@@ -7,3 +7,11 @@
   for = "/data/*.js"
   [headers.values]
     Cache-Control = "public, max-age=60"
+
+# Article routes are client-side (/story/{id}). Serve index.html for them so a
+# refresh or a shared link resolves instead of 404-ing. Status 200 keeps the
+# URL in the address bar; the router reads it and renders the story.
+[[redirects]]
+  from = "/story/*"
+  to = "/index.html"
+  status = 200

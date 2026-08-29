@@ -32,10 +32,20 @@
  *     image,       // Fast Break-owned asset path, or null. Never hotlinked,
  *                  // never a stand-in.
  *     video,       // local MP4 path or null
- *     featured     // optional. true = this league's Big Story on the homepage.
+ *     featured,    // optional. true = this league's Big Story on the homepage.
  *                  // PRESENTATION ONLY — it does not change article depth.
  *                  // Keep it to ONE story per league; the renderer uses the
  *                  // first it finds and warns in the console about extras.
+ *     priority     // high | normal | low. EDITORIAL WEIGHT, and deliberately
+ *                  // separate from `featured`. It sets how much room a story
+ *                  // earns, not where it sits on the page:
+ *                  //   high   ~250-500 words — league-level or career-level news
+ *                  //   normal ~100-250 words — the everyday wire
+ *                  //   low     ~50-120 words, 2-3 paragraphs — a procedural
+ *                  //           note, a minor move, a short injury update
+ *                  // A story can be priority:"high" and featured:false, and a
+ *                  // featured story can be priority:"normal". Length follows
+ *                  // priority; the Big Story slot follows `featured`.
  *   }
  *
  * Rules that keep the feed trustworthy:
@@ -49,6 +59,9 @@
  *   - sourceUrl is a link that was actually checked. Never guessed.
  *   - updatedAt stays null unless a genuine update time is known.
  *   - the feed is not padded. A league with fewer strong stories shows fewer.
+ *   - length follows `priority`, never a word target. A minor transaction that
+ *     is fully told in three paragraphs stays three paragraphs. Information
+ *     density beats word count.
  *
  * Loaded as a classic script before the main bundle, so it works over file://
  * as well as from a server.
@@ -57,11 +70,14 @@
 // ===========================================================================
 // CENTRAL STORY DATA — single source of truth for every rendered story
 // ---------------------------------------------------------------------------
-// Re-researched and re-verified 29 Aug 2026. Every story below carries a real
+// Re-researched and re-verified 29-30 Aug 2026. Every story carries a real
 // article body and a source URL that returned 200 on the day of publication.
-// The NBA stories were migrated out of the old static Q1-Q4 markup in
-// index.html so that NBA runs through the same Latest / Big Story / Story View
-// path as every other league.
+//
+// IMAGES: only three stories carry one. Every asset in assets/ is a Fast Break
+// social graphic with its own headline burned into the artwork, so an image can
+// only go on the story it was actually made for — putting the Marmoush card on
+// a different Spurs story would print a contradicting headline on the page.
+// The remaining assets are held for the stories they belong to.
 // ===========================================================================
 window.FB_STORIES = [
 
@@ -82,24 +98,26 @@ window.FB_STORIES = [
     source: 'NBA.com',
     sourceUrl: 'https://www.nba.com/news/demar-derozan-denver-nuggets-2026-free-agency',
     publishedAt: '2026-08-21', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'normal'
   },
   {
     id: 'nba-curry-extension-window-2026-08-29',
     sport: 'basketball', league: 'nba', category: 'contract', status: 'report',
     headline: 'Curry becomes eligible for a two-year, $136.7m Warriors extension',
-    dek: 'Golden State can put the offer on the table from Saturday. Nothing has been signed.',
+    dek: 'The window opened on Saturday. As of Sunday nothing has been signed.',
     summary: 'The extension would run through the 2028-29 season and take Curry to his age-40 year. It has not been signed.',
     body: [
-      'Saturday, 29 August is the first day Stephen Curry can sign a maximum contract extension with the Golden State Warriors. The deal available to him is two years and roughly $136.7 million, which would keep him under contract through the 2028-29 season and his age-40 year.',
-      'Curry, 38, is entering his 18th season and the final year of a contract worth close to $63 million. No extension has been signed.',
+      'Saturday, 29 August was the first day Stephen Curry could sign a maximum contract extension with the Golden State Warriors. The deal available to him is two years and roughly $136.7 million, which would keep him under contract through the 2028-29 season and his age-40 year.',
+      'Curry, 38, is entering his 18th season and the final year of a contract worth close to $63 million. The window is now open and no extension has been signed.',
       'The Warriors have made their position public. General manager Mike Dunleavy has said repeatedly over the past year that the club wants another deal done before the season begins, and that he is "pretty confident Steph will finish his career" in Golden State.',
       'Not everyone agrees on the timing. ESPN’s Brian Windhorst has argued Curry would be better served waiting rather than signing this summer.'
     ],
     source: 'HoopsHype',
     sourceUrl: 'https://www.hoopshype.com/story/sports/nba/2026/08/28/stephen-curry-becomes-eligible-for-max-warriors-extension-saturday/91504446007/',
-    publishedAt: '2026-08-29', updatedAt: null,
-    image: null, video: null
+    publishedAt: '2026-08-29', updatedAt: '2026-08-30',
+    image: 'assets/curry.jpg', video: null,
+    priority: 'normal'
   },
   {
     id: 'nba-thompson-heat-2026-08-21',
@@ -117,7 +135,8 @@ window.FB_STORIES = [
     source: 'ESPN',
     sourceUrl: 'https://www.espn.com/nba/story/_/id/49683637/mavs-buy-klay-thompson-deal-heat-move-deck-sources-say',
     publishedAt: '2026-08-21', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'normal'
   },
   {
     id: 'nba-watson-cavaliers-2026-08-19',
@@ -135,7 +154,8 @@ window.FB_STORIES = [
     source: 'NBA.com',
     sourceUrl: 'https://www.nba.com/news/peyton-watson-trade-cavaliers',
     publishedAt: '2026-08-19', updatedAt: '2026-08-28',
-    image: null, video: null
+    image: null, video: null,
+    priority: 'normal'
   },
   {
     id: 'nba-leonard-investigation-2026-08-14',
@@ -148,12 +168,15 @@ window.FB_STORIES = [
       'The league is examining whether the Clippers routed money to Leonard through an endorsement deal with Aspiration, a green banking company that has since gone bankrupt. Clippers owner Steve Ballmer invested $60 million in Aspiration, which also held a $300 million, 23-year endorsement agreement with the team.',
       'The Clippers have said they "did not funnel money to Kawhi Leonard through Aspiration" and that they were "victims of a fraud". The Raptors have said they will wait for the league’s findings rather than take on the financial risk of completing the deal mid-investigation.',
       'Under the agreed terms Toronto would send Brandon Ingram, Gradey Dick, unprotected first-round picks in 2031 and 2033, a 2027 first-round pick swap and two second-round picks.',
-      'The inquiry has since broadened to cover additional expenses the Clippers may have covered for Leonard, along with a second endorsement agreement that was never disclosed — reported as a multimillion-dollar arrangement with Daktronics. Commissioner Adam Silver has said the investigation needs to be wrapped up before next season, and the NBA has said its outside counsel expects to finalise its work in the coming weeks.'
+      'The inquiry has since broadened. It now covers additional expenses the Clippers may have met on Leonard’s behalf, along with a second endorsement agreement that was never disclosed — reported as a multimillion-dollar arrangement with Daktronics.',
+      'That widening is what has made the timing so difficult. A trade cannot sensibly be completed while the league is still deciding whether one of the two clubs involved broke the salary cap, because any penalty would land on a roster and a pick position that the trade itself would have already changed.',
+      'Commissioner Adam Silver has said the investigation needs to be wrapped up before next season, and the NBA has said its outside counsel expects to finalise its work in the coming weeks. Until it does, one of the summer’s biggest agreed trades stays exactly where it has been since 30 June: agreed, and unexecuted.'
     ],
     source: 'ESPN',
     sourceUrl: 'https://www.espn.com/nba/story/_/id/49317499/clippers-raptors-trade-involving-kawhi-leonard-hold-amid-probe',
     publishedAt: '2026-08-14', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'high'
   },
   {
     id: 'nba-westbrook-retires-2026-08-12',
@@ -163,14 +186,17 @@ window.FB_STORIES = [
     summary: 'Westbrook announced his retirement on social media, ending a career that reset the league’s triple-double record.',
     body: [
       'Russell Westbrook has announced his retirement after 18 NBA seasons, confirming the decision on social media.',
-      'He leaves as the league’s all-time leader in triple-doubles with 209, a record he built at a pace no one has matched. Forty-two of them came in the 2016-17 season alone.',
-      'That year remains the centrepiece of his career. Westbrook was named MVP after averaging 31.6 points, 10.7 rebounds and 10.4 assists, becoming the first player since Oscar Robertson in 1961-62 to average a triple-double across a full season.',
-      'A nine-time All-Star, he finishes fifth on the all-time assists list with 10,351 and 14th in career scoring with 27,176 points. He spent his first 11 seasons with the Oklahoma City Thunder and played last season for the Sacramento Kings.'
+      'He leaves as the league’s all-time leader in triple-doubles with 209 — a record he did not so much break as relocate. Forty-two of them came in the 2016-17 season alone, more in one year than most players manage in a career.',
+      'That season remains the centrepiece of everything. Westbrook was named Most Valuable Player after averaging 31.6 points, 10.7 rebounds and 10.4 assists, becoming the first player since Oscar Robertson in 1961-62 to average a triple-double across a full campaign. For a statistic that had sat untouched for 55 years, it was a direct answer to the question of whether it could be done again.',
+      'The rest of the résumé is built on the same relentlessness. A nine-time All-Star, he finishes fifth on the all-time assists list with 10,351 and 14th in career scoring with 27,176 points — a combination of volume passing and volume scoring that very few guards in the league’s history have sustained together.',
+      'He spent his first 11 seasons with the Oklahoma City Thunder, the franchise that drafted him and where the triple-double record was built. He played last season for the Sacramento Kings.',
+      'The record may not stand long. Nikola Jokic has 198 career triple-doubles and needs 11 more to pass him, and Luka Doncic sits on 90, although his rate has slowed with injuries and with more of the ball-handling shared. Westbrook could plausibly lose the record inside a season — which says less about the number than about the era he helped create.'
     ],
     source: 'NBA.com',
     sourceUrl: 'https://www.nba.com/news/russell-westbrook-retires-nba-after-18-seasons',
     publishedAt: '2026-08-12', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'high'
   },
   {
     id: 'nba-lakers-sale-2026-08-12',
@@ -179,15 +205,18 @@ window.FB_STORIES = [
     dek: 'The largest price ever paid for a sports franchise, a year after Mark Walter took control of the club.',
     summary: 'A group led by Thrive Capital founder Josh Kushner and former Disney chief executive Bob Iger is buying the franchise.',
     body: [
-      'The Los Angeles Lakers are being sold to a group led by Josh Kushner and Bob Iger for $12.5 billion, a record price for a sports franchise.',
-      'The seller is Mark Walter, who bought a controlling interest in the Lakers from the Buss family only last year at a valuation of roughly $10 billion — itself a record at the time.',
-      'Kushner is the founder of the venture firm Thrive Capital, a co-founder of Oscar Health and a minority owner of the Miami Heat. Iger was chief executive of the Walt Disney Company from 2005 to 2020 and again from 2022 to 2026.',
-      'Both men had been involved in the NBA’s Las Vegas expansion process before pivoting to make an offer for the Lakers.'
+      'The Los Angeles Lakers are being sold to a group led by Josh Kushner and Bob Iger for $12.5 billion — the highest price ever paid for a sports franchise.',
+      'The seller is Mark Walter, who bought a controlling interest in the Lakers from the Buss family only last year at a valuation of roughly $10 billion. That deal was itself a record at the time, which makes the speed of the revaluation the striking part: the franchise has gained around $2.5 billion in headline value inside twelve months, without changing conference, arena or roster core.',
+      'Kushner is the founder of the venture firm Thrive Capital, a co-founder of Oscar Health and already a minority owner inside the league at the Miami Heat. Iger was chief executive of the Walt Disney Company from 2005 to 2020, and returned to the role from 2022 to 2026.',
+      'Neither man arrived at the Lakers by the obvious route. Both had been involved in the NBA’s Las Vegas expansion process — the orthodox way into the league for buyers at this level — before pivoting to bid for an existing franchise instead.',
+      'For the Buss family, whose control of the club ran from 1979 until last year, the sale closes the second stage of an exit that began with the Walter deal.',
+      'For the wider sports market it resets the ceiling. NFL owners approved the sale of the Seattle Seahawks — the largest transaction in that league’s history — at $9.612 billion. The Lakers have just gone for nearly $3 billion more.'
     ],
     source: 'ESPN',
     sourceUrl: 'https://www.espn.com/nba/story/_/id/49590362/josh-kushner-bob-iger-buy-lakers-12b',
     publishedAt: '2026-08-12', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'high'
   },
   {
     id: 'nba-garnett-jersey-2026-08-14',
@@ -204,7 +233,8 @@ window.FB_STORIES = [
     source: 'HoopsHype',
     sourceUrl: 'https://www.hoopshype.com/story/sports/nba/2026/08/14/timberwolves-to-retire-kevin-garnetts-no-21-jersey-on-february-28/91305638007/',
     publishedAt: '2026-08-14', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'normal'
   },
 
   /* ---------------------------------------------------------------- WNBA */
@@ -222,12 +252,14 @@ window.FB_STORIES = [
       '"Because of the relationship we have with DeWanna, we worked out a buyout agreement that gives her the opportunity to chase a title in what could be her final postseason," Mercury general manager Nick U’Ren said.',
       '"I’m grateful to the Mercury for giving me the opportunity to play in what could be one of my final postseason opportunities," Bonner said.',
       'She averaged 10.6 points, 6.1 rebounds, 1.5 assists and 1.2 steals for Phoenix this season, starting 26 of 37 games. The Las Vegas Aces and New York Liberty were also in the running.',
-      'Atlanta have clinched a playoff berth and now add a two-time champion to a roster that includes Angel Reese but has been short on depth.'
+      'Atlanta have clinched a playoff berth and now add a two-time champion to a roster that includes Angel Reese but has been short on depth — the specific problem Bonner is being brought in to solve.',
+      'The move also carries an ending. Bonner was drafted by Phoenix in 2009 and spent the bulk of her career there; leaving on a buyout, in the final weeks of a season her own club could no longer contest, is not the exit most 17-year careers get. Both she and the Mercury framed it as the point of the deal rather than a side effect.'
     ],
     source: 'ESPN',
     sourceUrl: 'https://www.espn.com/wnba/story/_/id/49735947/sources-dewanna-bonner-signing-dream-mercury-buyout',
     publishedAt: '2026-08-27', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'high'
   },
   {
     id: 'wnba-playoff-field-set-2026-08-28',
@@ -244,7 +276,8 @@ window.FB_STORIES = [
     source: 'ESPN',
     sourceUrl: 'https://www.espn.com/wnba/story/_/id/49640698/wnba-playoffs-2026-which-teams-clinched-postseason-berth',
     publishedAt: '2026-08-28', updatedAt: null,
-    image: 'assets/wnba-playoffs-bracket.jpg', video: null
+    image: 'assets/wnba-playoffs-bracket.jpg', video: null,
+    priority: 'normal'
   },
   {
     id: 'wnba-shirt-incident-2026-08-17',
@@ -261,7 +294,8 @@ window.FB_STORIES = [
     source: 'ESPN',
     sourceUrl: 'https://www.espn.com/wnba/story/_/id/49643708/wnba-says-fans-free-wear-shirts-transgender-athlete-messaging',
     publishedAt: '2026-08-17', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'normal'
   },
 
   /* ----------------------------------------------------------------- NFL */
@@ -277,13 +311,15 @@ window.FB_STORIES = [
       'The Khosla family entered into a formal sale agreement with the Paul G. Allen estate on 11 July. The estate had announced in February that it was beginning the process of selling the team, in accordance with the wishes of Allen, the Microsoft co-founder who died in 2018 and whose sister Jody had overseen the franchise since.',
       'The buying group is led by Vinod Khosla, co-founder of Sun Microsystems and founder of the venture firm Khosla Ventures, alongside his wife Neeru — named by the league as the franchise’s principal owner — and their son Neal. The family must relinquish the 3.1% stake in the San Francisco 49ers that Vinod Khosla bought in 2025.',
       '"They will be tremendous caretakers of the Seattle Seahawks, the organization and the great partnership they have," Goodell said.',
-      'Seattle are the reigning champions, having beaten the New England Patriots 29-13 in February for the second Super Bowl title in franchise history.',
+      'The transaction closes nearly three decades of Allen family stewardship. Allen bought the Seahawks in 1997, at a point when the franchise’s long-term future in Seattle was genuinely uncertain, and the club has not changed hands since.',
+      'Seattle are the reigning champions, having beaten the New England Patriots 29-13 in February for the second Super Bowl title in franchise history — which makes this an unusually clean handover. The incoming owners inherit a roster that has just won, a head coach in place, and no immediate mandate to change anything.',
       '"How often do you get to buy a franchise that just won the Super Bowl? We are incredibly lucky and humbled by this gift," Vinod Khosla said. Asked about the task ahead, he was brief: "Keep the winning streak alive. Get another Super Bowl."'
     ],
     source: 'NFL.com',
     sourceUrl: 'https://www.nfl.com/news/nfl-owners-approve-sale-seattle-seahawks-khosla-family',
     publishedAt: '2026-08-26', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'high'
   },
   {
     id: 'nfl-williams-extension-2026-08-27',
@@ -300,7 +336,8 @@ window.FB_STORIES = [
     source: 'ESPN',
     sourceUrl: 'https://www.espn.com/nfl/story/_/id/49742399/sources-seahawks-leonard-williams-lands-3-year-90m-extension',
     publishedAt: '2026-08-27', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'normal'
   },
   {
     id: 'nfl-jacobs-charges-2026-08-27',
@@ -317,7 +354,8 @@ window.FB_STORIES = [
     source: 'NBC News',
     sourceUrl: 'https://www.nbcnews.com/sports/nfl/packers-josh-jacobs-charges-battery-criminal-damage-rcna594805',
     publishedAt: '2026-08-27', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'normal'
   },
   {
     id: 'nfl-watson-starter-2026-08-24',
@@ -333,7 +371,8 @@ window.FB_STORIES = [
     source: 'Cleveland Browns (official)',
     sourceUrl: 'https://www.clevelandbrowns.com/news/deshaun-watson-named-browns-starting-quarterback',
     publishedAt: '2026-08-24', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'low'
   },
   {
     id: 'nfl-cutdown-deadline-2026-08-28',
@@ -349,7 +388,8 @@ window.FB_STORIES = [
     source: 'NFL.com',
     sourceUrl: 'https://www.nfl.com/news/2026-nfl-53-man-roster-deadline-cut-candidates-trade-targets',
     publishedAt: '2026-08-28', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'low'
   },
 
   /* -------------------------------------------------------- PREMIER LEAGUE */
@@ -370,7 +410,8 @@ window.FB_STORIES = [
     source: 'ESPN',
     sourceUrl: 'https://www.espn.com/soccer/story/_/id/49740097/nottingham-forest-confirm-transfer-liam-delap-chelsea',
     publishedAt: '2026-08-27', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'normal'
   },
   {
     id: 'epl-palace-city-2026-08-28',
@@ -388,7 +429,8 @@ window.FB_STORIES = [
     source: 'ESPN',
     sourceUrl: 'https://www.espn.com/soccer/match/_/gameId/401879294/manchester-city-crystal-palace',
     publishedAt: '2026-08-28', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'normal'
   },
   {
     id: 'epl-riad-acl-2026-08-28',
@@ -404,7 +446,8 @@ window.FB_STORIES = [
     source: 'RotoWire',
     sourceUrl: 'https://www.rotowire.com/soccer/headlines/chadi-riad-injury-return-timeline-remains-unclear-528848',
     publishedAt: '2026-08-28', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'low'
   },
   {
     id: 'epl-martinez-chelsea-2026-08-28',
@@ -421,7 +464,8 @@ window.FB_STORIES = [
     source: 'Sky Sports',
     sourceUrl: 'https://www.skysports.com/football/news/11677/13577794/emiliano-martinez-transfer-news-chelsea-agree-lb7-5m-deal-to-sign-aston-villas-world-cup-winning-goalkeeper',
     publishedAt: '2026-08-28', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'normal'
   },
   {
     id: 'epl-marmoush-spurs-2026-08-27',
@@ -438,7 +482,8 @@ window.FB_STORIES = [
     source: 'Al Jazeera',
     sourceUrl: 'https://www.aljazeera.com/sports/2026/8/27/tottenham-sign-man-citys-egypt-forward-omar-marmoush-on-season-long-loan',
     publishedAt: '2026-08-27', updatedAt: null,
-    image: null, video: null
+    image: 'assets/mamush.jpg', video: null,
+    priority: 'normal'
   },
   {
     id: 'epl-window-deadline-2026-08-28',
@@ -447,13 +492,14 @@ window.FB_STORIES = [
     dek: 'Three days left in a window that opened on 15 June.',
     summary: 'Clubs have until Tuesday night UK time to complete their business.',
     body: [
-      'The Premier League summer transfer window closes at 11pm UK time on Tuesday 1 September.',
-      'The window opened on 15 June, giving clubs an unusually long run at their squads, and closes with several deals still outstanding across the division.'
+      'The Premier League summer transfer window closes at 11pm UK time on Tuesday 1 September. It opened on 15 June, an unusually long run shaped around the summer World Cup.',
+      'Business is still moving as it closes. Chelsea have agreed terms with Aston Villa for Emiliano Martinez, Tottenham have taken Omar Marmoush on loan from Manchester City with an obligation to buy, and Nottingham Forest have completed a club-record deal for Liam Delap. Anything not filed by 11pm waits until January.'
     ],
     source: 'ESPN',
     sourceUrl: 'https://www.espn.com/soccer/story/_/id/48944912/premier-league-efl-summer-transfer-window-2026-dates-does-open-deadline-day',
     publishedAt: '2026-08-28', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'low'
   },
 
   /* --------------------------------------------------------------- LA LIGA */
@@ -474,7 +520,8 @@ window.FB_STORIES = [
     source: 'ESPN',
     sourceUrl: 'https://www.espn.com/soccer/report/_/gameId/401882919',
     publishedAt: '2026-08-26', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'high'
   },
   {
     id: 'laliga-barca-athletic-2026-08-27',
@@ -491,7 +538,8 @@ window.FB_STORIES = [
     source: 'ESPN',
     sourceUrl: 'https://www.espn.com/soccer/story/_/id/49746982/rodri-barcelona-debut-hansi-flick-athletic-club-anthony-gordon',
     publishedAt: '2026-08-27', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'normal'
   },
 
   /* ------------------------------------------------------------ BUNDESLIGA */
@@ -506,13 +554,15 @@ window.FB_STORIES = [
       'SV Elversberg marked their first ever Bundesliga match by beating Bayer Leverkusen 3-2, a result that ranks among the great debuts in the competition’s history.',
       'Lukas Petkov scored the club’s first Bundesliga goal after eight minutes, his shot taking a deflection on the way in. Campbell added a second a minute later, capitalising on a misplaced pass from Edmond Tapsoba, and the promoted side went in 2-0 up at half-time.',
       'It got better 25 seconds after the restart. David Mokwa headed in from close range following a Petkov cross to make it 3-0.',
-      'Leverkusen responded through Patrik Schick, who turned in at the near post after a deflection off Maza, and Christian Kofane pulled the second back late on after a Boniface header came off the post. It was not enough.',
-      'Elversberg came up from the 2. Bundesliga this summer.'
+      'Leverkusen responded through Patrik Schick, who turned in at the near post after a deflection off Maza, and Christian Kofane pulled the second back late on after a Boniface header came off the post. The last ten minutes were played almost entirely in the Elversberg half. It was not enough.',
+      'The context makes the result unusual rather than merely surprising. Elversberg came up from the 2. Bundesliga this summer, having finished second with 62 points from 34 matches. Spiesen-Elversberg is a town of a few thousand people in the Saarland, and this was the club’s first appearance in the German top flight in its history.',
+      'Leverkusen, by contrast, opened the season as one of the division’s established European contenders. Losing the opening fixture to a promoted side does not decide anything in August, but it hands Elversberg three points and a result the club will be measured against for the rest of the season.'
     ],
     source: 'sport.de',
     sourceUrl: 'https://www.sport.de/fussball/deutschland-bundesliga/ma12193711/sv-07-elversberg_bayer-leverkusen/liveticker/',
     publishedAt: '2026-08-29', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'high'
   },
   {
     id: 'bundesliga-bayern-stuttgart-2026-08-28',
@@ -531,7 +581,8 @@ window.FB_STORIES = [
     source: 'Sportschau (ARD)',
     sourceUrl: 'https://www.sportschau.de/fussball/bundesliga/naechstes-schuetzenfest-zum-auftakt-bayern-schon-wieder-spitze,spielbericht-bayern-muenchen-vfb-stuttgart-106.html',
     publishedAt: '2026-08-28', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'normal'
   },
   {
     id: 'bundesliga-augsburg-seol-2026-08-27',
@@ -540,14 +591,14 @@ window.FB_STORIES = [
     dek: 'The wing-back arrives from Red Star Belgrade as the club’s eighth signing of the window.',
     summary: 'Kicker reports a fee of €3.75m plus bonuses, with Red Star retaining a 5% sell-on clause.',
     body: [
-      'FC Augsburg have signed Youngwoo Seol from Red Star Belgrade on a contract running to 2030. The 27-year-old wing-back will wear the number 7 shirt and is Augsburg’s eighth signing of the summer window.',
-      'Kicker reports that Augsburg will pay €3.75 million plus potential bonuses, with Red Star also understood to have secured a five percent sell-on clause.',
-      'Seol joined Red Star in 2024 and made 101 appearances for the Serbian club, winning two Serbian SuperLiga titles and two Serbian Cups.',
-      'A 37-time international, he started all three of South Korea’s matches at the 2026 World Cup. He becomes the fourth South Korean to play for Augsburg, after Ja-Cheol Koo, Dong-Won Ji and Jeong-Ho Hong.'
+      'FC Augsburg have signed Youngwoo Seol from Red Star Belgrade on a contract running to 2030. Kicker reports a fee of €3.75 million plus bonuses, with Red Star retaining a five percent sell-on clause.',
+      'The 27-year-old wing-back takes the number 7 shirt and is Augsburg’s eighth signing of the window. He made 101 appearances for Red Star after joining in 2024, winning two Serbian SuperLiga titles and two Serbian Cups.',
+      'A 37-time international, Seol started all three of South Korea’s matches at the 2026 World Cup. He is the fourth South Korean to play for Augsburg, after Ja-Cheol Koo, Dong-Won Ji and Jeong-Ho Hong.'
     ],
     source: 'Bundesliga.com',
     sourceUrl: 'https://www.bundesliga.com/en/bundesliga/news/augsburg-sign-seol-young-woo-red-star-belgrade-38811',
     publishedAt: '2026-08-27', updatedAt: null,
-    image: null, video: null
+    image: null, video: null,
+    priority: 'low'
   }
 ];
