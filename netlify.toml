@@ -1,0 +1,9 @@
+# Static site, no build step. index.html and the data/ files ship as-is.
+[build]
+  publish = "."
+  command = ""
+
+[[headers]]
+  for = "/data/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=60"

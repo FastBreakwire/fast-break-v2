@@ -1,0 +1,12 @@
+{
+  "name": "fastbreak-website",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Fast Break sports news website (V2). Mobile app lives in a separate repo.",
+  "scripts": {
+    "api": "node server/api.js",
+    "check": "node --check server/api.js && node --check server/models.js && node --check server/highlightlyProvider.js && node --check data/stories.js && node --check data/sports.js"
+  },
+  "engines": { "node": ">=18" },
+  "license": "UNLICENSED"
+}
