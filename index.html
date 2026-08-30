@@ -6,7 +6,7 @@
 <title>Fast Break</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 
   :root{
@@ -71,9 +71,13 @@
     --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
     --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px; --sp-9: 96px;
 
-    --serif: "Fraunces", Georgia, serif;
-    --sans: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
-    --mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+    /* Display: Mitr. Headlines, article H1, section titles. Modern sports
+       media, not newspaper serif. Mitr has no italic — never ask for one.
+       UI, body and meta all run on Inter; --label is the letterspaced
+       uppercase role that used to be monospace. */
+    --display: "Mitr", "Inter", system-ui, sans-serif;
+    --sans:    "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --label:   "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 
     --cool-muted: #9299A6;
     --cool-faint: #6B7280;
@@ -253,19 +257,19 @@
   .mobile-nav{ max-height:0; overflow:hidden; transition:max-height .35s var(--ease), border-color .35s; border-top:1px solid transparent; }
   .mobile-nav.open{ max-height:420px; border-top-color:var(--line); }
   .mobile-nav ul{ padding:var(--sp-4) 0; display:flex; flex-direction:column; gap:2px; }
-  .mobile-nav a{ display:block; padding:12px 0; font-family:var(--serif); font-size:22px; font-weight:500; }
+  .mobile-nav a{ display:block; padding:12px 0; font-family:var(--display); font-size:22px; font-weight:500; }
   .mobile-nav .mn-sub{ font-family:var(--sans); font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); padding:12px 0 4px; }
 
   /* ============ LEAGUE FILTER ============ */
   [data-league].league-hidden{ display:none !important; }
   .league-active-tag{
     display:inline-flex; align-items:center; gap:6px;
-    font-family:var(--mono); font-size:10.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    font-family:var(--label); font-size:10.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
     color:var(--ink); margin-left:10px;
   }
 
   .sport-list-label{
-    font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+    font-family:var(--label); font-size:10px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
     color:var(--cool-faint); padding:6px var(--sp-3) 8px;
   }
 
@@ -273,7 +277,7 @@
   .logo-fallback{
     width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center;
     background:rgba(255,255,255,.09); color:var(--ink-soft);
-    font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:.02em;
+    font-family:var(--label); font-size:9px; font-weight:700; letter-spacing:.02em;
   }
 
   /* ============ LIVE SCORE RAIL ============ */
@@ -291,7 +295,7 @@
   .score-rail-head{ display:flex; align-items:center; gap:8px; margin-bottom:14px; }
   .score-rail-label{
     display:inline-flex; align-items:center; gap:7px;
-    font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
+    font-family:var(--label); font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
     color:var(--ink-soft);
   }
   .score-rail-label .pulse{ width:6px; height:6px; }
@@ -299,12 +303,12 @@
   .score-rail-label.is-upcoming{ color:var(--cool-muted); }
   .score-rail-label.is-upcoming .pulse{ background:var(--cool-faint); animation:none; box-shadow:none; }
   .league-notice{
-    margin-top:12px; font-family:var(--mono); font-size:11px; letter-spacing:.04em;
+    margin-top:12px; font-family:var(--label); font-size:11px; letter-spacing:.04em;
     color:var(--cool-muted); border-left:2px solid var(--line-strong); padding-left:10px;
   }
-  .score-empty{ font-family:var(--mono); font-size:12px; color:var(--cool-faint); padding:8px 0; }
+  .score-empty{ font-family:var(--label); font-size:12px; color:var(--cool-faint); padding:8px 0; }
   .gs-demo{
-    font-family:var(--mono); font-size:9px; letter-spacing:.08em; text-transform:uppercase;
+    font-family:var(--label); font-size:9px; letter-spacing:.08em; text-transform:uppercase;
     color:var(--cool-faint); border:1px solid var(--cool-line); border-radius:4px; padding:1px 5px; margin-left:8px;
   }
   /* Active navigation is marked with weight and contrast, never colour —
@@ -317,14 +321,14 @@
   }
   .fb-video video{ width:100%; height:auto; display:block; background:var(--black); }
   .fb-video-cap{
-    font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    font-family:var(--label); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
     color:var(--cool-faint); padding:8px 12px; border-top:1px solid var(--cool-line);
   }
 
   .score-league-group{ margin-bottom:14px; }
   .score-league-group:last-child{ margin-bottom:0; }
   .score-league-name{
-    font-family:var(--mono); font-size:10.5px; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
+    font-family:var(--label); font-size:10.5px; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
     color:var(--cool-faint); margin-bottom:8px;
   }
   .score-row{
@@ -346,7 +350,7 @@
     box-shadow:0 10px 28px -18px rgba(226,59,59,.55);
   }
   .game-card.is-live:hover{ border-color:rgba(226,59,59,.5); }
-  .game-status-row{ display:flex; align-items:center; justify-content:space-between; font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; }
+  .game-status-row{ display:flex; align-items:center; justify-content:space-between; font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; font-variant-numeric:tabular-nums; }
   .game-status-row .gs-live{ color:var(--live-bright); display:flex; align-items:center; gap:5px; min-width:0; }
   .game-status-row .gs-live .pulse{ width:5px; height:5px; }
   /* LIVE · Q3 · 7:41 — broadcast reading order, clock in tabular figures. */
@@ -357,13 +361,13 @@
   .game-status-row .gs-time{ color:var(--cool-faint); }
   .game-teams{ display:flex; flex-direction:column; gap:6px; }
   .game-team-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-  .game-team{ display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12.5px; font-weight:600; letter-spacing:.02em; color:var(--ink-soft); }
+  .game-team{ display:flex; align-items:center; gap:8px; font-family:var(--label); font-size:12.5px; font-weight:600; letter-spacing:.04em; color:var(--ink-soft); text-transform:uppercase; }
   .team-badge{
     width:22px; height:22px; border-radius:6px; background:#151515; border:1px solid var(--cool-line);
-    display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:8.5px; font-weight:700; color:var(--cool-muted); flex:none;
+    display:flex; align-items:center; justify-content:center; font-family:var(--label); font-size:8.5px; font-weight:700; color:var(--cool-muted); flex:none;
   }
-  .game-score{ font-family:var(--mono); font-weight:700; font-size:15px; color:var(--ink); }
-  .game-broadcast{ font-family:var(--mono); font-size:10px; letter-spacing:.04em; color:var(--cool-faint); border-top:1px solid var(--cool-line); padding-top:8px; }
+  .game-score{ font-family:var(--label); font-weight:700; font-size:15.5px; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .game-broadcast{ font-family:var(--label); font-size:10px; letter-spacing:.04em; color:var(--cool-faint); border-top:1px solid var(--cool-line); padding-top:8px; }
 
   /* ============ TICKER ============ */
 
@@ -386,7 +390,7 @@
   .hero-card::after{ content:""; position:absolute; inset:0; background:linear-gradient(0deg, rgba(10,10,10,.94) 0%, rgba(10,10,10,.5) 45%, rgba(10,10,10,.08) 70%); }
   .hero-card-content{ position:relative; z-index:2; padding:var(--sp-6); color:var(--ink); }
   .hero-card .eyebrow{ color:var(--ink-soft); margin-bottom:14px; }
-  .hero-headline{ font-family:var(--serif); font-weight:600; font-size:clamp(28px, 3.4vw, 42px); line-height:1.08; letter-spacing:-.01em; margin-bottom:14px; max-width:20ch; }
+  .hero-headline{ font-family:var(--display); font-weight:600; font-size:clamp(28px, 3.4vw, 42px); line-height:1.08; letter-spacing:-.01em; margin-bottom:14px; max-width:20ch; }
   .hero-dek{ font-size:14px; color:rgba(242,242,242,.78); max-width:48ch; margin-bottom:16px; line-height:1.55; }
   .hero-card .meta-line{ color:rgba(242,242,242,.72); }
   .hero-card .meta-line .dot{ background:rgba(242,242,242,.5); }
@@ -411,8 +415,8 @@
   .big-story-body{ padding:var(--sp-6); }
   .big-story .status-row{ margin-bottom:16px; }
   .big-story h3{
-    font-family:var(--serif); font-weight:600;
-    font-size:clamp(26px, 3.2vw, 40px); line-height:1.1; letter-spacing:-.01em;
+    font-family:var(--display); font-weight:600;
+    font-size:clamp(24px, 2.9vw, 36px); line-height:1.14; letter-spacing:-.02em;
     margin-bottom:14px; max-width:24ch;
   }
   .big-story p{
@@ -422,19 +426,27 @@
   /* The one badge that is intentionally the brightest thing in a status row. */
   .status.featured{ background:var(--ink); color:var(--black); box-shadow:none; letter-spacing:.12em; }
 
-  .big-story.has-image{ background:var(--black); min-height:440px; display:flex; align-items:flex-end; }
-  .big-story.has-image .img-wrap{ position:absolute; inset:0; }
-  .big-story.has-image .img-wrap img{ width:100%; height:100%; object-fit:cover; transition:transform .8s var(--ease); }
-  .big-story.has-image:hover .img-wrap img{ transform:scale(1.025); }
-  .big-story.has-image::after{
-    content:""; position:absolute; inset:0;
-    background:linear-gradient(0deg, rgba(10,10,10,.94) 0%, rgba(10,10,10,.5) 45%, rgba(10,10,10,.08) 70%);
+  /* The old treatment bled the image full-width behind a gradient, which both
+     cropped the graphic and dropped a scrim over its baked-in headline. The
+     asset now sits in its own panel, complete and unobscured. */
+  .big-story.has-image{ background:var(--surface); }
+  .big-story.has-image .img-wrap{
+    background:var(--black); border-bottom:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; padding:var(--sp-4);
   }
-  .big-story.has-image .big-story-body{ position:relative; z-index:2; }
-  .big-story.has-image p{ color:rgba(242,242,242,.78); }
+  .big-story.has-image .img-wrap img{
+    width:100%; height:auto; max-height:420px;
+    object-fit:contain; display:block;
+  }
+  @media (min-width:820px){
+    .big-story.has-image{ display:grid; grid-template-columns:minmax(0,46%) minmax(0,54%); align-items:stretch; }
+    .big-story.has-image .img-wrap{ border-bottom:none; border-right:1px solid var(--line); max-height:none; }
+    .big-story.has-image .img-wrap img{ max-height:400px; }
+    .big-story.has-image .big-story-body{ display:flex; flex-direction:column; justify-content:center; }
+  }
   @media (max-width:720px){
     .big-story-body{ padding:var(--sp-5); }
-    .big-story.has-image{ min-height:360px; }
+    .big-story.has-image .img-wrap img{ max-height:300px; }
   }
   .side-card{
     background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:var(--sp-5);
@@ -443,7 +455,7 @@
   }
   .side-card:hover{ border-color:var(--accent-line); transform:translateY(-3px); }
   .side-card .eyebrow{ margin-bottom:10px; }
-  .side-card h3{ font-family:var(--serif); font-weight:600; font-size:18px; line-height:1.22; margin-bottom:10px; }
+  .side-card h3{ font-family:var(--display); font-weight:600; font-size:18px; line-height:1.22; margin-bottom:10px; }
   .side-card p{ color:var(--ink-soft); font-size:13px; line-height:1.55; margin-bottom:auto; padding-bottom:14px; }
 
   /* ============ SECTION HEADER (Q-system) ============ */
@@ -454,7 +466,7 @@
      soft red ambient halo that sits outside the border rather than outlining
      it. Purely editorial — it carries no story status. */
   .q-marker{
-    font-family:var(--serif); font-weight:700; font-style:italic; font-size:15px;
+    font-family:var(--display); font-weight:600; font-size:13.5px; letter-spacing:.02em;
     color:var(--ink);
     background:linear-gradient(180deg, #141414 0%, var(--black) 100%);
     border:1px solid var(--line-strong);
@@ -464,7 +476,7 @@
       0 0 12px rgba(190,44,52,.15),
       0 0 30px rgba(190,44,52,.09);
   }
-  .section-title{ font-family:var(--serif); font-weight:600; font-style:italic; font-size:clamp(24px, 2.8vw, 32px); letter-spacing:-.01em; }
+  .section-title{ font-family:var(--display); font-weight:600; font-size:clamp(22px, 2.5vw, 29px); letter-spacing:-.015em; }
   .section-desc{ color:var(--ink-faint); font-size:13.5px; max-width:38ch; }
   .section-date{ font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); font-weight:700; white-space:nowrap; }
 
@@ -482,21 +494,40 @@
     transform:translateY(-3px); border-color:var(--accent-line);
     box-shadow:0 18px 40px -26px rgba(0,0,0,.9);
   }
-  .news-card .img-wrap{ overflow:hidden; height:172px; flex:none; background:var(--black); }
-  .news-card .img-wrap img{ width:100%; height:100%; object-fit:cover; transition:transform .7s var(--ease); }
-  .news-card:hover .img-wrap img{ transform:scale(1.025); }
-  .news-card-body{ padding:var(--sp-4) var(--sp-4) var(--sp-5); display:flex; flex-direction:column; gap:10px; flex:1; }
+  /* a card with art becomes [thumb | content]; height is driven by the text */
+  .news-card.has-thumb{ display:grid; grid-template-columns:92px minmax(0,1fr); align-items:stretch; }
+  .news-card .img-wrap{
+    overflow:hidden; background:var(--black); border-right:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; padding:10px;
+  }
+  .news-card .img-wrap img{
+    width:100%; height:auto; max-height:100%;
+    object-fit:contain;                       /* never crop the artwork */
+    transition:transform .7s var(--ease);
+  }
+  .news-card:hover .img-wrap img{ transform:scale(1.03); }
+  .news-card-body{ padding:var(--sp-4) var(--sp-4) var(--sp-5); display:flex; flex-direction:column; gap:10px; flex:1; min-width:0; }
   .news-card-body .status-row{ display:flex; gap:8px; flex-wrap:wrap; }
-  .news-card-body h3{ font-family:var(--serif); font-weight:600; font-size:18px; line-height:1.25; }
-  .news-card-body p{ color:var(--ink-soft); font-size:13px; line-height:1.5; }
+  .news-card-body h3{
+    font-family:var(--display); font-weight:500; font-size:16.5px; line-height:1.32; letter-spacing:-.01em;
+    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+    min-height:calc(3 * 1.32em);
+  }
+  .news-card-body p{
+    color:var(--ink-soft); font-size:13px; line-height:1.5;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+    min-height:calc(2 * 1.5em);
+  }
+  /* the meta line is pinned to the bottom so every card ends on the same rule */
+  .news-card-body .meta-line{ margin-top:auto; padding-top:4px; }
 
   .feature-card{ grid-column:span 2; display:grid; grid-template-columns:1.1fr 1fr; }
   @media (max-width:640px){ .feature-card{ grid-column:span 1; grid-template-columns:1fr; } }
-  .feature-card .img-wrap{ height:100%; min-height:260px; }
+  .feature-card .img-wrap{ min-height:200px; }
   .feature-card .news-card-body{ padding:var(--sp-6); justify-content:center; }
   .feature-card .news-card-body h3{ font-size:24px; }
 
-  .no-image .news-card-body{ padding:var(--sp-5); }
+
 
   /* ============ TX WIRE (compact rows) ============ */
   .tx-wire{ display:flex; flex-direction:column; border:1px solid var(--line); border-radius:var(--r-md); overflow:hidden; background:var(--surface); }
@@ -523,7 +554,7 @@
     display:flex; flex-direction:column; gap:8px; transition:border-color .3s var(--ease), transform .3s var(--ease);
   }
   .bench-card:hover{ border-color:var(--line-strong); transform:translateY(-2px); }
-  .bench-name{ font-family:var(--serif); font-weight:600; font-size:15.5px; line-height:1.2; }
+  .bench-name{ font-family:var(--display); font-weight:600; font-size:15.5px; line-height:1.2; }
   .bench-team{ font-size:11px; color:var(--ink-faint); }
   .bench-note{ font-size:12px; color:var(--ink-soft); line-height:1.45; margin-top:2px; }
   .bench-flag{ font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--red); }
@@ -535,7 +566,7 @@
   }
   @media (max-width:820px){ .unfiltered-band{ grid-template-columns:1fr; padding:var(--sp-6) var(--sp-5); gap:var(--sp-5); } }
   .unfiltered-band .chip-unfiltered{ margin-bottom:18px; }
-  .unfiltered-band h3{ font-family:var(--serif); font-style:italic; font-weight:500; font-size:clamp(24px,2.8vw,32px); line-height:1.2; margin-bottom:14px; }
+  .unfiltered-band h3{ font-family:var(--display); font-weight:500; font-size:clamp(24px,2.8vw,32px); line-height:1.2; margin-bottom:14px; }
   .unfiltered-band p{ color:var(--ink-soft); font-size:14px; line-height:1.6; margin-bottom:18px; max-width:46ch; }
   .link-arrow{ display:inline-flex; align-items:center; gap:8px; font-weight:700; font-size:13px; letter-spacing:.04em; text-transform:uppercase; color:var(--ink); border-bottom:2px solid var(--accent-line); padding-bottom:3px; }
   .link-arrow span{ transition:transform .3s var(--ease); }
@@ -546,7 +577,7 @@
   .ht-list{ display:flex; flex-direction:column; gap:var(--sp-4); margin-top:var(--sp-6); }
   .ht-item{ display:grid; grid-template-columns:120px 1fr; gap:var(--sp-5); padding:var(--sp-4) 0; border-top:1px solid var(--line); }
   @media (max-width:640px){ .ht-item{ grid-template-columns:1fr; gap:6px; } }
-  .ht-item h4{ font-family:var(--serif); font-weight:600; font-size:17px; margin-bottom:6px; }
+  .ht-item h4{ font-family:var(--display); font-weight:600; font-size:17px; margin-bottom:6px; }
   .ht-item p{ font-size:13px; color:var(--ink-soft); line-height:1.55; }
 
   /* ============ REPLAY ============ */
@@ -563,7 +594,7 @@
     padding:var(--sp-7) var(--sp-6); text-align:center; display:flex; flex-direction:column; align-items:center;
   }
   .newsletter-band .eyebrow{ margin-bottom:16px; justify-content:center; }
-  .newsletter-band h3{ font-family:var(--serif); font-weight:600; font-size:clamp(28px,3.6vw,42px); margin-bottom:12px; letter-spacing:-.01em; }
+  .newsletter-band h3{ font-family:var(--display); font-weight:600; font-size:clamp(28px,3.6vw,42px); margin-bottom:12px; letter-spacing:-.01em; }
   .newsletter-band p{ color:var(--ink-soft); font-size:14.5px; max-width:44ch; margin-bottom:28px; }
   .newsletter-form{ display:flex; gap:10px; width:100%; max-width:420px; flex-wrap:wrap; justify-content:center; }
   .newsletter-form input{
@@ -583,7 +614,7 @@
   .pwa-section{ padding:var(--sp-8) 0; }
   .pwa-grid{ display:grid; grid-template-columns:1fr .85fr; gap:var(--sp-8); align-items:center; }
   @media (max-width:880px){ .pwa-grid{ grid-template-columns:1fr; gap:var(--sp-6); } }
-  .pwa-copy h3{ font-family:var(--serif); font-weight:600; font-style:italic; font-size:clamp(30px,4vw,46px); line-height:1.08; margin-bottom:18px; }
+  .pwa-copy h3{ font-family:var(--display); font-weight:600; font-size:clamp(30px,4vw,46px); line-height:1.08; margin-bottom:18px; }
   .pwa-copy p{ color:var(--ink-soft); font-size:14.5px; line-height:1.65; max-width:46ch; margin-bottom:26px; }
   .pwa-features{ display:flex; flex-direction:column; gap:14px; }
   .pwa-feature{ display:flex; align-items:center; gap:12px; font-size:13.5px; color:var(--ink-soft); }
@@ -599,7 +630,7 @@
   .phone-mock .p-ticker{ background:var(--black); border-radius:8px; padding:6px 10px; font-size:8px; color:var(--ink-soft); font-weight:800; letter-spacing:.04em; }
   .phone-mock .p-card{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:6px; }
   .phone-mock .p-card .p-eyebrow{ font-size:7px; font-weight:800; letter-spacing:.08em; color:var(--ink-soft); text-transform:uppercase; }
-  .phone-mock .p-card .p-title{ font-family:var(--serif); font-size:12.5px; font-weight:600; line-height:1.25; }
+  .phone-mock .p-card .p-title{ font-family:var(--display); font-size:12.5px; font-weight:600; line-height:1.25; }
   .phone-mock .p-card .p-meta{ font-size:7px; color:var(--ink-faint); }
 
   /* ============ SCROLL REVEAL ============ */
@@ -620,7 +651,7 @@
   /* ============ FOOTER ============ */
   footer{ border-top:1px solid var(--line); padding:var(--sp-8) 0 var(--sp-6); margin-top:var(--sp-7); }
   .footer-top{ display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:var(--sp-6); padding-bottom:var(--sp-7); }
-  .footer-brand p{ font-family:var(--serif); font-style:italic; color:var(--ink-soft); font-size:14px; max-width:28ch; margin-top:8px; }
+  .footer-brand p{ font-family:var(--display); color:var(--ink-soft); font-size:14px; max-width:28ch; margin-top:8px; }
   .footer-links{ display:flex; gap:var(--sp-8); flex-wrap:wrap; }
   .footer-col h5{ font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:14px; }
   .footer-col a{ display:block; font-size:14px; color:var(--ink-soft); margin-bottom:10px; transition:color .25s; }
@@ -649,17 +680,18 @@
   }
   .sport-nav-inner::-webkit-scrollbar{ display:none; }
 
+  /* ONE component, four identical instances. No icon slot: NBA/WNBA/NFL
+     resolve a league logo and Football (a group) does not, so any icon made
+     Football the odd one out. The label carries the identity; club and league
+     marks still appear inside the mega menu. */
   .sport-tab{
-    position:relative; display:flex; align-items:center; gap:9px;
-    padding:13px 14px; flex:none; white-space:nowrap;
+    position:relative; display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:13px 16px; flex:none; white-space:nowrap; text-align:left;
     font-family:var(--sans); font-size:13px; font-weight:700;
     letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft);
     border:none; background:none; cursor:pointer;
     transition:color .22s var(--ease), background .22s var(--ease);
   }
-  .sport-tab .st-icon{ width:19px; height:19px; flex:none; display:flex; align-items:center; justify-content:center; }
-  .sport-tab .st-icon img{ width:19px; height:19px; object-fit:contain; display:block; }
-  .sport-tab .st-icon .logo-fallback{ width:19px; height:19px; font-size:7px; border-radius:5px; }
   .sport-tab:hover{ color:var(--ink); background:var(--indigo-veil); }
   /* You are here. Indigo, never red. */
   .sport-tab.is-active{ color:var(--ink); }
@@ -682,18 +714,17 @@
     }
     .sport-nav-label{
       display:block;
-      font-family:var(--mono); font-size:9.5px; font-weight:600; letter-spacing:.16em;
+      font-family:var(--label); font-size:9.5px; font-weight:600; letter-spacing:.16em;
       text-transform:uppercase; color:var(--ink-faint); padding:0 14px 10px;
     }
+    /* identical box, height, padding and type for all four */
     .sport-tab{
-      width:100%; justify-content:flex-start; border-radius:9px;
-      font-family:var(--serif); font-style:normal; font-size:16px; font-weight:600;
-      letter-spacing:0; text-transform:none; padding:12px 14px;
+      width:100%; height:48px; border-radius:9px;
+      font-family:var(--sans); font-size:13px; font-weight:700;
+      letter-spacing:.07em; text-transform:uppercase; padding:0 15px;
     }
-    .sport-tab .st-icon, .sport-tab .st-icon img{ width:22px; height:22px; }
-    .sport-tab .st-icon .logo-fallback{ width:22px; height:22px; font-size:8px; }
     .sport-tab .st-chev{
-      margin-left:auto; color:var(--ink-faint); font-family:var(--mono); font-size:13px;
+      margin-left:auto; color:var(--ink-faint); font-size:15px; line-height:1;
       opacity:0; transition:opacity .2s var(--ease), transform .2s var(--ease);
     }
     .sport-tab:hover .st-chev, .sport-tab.is-open .st-chev{ opacity:1; transform:translateX(2px); color:var(--indigo); }
@@ -718,33 +749,33 @@
   .mega.open{ display:block; }
   .mega-inner{ display:grid; gap:0; }
   .mega-col{
-    padding:20px 22px; min-width:0;
+    padding:28px 30px; min-width:0;
     border-right:1px solid var(--line);
   }
   .mega-col:last-child{ border-right:none; }
   .mega-head{
-    display:flex; align-items:center; gap:10px; margin-bottom:14px;
-    padding-bottom:12px; border-bottom:1px solid var(--indigo-line);
+    display:flex; align-items:center; gap:12px; margin-bottom:20px;
+    padding-bottom:16px; border-bottom:1px solid var(--indigo-line);
   }
-  .mega-head .st-icon, .mega-head .st-icon img{ width:20px; height:20px; }
+  .mega-head .st-icon, .mega-head .st-icon img{ width:26px; height:26px; }
   .mega-head .st-icon{ display:flex; align-items:center; justify-content:center; flex:none; }
   .mega-head .st-icon .logo-fallback{ width:20px; height:20px; font-size:7px; }
   .mega-title{
-    font-family:var(--serif); font-size:17px; font-weight:600; color:var(--ink);
+    font-family:var(--display); font-size:21px; font-weight:600; color:var(--ink); letter-spacing:-.01em;
     background:none; border:none; padding:0; cursor:pointer; text-align:left;
     transition:color .2s var(--ease);
   }
   .mega-title:hover{ color:var(--indigo); }
   .mega-title.is-active{ color:var(--indigo); }
   .mega-sub{
-    font-family:var(--mono); font-size:9.5px; font-weight:600; letter-spacing:.15em;
-    text-transform:uppercase; color:var(--ink-faint); margin:16px 0 8px;
+    font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--ink-faint); margin:26px 0 12px;
   }
-  .mega-links{ display:flex; flex-direction:column; gap:1px; }
+  .mega-links{ display:flex; flex-direction:column; gap:2px; }
   .mega-link{
-    display:flex; align-items:center; gap:9px;
-    padding:7px 9px; border-radius:7px; text-align:left; width:100%;
-    font-size:13px; font-weight:500; color:var(--cool-muted);
+    display:flex; align-items:center; gap:11px;
+    padding:9px 11px; border-radius:8px; text-align:left; width:100%;
+    font-size:13.5px; font-weight:500; color:var(--cool-muted);
     background:none; border:none; cursor:pointer;
     transition:background .18s var(--ease), color .18s var(--ease);
   }
@@ -754,18 +785,18 @@
   .mega-link .si-icon img{ width:19px; height:19px; object-fit:contain; }
   .mega-link .si-icon .logo-fallback{ width:19px; height:19px; font-size:7px; border-radius:5px; }
   .mega-link .ml-label{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .mega-teams{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1px 10px; }
-  .mega-empty{ font-family:var(--mono); font-size:11px; color:var(--cool-faint); padding:6px 9px; }
+  .mega-teams{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:2px 18px; }
+  .mega-empty{ font-family:var(--label); font-size:11px; color:var(--cool-faint); padding:6px 9px; }
 
   /* desktop: flyout to the right of the rail, tall like a broadcast menu */
   @media (min-width:1080px){
     .mega{
-      top:0; left:210px; width:min(760px, calc(100vw - 230px));
+      top:0; left:210px; width:min(920px, calc(100vw - 230px));
       max-height:100vh; overflow-y:auto;
       border-left:none; border-radius:0 var(--r-sm) var(--r-sm) 0;
     }
     .mega-inner.cols-1{ grid-template-columns:minmax(0,1fr); }
-    .mega-inner.cols-2{ grid-template-columns:230px minmax(0,1fr); }
+    .mega-inner.cols-2{ grid-template-columns:270px minmax(0,1fr); }
     .mega-inner.cols-3{ grid-template-columns:repeat(3,minmax(0,1fr)); }
   }
   /* below that: the strip is horizontal, so the panel drops full-width beneath it */
@@ -796,7 +827,7 @@
   .breadcrumb{
     display:flex; align-items:center; flex-wrap:wrap; gap:8px;
     padding:var(--sp-5) 0 var(--sp-4);
-    font-family:var(--mono); font-size:11px; font-weight:600;
+    font-family:var(--label); font-size:11px; font-weight:600;
     letter-spacing:.08em; text-transform:uppercase;
   }
   .breadcrumb a{ color:var(--cool-muted); transition:color .2s var(--ease); }
@@ -815,21 +846,25 @@
   .article-main{ min-width:0; }
   .article-main .status-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
   .article-main h1{
-    font-family:var(--serif); font-weight:600;
-    font-size:clamp(28px, 4vw, 46px); line-height:1.08; letter-spacing:-.015em;
-    margin-bottom:16px; max-width:24ch;
+    font-family:var(--display); font-weight:600;
+    font-size:clamp(26px, 3.4vw, 40px); line-height:1.16; letter-spacing:-.02em;
+    margin-bottom:16px; max-width:26ch;
   }
   .article-lede{
-    font-family:var(--serif); font-size:clamp(17px,1.7vw,20px); line-height:1.5;
-    font-weight:500; color:var(--ink-soft); margin-bottom:var(--sp-5); max-width:56ch;
+    font-family:var(--sans); font-size:clamp(16.5px,1.6vw,19px); line-height:1.55;
+    font-weight:500; color:var(--ink-soft); margin-bottom:var(--sp-5); max-width:58ch;
   }
   .article-hero{
     border-radius:var(--r-md); overflow:hidden; margin:0 0 var(--sp-5);
     background:var(--black); border:1px solid var(--line);
   }
-  .article-hero img{ width:100%; height:auto; display:block; }
+  .article-hero{ display:flex; align-items:center; justify-content:center; }
+  .article-hero img{
+    width:100%; height:auto; max-height:min(72vh, 620px);
+    object-fit:contain; display:block;      /* complete graphic, no crop */
+  }
   .article-hero-cap{
-    font-family:var(--mono); font-size:10px; letter-spacing:.07em; text-transform:uppercase;
+    font-family:var(--label); font-size:10px; letter-spacing:.07em; text-transform:uppercase;
     color:var(--cool-faint); padding:9px 13px; border-top:1px solid var(--line);
   }
   .article-body-copy p{
@@ -838,7 +873,7 @@
   .article-body-copy p:last-child{ margin-bottom:0; }
   .article-byline{
     margin-top:var(--sp-6); padding-top:16px; border-top:1px solid var(--line);
-    font-family:var(--mono); font-size:11.5px; letter-spacing:.05em; color:var(--cool-faint);
+    font-family:var(--label); font-size:11.5px; letter-spacing:.05em; color:var(--cool-faint);
     display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px;
   }
   .article-byline .dot{ width:3px; height:3px; border-radius:50%; background:var(--cool-line); flex:none; }
@@ -851,7 +886,7 @@
   }
   .rail-block{ min-width:0; }
   .rail-head{
-    font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.16em;
+    font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.16em;
     text-transform:uppercase; color:var(--ink-soft);
     padding-bottom:10px; margin-bottom:14px; border-bottom:1px solid var(--indigo-line);
   }
@@ -864,21 +899,21 @@
   .rail-item:hover .rail-title{ color:var(--indigo); }
   .rail-item .rail-kicker{
     display:flex; align-items:center; gap:7px; margin-bottom:6px;
-    font-family:var(--mono); font-size:9.5px; font-weight:600; letter-spacing:.1em;
+    font-family:var(--label); font-size:9.5px; font-weight:600; letter-spacing:.1em;
     text-transform:uppercase; color:var(--ink-faint);
   }
   .rail-item .rail-title{
-    font-family:var(--serif); font-size:15px; font-weight:600; line-height:1.28;
+    font-family:var(--display); font-size:14px; font-weight:500; line-height:1.35; letter-spacing:-.01em;
     color:var(--ink); transition:color .2s var(--ease); display:block;
   }
   .rail-item .rail-meta{ font-size:11px; color:var(--ink-faint); margin-top:6px; }
   /* compact thumb variant for the "more from" block */
-  .rail-item.has-thumb{ display:grid; grid-template-columns:64px minmax(0,1fr); gap:12px; align-items:start; }
+  .rail-item.has-thumb{ display:grid; grid-template-columns:64px minmax(0,1fr); gap:12px; align-items:center; }
   .rail-item.has-thumb .rail-thumb{
-    width:64px; height:48px; border-radius:8px; overflow:hidden; background:var(--black);
-    border:1px solid var(--line);
+    width:64px; height:64px; border-radius:8px; overflow:hidden; background:var(--black);
+    border:1px solid var(--line); display:flex; align-items:center; justify-content:center; padding:4px;
   }
-  .rail-item.has-thumb .rail-thumb img{ width:100%; height:100%; object-fit:cover; }
+  .rail-item.has-thumb .rail-thumb img{ width:100%; height:auto; max-height:100%; object-fit:contain; }
 
   @media (max-width:999px){
     .article-rail{ border-top:1px solid var(--line); padding-top:var(--sp-6); }
@@ -961,6 +996,87 @@
       </div>
       <div id="bigStory"></div>
       <div class="grid-editorial" id="latestGrid"></div>
+    </section>
+
+    <!-- ================= THE Q SYSTEM =================
+         A Fast Break editorial device for BASKETBALL only. NBA and WNBA get
+         Latest -> Q1 -> Q2 -> Halftime -> Q3 -> Q4 -> Replay; football and the
+         NFL get Latest -> Replay. The sections are filled from the same central
+         story data as everything else, so nothing is duplicated: a story shown
+         in Latest never also appears in a Q section.
+         Rendered by renderStories(); each shell hides itself when empty. -->
+    <section class="section q-section" data-q="q1" hidden>
+      <div class="section-head">
+        <div class="section-title-group">
+          <span class="q-marker">Q1</span>
+          <h2 class="section-title">Contract Watch</h2>
+          <p class="section-desc">Extensions, options and front-office posture.</p>
+        </div>
+        <span class="section-date" data-q-count="q1"></span>
+      </div>
+      <div class="grid-editorial" data-q-grid="q1"></div>
+    </section>
+
+    <section class="section q-section" data-q="q2" hidden>
+      <div class="section-head">
+        <div class="section-title-group">
+          <span class="q-marker">Q2</span>
+          <h2 class="section-title">Under Review</h2>
+          <p class="section-desc">The league office's open files.</p>
+        </div>
+        <span class="section-date" data-q-count="q2"></span>
+      </div>
+      <div class="grid-editorial" data-q-grid="q2"></div>
+    </section>
+
+    <section class="section q-section" data-q="ht" hidden>
+      <div class="section-head">
+        <div class="section-title-group">
+          <span class="q-marker">HT</span>
+          <h2 class="section-title">Halftime</h2>
+          <p class="section-desc">Off the transaction wire.</p>
+        </div>
+        <span class="section-date" data-q-count="ht"></span>
+      </div>
+      <div class="grid-editorial" data-q-grid="ht"></div>
+    </section>
+
+    <section class="section q-section" data-q="q3" hidden>
+      <div class="section-head">
+        <div class="section-title-group">
+          <span class="q-marker">Q3</span>
+          <h2 class="section-title">Trade Break</h2>
+          <p class="section-desc">Trades, signings and waivers — every roster move, logged.</p>
+        </div>
+        <span class="section-date" data-q-count="q3"></span>
+      </div>
+      <div class="grid-editorial" data-q-grid="q3"></div>
+    </section>
+
+    <section class="section q-section" data-q="q4" hidden>
+      <div class="section-head">
+        <div class="section-title-group">
+          <span class="q-marker">Q4</span>
+          <h2 class="section-title">On the Bench</h2>
+          <p class="section-desc">Injuries, standings and where things stand.</p>
+        </div>
+        <span class="section-date" data-q-count="q4"></span>
+      </div>
+      <div class="grid-editorial" data-q-grid="q4"></div>
+    </section>
+
+    <!-- REPLAY — every league. Stories displaced from the active feed, kept
+         rather than deleted. -->
+    <section class="section" id="replay" hidden>
+      <div class="section-head">
+        <div class="section-title-group">
+          <span class="q-marker">RE</span>
+          <h2 class="section-title">Replay</h2>
+          <p class="section-desc">Previously reported — still on the record.</p>
+        </div>
+        <span class="section-date" id="replayCount"></span>
+      </div>
+      <div class="replay-list" id="replayList"></div>
     </section>
 
     <!-- NEWSLETTER -->
@@ -1247,48 +1363,187 @@
 
   // Renders the central story data for the active league. One component for
   // every league — no per-league markup.
+  // ---------------------------------------------------------------------------
+  // THE Q SYSTEM — basketball only
+  // ---------------------------------------------------------------------------
+  // Each section claims a family of categories. A story lands in exactly one
+  // place, so nothing is ever published twice on the same page.
+  const Q_SECTIONS = [
+    { id:'q1', cats:['contract','extension'] },
+    { id:'q2', cats:['investigation','legal'] },
+    { id:'ht', cats:['league'] },
+    { id:'q3', cats:['trade','signing','waiver'] },
+    { id:'q4', cats:['roster','standings','results','injury','game','fixtures'] }
+  ];
+  const BASKETBALL_LEAGUES = ['nba', 'wnba'];
+
+  // ---------------------------------------------------------------------------
+  // THE ROLLING ACTIVE FEED
+  // ---------------------------------------------------------------------------
+  // Latest is a fixed-size window, not a date range. Every league ranks its own
+  // stories, the top ACTIVE_LATEST_COUNT are on the page, and anything pushed
+  // out moves down — never away. One constant controls how much is visible.
+  //
+  //   rank 1                    -> Big Story
+  //   rank 2..ACTIVE_LATEST_COUNT -> Latest grid
+  //   the rest                  -> a Q section (basketball) or Replay
+  //
+  // The window includes the Big Story, so ACTIVE_LATEST_COUNT = 5 means one
+  // Big Story plus four cards.
+  const ACTIVE_LATEST_COUNT = 5;
+
+  // Recency is the primary force. Priority is a weight applied on top of it,
+  // not a tier that outranks it — so a genuinely current story beats an
+  // important but ageing one, and nothing gets to sit at the top forever.
+  //
+  //   score = priorityWeight x 0.5 ^ (ageInDays / LATEST_HALF_LIFE_DAYS)
+  //
+  // Exponential decay with a 4-day half-life. Because the decay is
+  // exponential, the ratio between any two scores depends only on the
+  // DIFFERENCE in their ages, so the ordering is stable no matter when the
+  // page is loaded — the feed does not re-shuffle itself just because a day
+  // passed with no edits.
+  //
+  // What the weights buy, in plain terms:
+  //   high (2.0)   outranks a same-day normal story, and keeps outranking a
+  //                brand-new normal story for 4 days (one half-life) before
+  //                falling behind it.
+  //   low  (0.55)  is worth roughly a normal story 3.5 days older.
+  // An old high-priority story therefore leaves Latest on its own; on
+  // basketball it lands in the Q section that owns its category, everywhere
+  // else it moves to Replay. It is never deleted.
+  const LATEST_HALF_LIFE_DAYS = 4;
+  const PRIORITY_WEIGHT = { high: 2.0, normal: 1.0, low: 0.55 };
+
+  function ageInDays(iso, refMs){
+    return Math.max(0, (refMs - new Date(iso + 'T00:00:00').getTime()) / 86400000);
+  }
+  function freshnessScore(s, refMs){
+    const w = PRIORITY_WEIGHT[String(s.priority || 'normal').toLowerCase()];
+    return (w === undefined ? 1 : w)
+         * Math.pow(0.5, ageInDays(s.publishedAt, refMs) / LATEST_HALF_LIFE_DAYS);
+  }
+
+  // Ranking reads freshness, then falls back to the publish date and finally
+  // the id so the sort is stable. It deliberately does NOT read `featured`
+  // (that would pin a story to the lead) and does NOT read `image` (artwork is
+  // a visual asset, never an editorial ranking signal).
+  function compareStories(a, b, refMs){
+    const d = freshnessScore(b, refMs) - freshnessScore(a, refMs);
+    if (Math.abs(d) > 1e-9) return d > 0 ? 1 : -1;
+    const p = b.publishedAt.localeCompare(a.publishedAt);   // newest first
+    if (p !== 0) return p;
+    return a.id.localeCompare(b.id);
+  }
+
+  // The whole feed for one league, ranked. Nothing here reads `image`:
+  // artwork is a visual asset and has no bearing on editorial ranking.
+  function rankedFor(league, refMs){
+    const ref = refMs === undefined ? Date.now() : refMs;
+    return STORIES.filter(s => s.league === league)
+                  .sort((a, b) => compareStories(a, b, ref));
+  }
+
   function renderStories(){
     const grid = document.getElementById('latestGrid');
     if (!grid) return;
     const marker = document.getElementById('latestMarker');
     const count  = document.getElementById('latestCount');
+    const big    = document.getElementById('bigStory');
+    const isBasketball = BASKETBALL_LEAGUES.includes(activeLeague);
 
-    const rows = STORIES
-      .filter(s => s.league === activeLeague)
-      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)); // newest first
+    // League isolation: the ranking only ever sees this league's stories, so a
+    // new NBA story can never displace an NFL one.
+    const ranked = rankedFor(activeLeague);
 
     if (marker) marker.textContent = (leagueNames[activeLeague] || activeLeague).toUpperCase();
-    if (count)  count.textContent  = rows.length ? `${rows.length} stories` : '';
 
     grid.innerHTML = '';
-    const big = document.getElementById('bigStory');
     if (big) big.innerHTML = '';
+    clearQSections();
+    renderReplay([]);
 
-    // No researched stories for this league in the window: hide the whole
-    // section rather than showing an empty shell or padding it with old items.
     const section = document.getElementById('latest');
-    if (section) section.hidden = !rows.length;
-    if (!rows.length) return;
+    if (section) section.hidden = !ranked.length;
+    if (!ranked.length) { if (count) count.textContent = ''; return; }
 
-    // The league's Big Story comes from the same data as everything else —
-    // it is simply the row flagged `featured`. One per league is the rule; if
-    // several are flagged the first wins and the rest fall back to the grid.
-    const featuredRows = rows.filter(s => s.featured);
-    if (featuredRows.length > 1) {
-      console.warn(`[Fast Break] ${featuredRows.length} featured stories for ` +
-                   `"${activeLeague}" — using "${featuredRows[0].id}", the rest ` +
-                   `render as normal cards. Keep featured:true to one per league.`);
+    const active    = ranked.slice(0, ACTIVE_LATEST_COUNT);
+    let   displaced = ranked.slice(ACTIVE_LATEST_COUNT);
+
+    // The Big Story is whatever currently ranks first — chosen, not pinned. It
+    // renders with its image if it has one and cleanly without if it does not;
+    // having artwork never promotes a story into the slot.
+    const lead = active[0];
+    if (big) big.appendChild(buildStoryCard(lead, { big: true }));
+    active.slice(1).forEach(s => grid.appendChild(buildStoryCard(s)));
+
+    if (count) count.textContent = ranked.length === 1 ? '1 story' : `${ranked.length} stories`;
+
+    // Basketball keeps its Q sections: a story that leaves Latest lands in the
+    // section that owns its category, and only reaches Replay if no section
+    // claims it. Football and the NFL have no Q sections, so displaced stories
+    // go straight to Replay.
+    if (isBasketball) {
+      const claimed = new Set();
+      Q_SECTIONS.forEach(q => {
+        const picked = displaced.filter(s => q.cats.includes(String(s.category).toLowerCase()));
+        picked.forEach(s => claimed.add(s.id));
+        fillQSection(q.id, picked);
+      });
+      displaced = displaced.filter(s => !claimed.has(s.id));
     }
-    const featured = featuredRows[0] || null;
-    const gridRows = featured ? rows.filter(s => s !== featured) : rows;
 
-    if (featured && big) {
-      big.appendChild(buildStoryCard(featured, { big: true }));
-    }
+    // Replay holds what fell out of the active presentation, newest first.
+    // Nothing is deleted — every row still routes to its full article.
+    renderReplay(displaced.slice().sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)));
+  }
 
-    gridRows.forEach(s => {
-      grid.appendChild(buildStoryCard(s));
+  function clearQSections(){
+    document.querySelectorAll('[data-q]').forEach(sec => {
+      sec.hidden = true;
+      const g = sec.querySelector('[data-q-grid]');
+      if (g) g.innerHTML = '';
     });
+  }
+
+  function fillQSection(id, stories){
+    const sec = document.querySelector(`[data-q="${id}"]`);
+    if (!sec) return;
+    const grid = sec.querySelector('[data-q-grid]');
+    const cnt  = sec.querySelector('[data-q-count]');
+    grid.innerHTML = '';
+    sec.hidden = !stories.length;
+    if (!stories.length) { if (cnt) cnt.textContent = ''; return; }
+    stories.forEach(s => grid.appendChild(buildStoryCard(s)));
+    if (cnt) cnt.textContent = stories.length === 1 ? '1 story' : `${stories.length} stories`;
+  }
+
+  // Replay keeps displaced reporting on the record as compact rows. It is not a
+  // dumping ground: every row still routes to the full article.
+  function renderReplay(stories){
+    const sec  = document.getElementById('replay');
+    const list = document.getElementById('replayList');
+    const cnt  = document.getElementById('replayCount');
+    if (!sec || !list) return;
+    list.innerHTML = '';
+    sec.hidden = !stories.length;
+    if (!stories.length) { if (cnt) cnt.textContent = ''; return; }
+
+    stories.forEach(s => {
+      const a = document.createElement('a');
+      a.className = 'replay-item';
+      a.href = storyUrl(s.id);
+      a.dataset.storyLink = s.id;
+      a.innerHTML = `<time>${formatStoryDate(s.publishedAt)}</time>` +
+                    `<span><b>${s.headline}</b> ${s.summary}</span>`;
+      a.addEventListener('click', e => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        e.preventDefault();
+        navigate(storyUrl(s.id));
+      });
+      list.appendChild(a);
+    });
+    if (cnt) cnt.textContent = stories.length === 1 ? '1 story' : `${stories.length} stories`;
   }
 
   // One builder for both the Big Story and the ordinary cards. Both carry the
@@ -1305,7 +1560,7 @@
 
     card.className = opts.big
       ? 'big-story reveal' + (s.image ? ' has-image' : '')
-      : 'news-card reveal' + (s.image ? '' : ' no-image');
+      : 'news-card reveal' + (s.image ? ' has-thumb' : ' no-image');
 
     const statusCls = STORY_STATUS_CLASS[s.status] || '';
     const img = s.image ? `<div class="img-wrap"><img src="${assetUrl(s.image)}" alt=""></div>` : '';
@@ -1471,10 +1726,7 @@
     btn.className = 'sport-tab';
     btn.dataset.sportId = node.id;
     btn.setAttribute('aria-haspopup', 'true');
-    const mark = node.logo
-      ? `<span class="st-icon">${logoMark(node.logo, '')}</span>` : '';
-    btn.innerHTML = mark +
-                    `<span class="st-label">${node.label}</span>` +
+    btn.innerHTML = `<span class="st-label">${node.label}</span>` +
                     `<span class="st-chev" aria-hidden="true">›</span>`;
 
     if (canHover) {

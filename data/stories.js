@@ -32,10 +32,16 @@
  *     image,       // Fast Break-owned asset path, or null. Never hotlinked,
  *                  // never a stand-in.
  *     video,       // local MP4 path or null
- *     featured,    // optional. true = this league's Big Story on the homepage.
- *                  // PRESENTATION ONLY — it does not change article depth.
- *                  // Keep it to ONE story per league; the renderer uses the
- *                  // first it finds and warns in the console about extras.
+ *     featured,    // NOT what selects the Big Story, and never a pin. The
+ *                  // homepage ranks each league by freshness — a recency
+ *                  // decay with priority as a weight — and gives the Big
+ *                  // Story slot to whatever comes first, so the lead updates
+ *                  // itself as stories are added. The renderer does not read
+ *                  // this field at all.
+ *                  // It is kept as an editorial annotation recording which
+ *                  // story held the lead when the file was last edited, one
+ *                  // per league. It can go stale as stories age; that is
+ *                  // cosmetic and cannot affect what the page shows.
  *     priority     // high | normal | low. EDITORIAL WEIGHT, and deliberately
  *                  // separate from `featured`. It sets how much room a story
  *                  // earns, not where it sits on the page:
@@ -84,7 +90,6 @@ window.FB_STORIES = [
   /* ----------------------------------------------------------------- NBA */
   {
     id: 'nba-derozan-nuggets-2026-08-21',
-    featured: true,
     sport: 'basketball', league: 'nba', category: 'signing', status: 'confirmed',
     headline: 'DeMar DeRozan signs with the Nuggets on a one-year deal',
     dek: 'The six-time All-Star lands in Denver on the veteran minimum after a month on the open market.',
@@ -103,6 +108,7 @@ window.FB_STORIES = [
   },
   {
     id: 'nba-curry-extension-window-2026-08-29',
+    featured: true,
     sport: 'basketball', league: 'nba', category: 'contract', status: 'report',
     headline: 'Curry becomes eligible for a two-year, $136.7m Warriors extension',
     dek: 'The window opened on Saturday. As of Sunday nothing has been signed.',
@@ -237,6 +243,75 @@ window.FB_STORIES = [
     priority: 'normal'
   },
 
+  {
+    id: 'nba-harden-cavaliers-2026-08-20',
+    sport: 'basketball', league: 'nba', category: 'contract', status: 'confirmed',
+    headline: 'James Harden re-signs with the Cavaliers on a three-year, $97m deal',
+    dek: 'Cleveland keep their starting guard after he turned down a $42.3m player option in June.',
+    summary: 'The deal includes a player option for 2028-29 and a trade kicker.',
+    body: [
+      'James Harden has agreed a new three-year contract worth $97 million to remain with the Cleveland Cavaliers. The deal includes a player option for 2028-29 and a trade kicker.',
+      'Harden declined his $42.3 million player option in June. Rather than move quickly at the opening of free agency, he and his agents worked through both two-year and three-year structures with the Cavaliers, and he allowed Cleveland to take as much time as it needed to build the rest of the roster before finalising his own terms.',
+      'He turned 37 on 26 August. On signing he becomes only the second player in league history to commit to more than $90 million in guaranteed salary at 37 or older, after LeBron James.',
+      'Cleveland now line up with Harden alongside Donovan Mitchell, Peyton Watson, Evan Mobley and Jarrett Allen.'
+    ],
+    source: 'ESPN',
+    sourceUrl: 'https://www.espn.com/nba/story/_/id/49671792/james-harden-agrees-3-year-97m-deal-remain-cavaliers',
+    publishedAt: '2026-08-20', updatedAt: null,
+    image: 'assets/harden-hero.jpg', video: null,
+    priority: 'normal'
+  },
+  {
+    id: 'nba-kuminga-timberwolves-2026-08-27',
+    sport: 'basketball', league: 'nba', category: 'signing', status: 'confirmed',
+    headline: 'Jonathan Kuminga signs with the Timberwolves',
+    dek: 'Minnesota fill a power forward vacancy with the former Warriors wing after his split from Atlanta.',
+    summary: 'A two-year deal with a player option, reported by ESPN at $12.4m and elsewhere at $13m.',
+    body: [
+      'Jonathan Kuminga has agreed a two-year contract with the Minnesota Timberwolves. ESPN reported the deal at $12.4 million, with other outlets putting it at $13 million; it includes a player option.',
+      'The signing fills a power forward vacancy for Minnesota, and Kuminga is expected to start in 2026-27.',
+      'It closes an unsettled eighteen months. Golden State traded Kuminga to the Atlanta Hawks in February alongside Buddy Hield, ending a Bay Area spell that never quite resolved itself, and he reached free agency this summer after splitting from the Hawks.'
+    ],
+    source: 'ESPN',
+    sourceUrl: 'https://www.espn.com/nba/story/_/id/49736014/jonathan-kuminga-reaches-2-year-deal-minnesota-timberwolves',
+    publishedAt: '2026-08-27', updatedAt: null,
+    image: 'assets/kumingyt.jpg', video: null,
+    priority: 'low'
+  },
+  {
+    id: 'nba-mathurin-pelicans-2026-08-26',
+    sport: 'basketball', league: 'nba', category: 'signing', status: 'confirmed',
+    headline: 'Bennedict Mathurin signs with the Pelicans on a two-year deal',
+    dek: 'The 24-year-old chose flexibility over a longer commitment after the Clippers pulled his qualifying offer.',
+    summary: 'Two years and $16m with a player option, putting him on the earliest path to unrestricted free agency.',
+    body: [
+      'Bennedict Mathurin has agreed a two-year, $16 million contract with the New Orleans Pelicans. The deal includes a player option.',
+      'Mathurin had been a restricted free agent at the LA Clippers, who withdrew his $8.8 million qualifying offer after meeting his representatives. That put him on the open market, and reporting at the time said he prioritised flexibility and the earliest possible route to unrestricted free agency next summer over longer offers with more money and more team control.',
+      'The sixth overall pick in 2022 averaged 17.6 points, 5.4 rebounds and 2.4 assists across 54 games last season, split between Indiana and the Clippers after a February trade ended three and a half years with the Pacers.'
+    ],
+    source: 'ESPN',
+    sourceUrl: 'https://www.espn.com/nba/story/_/id/49732472/sources-pelicans-reach-2-year-16m-deal-bennedict-mathurin',
+    publishedAt: '2026-08-26', updatedAt: null,
+    image: 'assets/peiltrade.jpg', video: null,
+    priority: 'normal'
+  },
+  {
+    id: 'nba-jordan-nbc-2026-08-26',
+    sport: 'basketball', league: 'nba', category: 'league', status: 'report',
+    headline: 'Michael Jordan not expected back on NBC’s NBA coverage',
+    dek: 'His run as a special on-air contributor looks to have lasted a single season.',
+    summary: 'NBC declined to comment. Jordan could still change his mind, but viewers are unlikely to see him this season.',
+    body: [
+      'Michael Jordan is not expected to return to NBC’s NBA coverage for the coming season, ending a run as a special on-air contributor after a single year.',
+      'His contribution last season amounted to one sit-down interview with Mike Tirico, cut into segments that were spread across the schedule. The appearances were infrequent and largely avoided the league’s current affairs.',
+      'No reason has been reported and NBC declined to comment. Jordan could still change his mind, but viewers are not expected to see or hear from him during the season ahead.'
+    ],
+    source: 'Front Office Sports',
+    sourceUrl: 'https://frontofficesports.com/michael-jordan-not-expected-return-nba-nbc-coverage/',
+    publishedAt: '2026-08-26', updatedAt: null,
+    image: 'assets/mj.jpg', video: null,
+    priority: 'low'
+  },
   /* ---------------------------------------------------------------- WNBA */
   {
     id: 'wnba-bonner-dream-2026-08-27',
@@ -298,6 +373,59 @@ window.FB_STORIES = [
     priority: 'normal'
   },
 
+  {
+    id: 'wnba-clark-mitchell-record-2026-08-28',
+    sport: 'basketball', league: 'wnba', category: 'results', status: 'confirmed',
+    headline: 'Clark and Mitchell each score 34 as the Fever rout the Sun',
+    dek: 'The fourth time this season the pair have both gone past 30 — a WNBA single-season record for a duo.',
+    summary: 'Indiana won 111-91, with Clark adding 12 assists and Mitchell extending a 24-game run of 20-point scoring.',
+    body: [
+      'Caitlin Clark and Kelsey Mitchell each scored 34 points as the Indiana Fever beat the Connecticut Sun 111-91 on Friday, the pair combining for 68 of their side’s points.',
+      'It was the fourth time this season both have scored 30 or more in the same game, extending their own WNBA single-season record for a duo. The previous mark was two, set by A’ja Wilson and Jackie Young.',
+      'Clark added 12 assists, the fifth time this year she has posted a double-double with at least 30 points and 10 assists. Mitchell’s 34 extended her run to 24 consecutive games scoring 20 or more.',
+      'The win sends Indiana into the FIBA World Cup break in form.'
+    ],
+    source: 'ESPN',
+    sourceUrl: 'https://www.espn.com/wnba/story/_/id/49758105/clark-mitchell-combine-68-fever-blowout-win-sun',
+    publishedAt: '2026-08-28', updatedAt: null,
+    image: 'assets/calrk mitchell.jpg', video: null,
+    priority: 'normal'
+  },
+  {
+    id: 'wnba-smith-out-season-2026-08-27',
+    sport: 'basketball', league: 'wnba', category: 'injury', status: 'confirmed',
+    headline: 'NaLyssa Smith out for the season with a left leg injury',
+    dek: 'A significant blow to the defending champions’ hopes of repeating.',
+    summary: 'Smith was hurt in a non-contact incident against Toronto on 23 August. The Aces have not disclosed the injury.',
+    body: [
+      'Las Vegas Aces forward NaLyssa Smith will miss the remainder of the 2026 season with a left leg injury, the club announced.',
+      'Smith was hurt in a non-contact incident at the 3:15 mark of the third quarter against the Toronto Tempo on 23 August. The Aces have not disclosed the specific injury or said whether she will need surgery.',
+      'She had been one of the most efficient players in the league, averaging 11.8 points and 6.4 rebounds across 37 games while leading the WNBA in field goal percentage at 63.8%.',
+      'Losing her for the postseason is a real problem for the defending champions as they try to repeat.'
+    ],
+    source: 'Las Vegas Aces (official)',
+    sourceUrl: 'https://aces.wnba.com/news/nalyssa-smith-sidelined-for-remainder-of-season',
+    publishedAt: '2026-08-27', updatedAt: null,
+    image: 'assets/outof.jpg', video: null,
+    priority: 'normal'
+  },
+  {
+    id: 'wnba-fever-clinch-2026-08-21',
+    sport: 'basketball', league: 'wnba', category: 'standings', status: 'confirmed',
+    headline: 'Fever clinch a playoff spot for the third straight season',
+    dek: 'Indiana went through without playing, when Portland lost to Toronto.',
+    summary: 'The Fever were the fourth team into the 2026 postseason, at 24-13.',
+    body: [
+      'The Indiana Fever clinched a place in the 2026 WNBA playoffs without taking the floor, their berth confirmed when the Portland Fire lost 82-79 to the Toronto Tempo.',
+      'It is the third consecutive season Indiana have qualified. At 24-13 they were the fourth team into the field, joining Minnesota, Golden State and Las Vegas.',
+      'Caitlin Clark has averaged 21.7 points and 8.3 assists on the way there, shooting 44.4% from the floor and 35.4% from three.'
+    ],
+    source: 'Bleacher Report',
+    sourceUrl: 'https://bleacherreport.com/articles/25469717-caitlin-clark-fever-clinch-2026-wnba-playoff-berth-updated-bracket-picture-and-standings',
+    publishedAt: '2026-08-21', updatedAt: null,
+    image: 'assets/clark-fever-hero.jpg', video: null,
+    priority: 'low'
+  },
   /* ----------------------------------------------------------------- NFL */
   {
     id: 'nfl-seahawks-sale-2026-08-26',
@@ -392,10 +520,28 @@ window.FB_STORIES = [
     priority: 'low'
   },
 
+  {
+    id: 'nfl-pro-bowl-eliminated-2026-08-26',
+    sport: 'americanfootball', league: 'nfl', category: 'league', status: 'confirmed',
+    headline: 'NFL eliminates the Pro Bowl game after 75 years',
+    dek: 'The all-star exhibition is gone entirely. The selection survives as an individual honour.',
+    summary: 'League executives presented the change to owners on Wednesday. Eighty-eight players will still be voted in, with no alternates.',
+    body: [
+      'The NFL is doing away with the Pro Bowl game. League executives presented the plan to team owners on Wednesday, ending an all-star exhibition that has been played in one form or another for 75 years.',
+      'What disappears is the game itself, in every version it has taken — the full-contact match, the flag football format, the skills competition. What survives is the selection.',
+      'Eighty-eight players will still be voted into an official Pro Bowl class covering offence, defence and special teams across both conferences, chosen as now by fans, players and coaches. The significant change is that there will be no alternates: the honour is fixed to the players originally selected rather than passed down as others withdraw.',
+      'The selections will be announced in December, and the league will stage an event celebrating the class in Los Angeles in February 2027. Beginning with the 2026 season, players voted in will wear a recognition badge on their team uniform.',
+      'The exhibition had become difficult to defend. Ratings had fallen steadily, participation was uneven, and the game itself was routinely played at an intensity that satisfied nobody. Converting the Pro Bowl into a pure award — a line on a résumé and a patch on a jersey — removes the part of it that had stopped working while keeping the part players actually care about.'
+    ],
+    source: 'Yahoo Sports',
+    sourceUrl: 'https://sports.yahoo.com/nfl/breaking-news/article/nfl-eliminating-pro-bowl-event-prioritizing-individual-performance-award-without-alternates-210503896.html',
+    publishedAt: '2026-08-26', updatedAt: null,
+    image: 'assets/1nfl.jpg', video: null,
+    priority: 'normal'
+  },
   /* -------------------------------------------------------- PREMIER LEAGUE */
   {
     id: 'epl-delap-forest-2026-08-27',
-    featured: true,
     sport: 'football', league: 'epl', category: 'transfer', status: 'confirmed',
     headline: 'Nottingham Forest sign Liam Delap from Chelsea',
     dek: 'Oliver Glasner had identified the striker as Forest’s first-choice attacking target, and gets him after a single season at Stamford Bridge.',
@@ -502,6 +648,79 @@ window.FB_STORIES = [
     priority: 'low'
   },
 
+  {
+    id: 'epl-barcola-liverpool-2026-08-29',
+    featured: true,
+    sport: 'football', league: 'epl', category: 'transfer', status: 'report',
+    headline: 'Liverpool agree terms with PSG for Bradley Barcola',
+    dek: 'A guaranteed €116m rising to €140m, reported by David Ornstein. The deal is not yet completed.',
+    summary: 'Barcola has two years left in Paris and does not want to extend. Liverpool are pushing before Tuesday’s deadline.',
+    body: [
+      'Liverpool have reached an agreement in principle with Paris Saint-Germain for Bradley Barcola, according to David Ornstein. The clubs have agreed a guaranteed €116 million (£100 million), rising by a further €24 million (£20 million) in add-ons for a potential total of €140 million.',
+      'The deal is not done. Negotiations are ongoing and nothing has been completed or announced by either club.',
+      'Barcola has become Liverpool’s priority target as they look to strengthen the attack before the English window closes at 11pm on Tuesday 1 September. The 23-year-old France international has two years left on his PSG contract and does not want to extend with the Champions League holders.',
+      'The move has knock-on effects at Anfield: with Barcola arriving and Victor Munoz already signed from Osasuna this summer, Cody Gakpo’s position in the squad has come under question late in the window.'
+    ],
+    source: 'FootballTransfers',
+    sourceUrl: 'https://www.footballtransfers.com/en/transfer-news/uk-premier-league/2026/08/bradley-barcola-liverpool-agree-to-sign-psg-star-for-eur140m',
+    publishedAt: '2026-08-29', updatedAt: null,
+    image: 'assets/barcola.jpg', video: null,
+    priority: 'normal'
+  },
+  {
+    id: 'epl-enzo-city-2026-08-29',
+    sport: 'football', league: 'epl', category: 'transfer', status: 'report',
+    headline: 'Enzo Fernández agrees personal terms with Manchester City',
+    dek: 'A verbal agreement on the player’s side. City have not yet made a bid, and the fee is Chelsea’s call.',
+    summary: 'Fabrizio Romano reports terms agreed. Chelsea are expected to ask for around £130m with three days of the window left.',
+    body: [
+      'Enzo Fernández has a verbal agreement with Manchester City on personal terms, according to Fabrizio Romano. The transfer itself is some way from done.',
+      'City have not submitted an official bid and concrete club-to-club negotiations have not taken place. Contact is expected shortly, but the decision on price sits with Chelsea, who are understood to want more than the £120 million originally attached to the midfielder and are likely to ask for around £130 million.',
+      'The push is coming from City manager Enzo Maresca, who coached Fernández at Stamford Bridge and wants to work with the 25-year-old Argentina international again.',
+      'Fernández’s position at Chelsea has weakened since the season began — manager Xabi Alonso left him out of the matchday squad for the Carabao Cup win over Luton Town. With the window closing on Tuesday 1 September, there is very little time for a deal of this size to be built from scratch.'
+    ],
+    source: 'Yahoo Sports',
+    sourceUrl: 'https://sports.yahoo.com/articles/enzo-fernandez-agrees-terms-man-062512514.html',
+    publishedAt: '2026-08-29', updatedAt: null,
+    image: 'assets/enzo.jpg', video: null,
+    priority: 'normal'
+  },
+  {
+    id: 'epl-gakpo-city-talks-2026-08-29',
+    sport: 'football', league: 'epl', category: 'transfer', status: 'report',
+    headline: 'Manchester City open talks with Liverpool for Cody Gakpo',
+    dek: 'An opening bid has been made and Liverpool are weighing it up this late in the window.',
+    summary: 'Sky Sports reports formal talks, with personal terms also under discussion. Tottenham have also been interested.',
+    body: [
+      'Manchester City have opened formal talks with Liverpool over a move for Cody Gakpo, with an opening bid already submitted for the 27-year-old.',
+      'Sky Sports reports that Gakpo has decided he wants the move to the Etihad, and that discussions over personal terms are under way. Liverpool are considering their position given how late in the window the approach has come — they had not wanted to sell.',
+      'The timing is what makes it live. Liverpool are close to signing Bradley Barcola from PSG and added Victor Munoz from Osasuna earlier in the summer, which changes the shape of the forward line and the case for keeping Gakpo.',
+      'Tottenham had also been interested in the Netherlands international, but the move is described as advancing in City’s direction.'
+    ],
+    source: 'Sky Sports',
+    sourceUrl: 'https://www.skysports.com/transfer/news/12691/13578859/cody-gakpo-transfer-news-manchester-city-open-talks-to-sign-liverpool-forward',
+    publishedAt: '2026-08-29', updatedAt: null,
+    image: 'assets/gakpo.jpg', video: null,
+    priority: 'normal'
+  },
+  {
+    id: 'epl-jesus-arsenal-2026-08-27',
+    sport: 'football', league: 'epl', category: 'transfer', status: 'confirmed',
+    headline: 'Gabriel Jesus is not training with the Arsenal first team',
+    dek: 'Mikel Arteta confirmed the striker has been pulled from first-team sessions and is expected to leave.',
+    summary: '"It’s something to do with the numbers that we have in the squad," Arteta said. Napoli, Everton and Ipswich are interested.',
+    body: [
+      'Gabriel Jesus has been training away from the Arsenal first team and is expected to leave the club, Mikel Arteta confirmed.',
+      'Asked about the striker’s absence from sessions, Arteta said it was "something to do with the numbers that we have in the squad" — a surplus of attacking options rather than a fitness problem.',
+      'Arsenal are understood to be pushing for a resolution before the deadline rather than let Jesus run down the final year of his contract and leave for nothing next summer. Napoli, Everton and Ipswich have all shown interest in the 28-year-old Brazilian.',
+      'The complication is that Jesus would rather stay at the Emirates than take a move elsewhere, and his wages are reported to be a sticking point for the clubs interested.'
+    ],
+    source: 'Daily Cannon',
+    sourceUrl: 'https://dailycannon.com/2026/08/jesus-napoli-arsenal-training-alone/',
+    publishedAt: '2026-08-27', updatedAt: null,
+    image: 'assets/jesus.jpg', video: null,
+    priority: 'normal'
+  },
   /* --------------------------------------------------------------- LA LIGA */
   {
     id: 'laliga-madrid-sociedad-2026-08-26',
@@ -542,6 +761,42 @@ window.FB_STORIES = [
     priority: 'normal'
   },
 
+  {
+    id: 'laliga-alvarez-squad-2026-08-29',
+    sport: 'football', league: 'laliga', category: 'transfer', status: 'confirmed',
+    headline: 'Julián Álvarez left out of the Atlético squad again',
+    dek: 'Simeone confirmed the striker will not travel to Sevilla, a second omission in a fortnight.',
+    summary: 'Álvarez asked to be sold in the offseason. Atlético have blocked every offer and set him a deadline to decide.',
+    body: [
+      'Diego Simeone confirmed on Friday that Julián Álvarez will not be involved when Atlético Madrid travel to face Sevilla, saying the club had already made its position on the striker clear.',
+      'It is the second omission in a fortnight. Álvarez was also left out of the squad for Atlético’s La Liga opener against Málaga.',
+      'The standoff dates to the offseason, when Álvarez told the club he wanted to be transferred. Atlético said they did not intend to negotiate a release and have blocked every approach since, including a reported $114 million bid from Barcelona.',
+      'The club have now given him a deadline of Sunday to decide whether to open up to a move to Arsenal or commit to staying. With the Spanish window closing on 1 September, the two omissions read less like squad rotation than leverage.'
+    ],
+    source: 'Sky Sports',
+    sourceUrl: 'https://www.skysports.com/football/video/19540/13578168/diego-simeone-confirms-julian-alvarez-set-to-miss-atletico-madrid-match-against-sevilla',
+    publishedAt: '2026-08-29', updatedAt: null,
+    image: 'assets/aövarez.jpg', video: null,
+    priority: 'normal'
+  },
+  {
+    id: 'laliga-endrick-stays-2026-08-10',
+    sport: 'football', league: 'laliga', category: 'transfer', status: 'confirmed',
+    headline: 'Endrick stays at Real Madrid after Mourinho halts loan talks',
+    dek: 'Madrid had considered sending the Brazilian to Manchester United or Aston Villa before changing course.',
+    summary: 'Mourinho stopped the loan discussions and told the club he sees a role for Endrick this season.',
+    body: [
+      'Real Madrid have decided Endrick will stay at the club this season, with José Mourinho halting loan talks that had been under way.',
+      'Madrid had considered sending the Brazilian out again, with Manchester United and Aston Villa both credited with interest. Mourinho stopped those discussions and took the position that Endrick could play a significant part in his squad.',
+      'The 20-year-old spent the second half of last season on loan at Lyon, scoring eight goals and adding five assists in 21 appearances.',
+      'The decision is not necessarily final. Loan talks are expected to be revisited in January if he is not getting regular minutes.'
+    ],
+    source: 'Sports Illustrated',
+    sourceUrl: 'https://www.si.com/soccer/real-madrid-u-turn-endrick-2026-27-season',
+    publishedAt: '2026-08-10', updatedAt: null,
+    image: 'assets/endrick.jpg', video: null,
+    priority: 'low'
+  },
   /* ------------------------------------------------------------ BUNDESLIGA */
   {
     id: 'bundesliga-elversberg-leverkusen-2026-08-29',
