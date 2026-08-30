@@ -38,6 +38,32 @@
     { id:"americanfootball",name:"American Football", type:"americanfootball" }
   ];
 
+  // ---------------------------------------------------------------------------
+  // COMPETITIONS — not national leagues
+  // ---------------------------------------------------------------------------
+  // A league has a fixed member set: the same clubs play every round of the
+  // season, and TEAMS_CFG can list them. A continental cup does not — its field
+  // is decided by qualification and changes every season, so its participants
+  // are a PROVIDER concern, never a hardcoded list here.
+  //
+  // Modelling them as leagues would mean inventing a permanent membership that
+  // does not exist. They therefore get their own kind, with:
+  //   kind:"cup"        distinguishes them from kind:"league"
+  //   organiser         the confederation that runs it (UEFA)
+  //   participantsFrom  where the field comes from, so the data layer knows it
+  //                     must be fetched per season rather than read from here
+  //
+  // Highlightly (or any provider) maps its own competition ids onto these ids
+  // server-side, exactly as it already does for leagues. Nothing here is tied
+  // to a provider's response shape, and no fixtures are implemented in this
+  // file — this is configuration only.
+  const COMPETITIONS_CFG = [
+    { id:"ucl", sport:"football", kind:"cup", name:"Champions League",
+      organiser:"UEFA", country:null, logo:null, participantsFrom:"qualification" },
+    { id:"uel", sport:"football", kind:"cup", name:"Europa League",
+      organiser:"UEFA", country:null, logo:null, participantsFrom:"qualification" }
+  ];
+
   const LEAGUES_CFG = [
     { id:"nba",        sport:"basketball",      name:"NBA",             country:"US", logo:ESPN("nba","nba") },
     { id:"wnba",       sport:"basketball",      name:"WNBA",            country:"US", logo:ESPN("wnba","wnba") },
@@ -94,5 +120,9 @@
     { id:"bundesliga-fcb", league:"bundesliga", name:"Bayern München",     shortName:"FCB", logo:null },
     { id:"bundesliga-rbl", league:"bundesliga", name:"RB Leipzig",         shortName:"RBL", logo:null }
   ];
-  window.FB_SPORTS_CONFIG = { SPORTS_CFG, LEAGUES_CFG, TEAMS_CFG };
+  // Leagues carry kind:"league" so callers can treat leagues and cups through
+  // one uniform shape without inspecting which array they came from.
+  LEAGUES_CFG.forEach(l => { l.kind = "league"; });
+
+  window.FB_SPORTS_CONFIG = { SPORTS_CFG, LEAGUES_CFG, COMPETITIONS_CFG, TEAMS_CFG };
 })();
