@@ -92,6 +92,13 @@ const server = http.createServer(async (req, res) => {
 
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Cache-Control', 'public, max-age=15');
+  // The documented local dev setup runs the static frontend and this API on
+  // two different ports (8080 / 3000) — two different origins as far as the
+  // browser is concerned. The response bodies here carry only normalized
+  // game/team/standings data, never the provider key, so allowing any origin
+  // to read them costs nothing; this does not change what the API does or
+  // exposes, only who is allowed to fetch it.
+  res.setHeader('Access-Control-Allow-Origin', '*');
 
   if (!route) {
     res.writeHead(404);

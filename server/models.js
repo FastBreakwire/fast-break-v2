@@ -6,7 +6,12 @@
  * file — adapters map into these, never the other way round.
  */
 
-const LEAGUE_IDS = ['nba', 'wnba', 'nfl', 'epl', 'laliga', 'bundesliga'];
+// ucl/uel added — Champions League and Europa League are UEFA competitions,
+// not domestic leagues (no fixed member set; the field changes every season
+// by qualification). They are backend-only until the frontend's nav content
+// map (data-driven from data/sports.js) chooses to light them up — adding
+// them here cannot make them appear anywhere by itself.
+const LEAGUE_IDS = ['nba', 'wnba', 'nfl', 'epl', 'laliga', 'bundesliga', 'ucl', 'uel'];
 
 const SPORT_BY_LEAGUE = {
   nba: 'basketball',
@@ -14,7 +19,9 @@ const SPORT_BY_LEAGUE = {
   nfl: 'americanfootball',
   epl: 'football',
   laliga: 'football',
-  bundesliga: 'football'
+  bundesliga: 'football',
+  ucl: 'football',
+  uel: 'football'
 };
 
 /**
@@ -27,15 +34,25 @@ const PERIODS = {
   football: ['1H', 'HT', '2H', 'ET', 'PENS', 'FT']
 };
 
-const STATUSES = ['scheduled', 'live', 'final'];
+// 'postponed' and 'cancelled' are accepted so a real provider value never
+// gets silently coerced to 'scheduled' — but neither has been observed from
+// Highlightly during testing (only "Not started" / live phases / "Finished"
+// were seen). The frontend already renders any non-'live' status as a
+// not-yet-started card (it shows startTime), so admitting these two values
+// here cannot break existing rendering — worst case a postponed game reads
+// like a scheduled one until the UI is taught to say "Postponed" explicitly.
+const STATUSES = ['scheduled', 'live', 'final', 'postponed', 'cancelled'];
 
 /**
  * @typedef {Object} Game
  * @property {string}      id
  * @property {string}      sport       basketball | football | americanfootball
  * @property {string}      league      one of LEAGUE_IDS
- * @property {string}      status      scheduled | live | final
- * @property {string}      homeTeam    short display name
+ * @property {string}      status      scheduled | live | final | postponed | cancelled
+ * @property {string}      homeTeam    short display label (existing field — the score
+ *                                     rail renders this directly as text, so it stays
+ *                                     a short string exactly as before; demo data and
+ *                                     real data both satisfy this identically)
  * @property {string}      awayTeam
  * @property {number|null} homeScore
  * @property {number|null} awayScore
@@ -44,6 +61,25 @@ const STATUSES = ['scheduled', 'live', 'final'];
  * @property {string|null} startTime
  * @property {string|null} venue
  * @property {string|null} broadcast
+ *
+ * Additive fields below — NOT read by the current frontend. They exist so the
+ * data layer is ready for future team/player work without a second normalizer
+ * or a second fetch. Every one of them defaults to null and is safe to ignore.
+ * @property {string|null} homeTeamId
+ * @property {string|null} awayTeamId
+ * @property {string|null} homeTeamName   full team name, e.g. "New York Knicks"
+ * @property {string|null} awayTeamName
+ * @property {string|null} homeTeamLogo   remote URL, never downloaded/stored
+ * @property {string|null} awayTeamLogo
+ * @property {Object|null} periods        per-period score breakdown, sport-shaped:
+ *                                        basketball/NFL: {q1:{home,away}, q2:{...}, ...}
+ *                                        football: always null — Highlightly's match
+ *                                        payload carries no half-by-half score split,
+ *                                        only the running total (confirmed, not a gap
+ *                                        in this mapping)
+ * @property {Array|null}  events         football goal/card/sub events, only present
+ *                                        on a single-match detail fetch, never on a
+ *                                        list — null otherwise, never fabricated
  */
 function normalizeGame(g) {
   const sport = g.sport || SPORT_BY_LEAGUE[g.league] || null;
@@ -57,18 +93,37 @@ function normalizeGame(g) {
     awayTeam: g.awayTeam ?? null,
     homeScore: num(g.homeScore),
     awayScore: num(g.awayScore),
-    period: status === 'scheduled' ? null : (g.period ?? null),
+    period: (status === 'scheduled' || status === 'postponed' || status === 'cancelled')
+      ? null : (g.period ?? null),
     clock: g.clock ?? null,
     startTime: g.startTime ?? null,
     venue: g.venue ?? null,
-    broadcast: g.broadcast ?? null
+    broadcast: g.broadcast ?? null,
+    homeTeamId: g.homeTeamId ?? null,
+    awayTeamId: g.awayTeamId ?? null,
+    homeTeamName: g.homeTeamName ?? null,
+    awayTeamName: g.awayTeamName ?? null,
+    homeTeamLogo: g.homeTeamLogo ?? null,
+    awayTeamLogo: g.awayTeamLogo ?? null,
+    periods: g.periods ?? null,
+    events: g.events ?? null
   };
 }
 
 /**
  * @typedef {Object} Standing
  * Draws are meaningful in football and null for basketball/NFL;
- * points are null where a league ranks on win pct instead.
+ * points are null where a league ranks on win pct instead (basketball, NFL).
+ *
+ * `group`/`conference`/`division` are additive and carry Highlightly's own
+ * grouping — e.g. basketball's "Western Conference", NFL's "American Football
+ * Conference"/"AFC". Nothing is invented: a sport that doesn't provide one
+ * of these levels leaves it null rather than guessing. Kept as a flat row
+ * (not nested groups) so this stays a plain array like the rest of the API,
+ * exactly as `passthrough()` in api.js already expects.
+ *
+ * `scoreFor`/`scoreAgainst` generalise basketball's points-scored/against and
+ * football's goals-for/against under one sport-neutral name.
  */
 function normalizeStanding(s) {
   return {
@@ -80,16 +135,28 @@ function normalizeStanding(s) {
     wins: num(s.wins),
     losses: num(s.losses),
     draws: num(s.draws),
-    points: num(s.points)
+    points: num(s.points),
+    scoreFor: num(s.scoreFor),
+    scoreAgainst: num(s.scoreAgainst),
+    group: s.group ?? null,
+    conference: s.conference ?? null,
+    division: s.division ?? null
   };
 }
 
-/** @typedef {Object} Team {id, league, name, shortName, logo} */
+/**
+ * @typedef {Object} Team {id, league, name, shortName, logo}
+ * `displayName` is additive: NFL's API distinguishes a short club name
+ * ("Bears") from the full one ("Chicago Bears") in separate fields; other
+ * sports only give the full name, so `displayName` simply mirrors `name`
+ * there rather than being left inconsistently null.
+ */
 function normalizeTeam(t) {
   return {
     id: String(t.id),
     league: t.league,
     name: t.name ?? null,
+    displayName: t.displayName ?? t.name ?? null,
     shortName: t.shortName ?? null,
     logo: t.logo ?? null
   };

@@ -372,7 +372,11 @@
   .team-badge{
     width:22px; height:22px; border-radius:6px; background:#151515; border:1px solid var(--cool-line);
     display:flex; align-items:center; justify-content:center; font-family:var(--label); font-size:8.5px; font-weight:700; color:var(--cool-muted); flex:none;
+    overflow:hidden; /* clips a real logo to the box's rounded corners */
   }
+  /* Real team logo, when the backend provides one. Sized to the existing
+     22px box exactly — a logo never changes the card's footprint. */
+  .team-badge img{ width:100%; height:100%; object-fit:contain; display:block; }
   .game-score{ font-family:var(--label); font-weight:700; font-size:15.5px; color:var(--ink); font-variant-numeric:tabular-nums; }
   .game-broadcast{ font-family:var(--label); font-size:10px; letter-spacing:.04em; color:var(--cool-faint); border-top:1px solid var(--cool-line); padding-top:8px; }
 
@@ -940,13 +944,17 @@
   .mega-link.is-pending:hover{ background:none; color:var(--cool-muted); }
   .mega-title.is-pending{ opacity:.55; cursor:default; }
   .mega-title.is-pending:hover{ color:var(--ink); }
-  /* team rows: uniform monogram, no mixed logo/blank states */
+  /* team rows: a real club crest when Highlightly has one, a lettermark
+     fallback otherwise — same fixed box either way, so a broken/missing logo
+     never shifts the row. */
   .mega-link.team-row{ gap:10px; }
   .tm-chip{
-    flex:none; min-width:30px; padding:2px 5px; border-radius:5px; text-align:center;
+    flex:none; width:22px; height:22px; padding:2px; border-radius:5px; text-align:center;
     background:rgba(255,255,255,.06); color:var(--ink-faint);
-    font-size:9.5px; font-weight:700; letter-spacing:.06em;
+    font-size:8.5px; font-weight:700; letter-spacing:.02em;
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
   }
+  .tm-chip img{ width:100%; height:100%; object-fit:contain; display:block; }
   .mega-link.team-row:hover .tm-chip{ background:var(--indigo-veil); color:var(--indigo); }
   .mega-head{
     display:flex; align-items:center; gap:12px; margin-bottom:18px;
@@ -1545,7 +1553,42 @@
   const COMPETITIONS_CFG = _cfg.COMPETITIONS_CFG || [];
 
   const leagueById = id => LEAGUES_CFG.find(l => l.id === id);
-  const teamsForLeague = id => TEAMS_CFG.filter(t => t.league === id);
+
+  // ---------------------------------------------------------------------------
+  // TEAM ROSTERS — fetched from the backend (Highlightly via /api/teams), one
+  // request per league/competition id, cached for the life of the page. Team
+  // rosters don't change minute to minute the way scores do, so there is no
+  // polling here — just a single fetch the first time a sport's panel opens,
+  // reused after that. TEAMS_CFG (data/sports.js) is the fallback source when
+  // the API can't answer (no key configured, or a provider error) — the same
+  // demo-vs-real split the score rail already uses, so the panel never
+  // renders empty and never silently mixes a real roster with a hand-picked
+  // one in the same column.
+  // ---------------------------------------------------------------------------
+  const teamsCache = {}; // league/competition id -> { teams:[...], demo:bool, loading:bool }
+  const staticTeamsForLeague = id => TEAMS_CFG.filter(t => t.league === id);
+
+  async function fetchTeamsForLeague(id){
+    if (teamsCache[id]) return teamsCache[id]; // already loaded, or a fetch is already in flight
+    teamsCache[id] = { teams: null, demo: false, loading: true };
+    try {
+      const res = await fetch(`${FB_API_BASE}/teams?league=${id}`, { headers:{ 'Accept':'application/json' } });
+      if (res.ok) {
+        const body = await res.json();
+        if (Array.isArray(body.data) && body.data.length) {
+          teamsCache[id] = { teams: body.data, demo: false, loading: false };
+          return teamsCache[id];
+        }
+      }
+    } catch (e) { /* no API layer running, or a network error — fall through */ }
+    // Provider disabled/erroring, or a genuinely empty roster (e.g. a cup
+    // whose qualified field hasn't been published yet) — fall back to the
+    // static list. Domestic leagues all have one; competitions (ucl/uel) have
+    // none, which correctly leaves their panel showing the existing "field
+    // set by qualification" note instead of an empty Teams heading.
+    teamsCache[id] = { teams: staticTeamsForLeague(id), demo: true, loading: false };
+    return teamsCache[id];
+  }
 
   // Renders a logo, or a lettermark when no verified asset exists. The onerror
   // hook also catches a CDN miss so a broken image never shows.
@@ -1577,17 +1620,17 @@
 
   const competitionById = id => COMPETITIONS_CFG.find(c => c.id === id);
 
-  // league OR competition -> one uniform shape:
-  //   { id, name, kind:"league"|"cup", logo, hasTeams }
-  // hasTeams is what the menu keys off. A national league has a fixed member
-  // set worth listing; a cup's field is decided by qualification each season
-  // and belongs to the data layer, so it lists none.
+  // league OR competition -> one uniform shape: { id, name, kind:"league"|"cup", logo }
+  // Whether a column actually shows teams is no longer decided here by kind —
+  // it is decided by whether the real roster has been fetched (see
+  // teamsSectionHtml below), because a cup's field is a genuine per-season
+  // fetch (Highlightly standings-derived, same as a domestic league) rather
+  // than a permanently-empty case.
   function resolveChild(id){
     const lg = leagueById(id);
-    if (lg) return { id: lg.id, name: lg.name, kind: 'league', logo: lg.logo, hasTeams: true };
+    if (lg) return { id: lg.id, name: lg.name, kind: 'league', logo: lg.logo };
     const cp = competitionById(id);
-    if (cp) return { id: cp.id, name: cp.name, kind: 'cup', logo: cp.logo, hasTeams: false,
-                     organiser: cp.organiser };
+    if (cp) return { id: cp.id, name: cp.name, kind: 'cup', logo: cp.logo, organiser: cp.organiser };
     return null;
   }
 
@@ -1904,17 +1947,11 @@
 
     renderStories();
 
-    // Score data is still demo/fallback for the football leagues and the NFL.
-    const notice = document.getElementById('leagueNotice');
-    if (notice) {
-      const demoScores = !['nba', 'wnba'].includes(league);
-      notice.hidden = !demoScores;
-      if (demoScores) {
-        notice.textContent =
-          `Scores for ${leagueNames[league] || league.toUpperCase()} are demo data until a provider key is configured. Stories above are verified reporting.`;
-      }
-    }
-
+    // The demo/real notice is set inside renderScoreRail() itself, driven by
+    // what that fetch actually returned — not guessed here per league. All
+    // eight competitions can serve real Highlightly data now, so a static
+    // "these two are real, the rest are demo" assumption would be wrong the
+    // moment any of the others has live data (as they do).
     if (typeof renderScoreRail === 'function') renderScoreRail();
     if (!opts.silent && articleView.hidden) window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -2042,28 +2079,55 @@
        </button>`).join('');
   }
 
-  // Team rows are text-led on purpose. Club marks will arrive with the
-  // sport-data layer; until then a uniform monogram beats a mix of real logos
-  // for some clubs and blanks for others.
-  function teamLinks(entry){
-    const teams = teamsForLeague(entry.id);
-    if (!teams.length) return '';
+  // Team logo chip for the mega menu — same onerror-swap pattern as
+  // teamBadge() (score rail) and logoMark() above: a real Highlightly logo
+  // when there is one, a clean text fallback when there isn't. Now that every
+  // sport's roster carries a real logo, the row no longer has to choose
+  // between "real for some clubs, blank for others" — the fallback only ever
+  // fires for an individual broken/missing URL, not a whole sport at once.
+  function tmChip(logoUrl, label){
+    if (!logoUrl) return `<span class="tm-chip">${label}</span>`;
+    return `<span class="tm-chip"><img src="${logoUrl}" alt="" loading="lazy"
+      onerror="this.parentElement.textContent='${label}'"></span>`;
+  }
+
+  function teamLinks(teams, leagueId){
+    // displayName is the full club name everywhere (NFL's own "name" is the
+    // short club name, e.g. "Chiefs" vs "Kansas City Chiefs" — see models.js);
+    // falling back to name keeps the static TEAMS_CFG rows, which only ever
+    // carry a full name, working the same way.
     return teams.map(t =>
-      `<button class="mega-link team-row" role="menuitem" data-league="${entry.id}">
-         <span class="tm-chip">${t.shortName}</span>
-         <span class="ml-label">${t.name}</span>
+      `<button class="mega-link team-row" role="menuitem" data-league="${leagueId}">
+         ${tmChip(t.logo, t.shortName)}
+         <span class="ml-label">${t.displayName || t.name}</span>
        </button>`).join('');
   }
 
-  // One column per child, identical for a national league and a cup. The only
-  // difference is what sits under the categories: a league lists its clubs, a
-  // cup says where its field comes from instead of inventing a member list.
-  function childColumn(entry){
-    const tail = entry.hasTeams
-      ? `<p class="mega-sub">Teams</p><div class="mega-links">${teamLinks(entry)}</div>`
-      : `<p class="mega-sub">Format</p>
+  // What sits under the categories in a column. Driven by the team cache, not
+  // by league-vs-cup: a domestic league's roster is already cached by the
+  // time this runs (renderMega fetches it below); a cup's is too, once
+  // Highlightly has a qualified field to report — until then, or if a fetch
+  // is still in flight, it falls back to the pre-existing note rather than
+  // showing an empty "Teams" heading.
+  function teamsSectionHtml(entry){
+    const cached = teamsCache[entry.id];
+    if (cached && Array.isArray(cached.teams) && cached.teams.length) {
+      return `<p class="mega-sub">Teams</p><div class="mega-links">${teamLinks(cached.teams, entry.id)}</div>`;
+    }
+    if (cached && cached.loading) {
+      return `<p class="mega-sub">Teams</p><p class="mega-note">Loading teams…</p>`;
+    }
+    if (entry.kind === 'cup') {
+      return `<p class="mega-sub">Format</p>
          <p class="mega-note">${entry.organiser || 'Cup'} competition — the field is
             set by qualification each season.</p>`;
+    }
+    return `<p class="mega-sub">Teams</p><p class="mega-note">Loading teams…</p>`;
+  }
+
+  // One column per child, identical for a national league and a cup — both
+  // resolve their team section the same way (see teamsSectionHtml).
+  function childColumn(entry){
     return `
       <div class="mega-col">
         <div class="mega-head">
@@ -2071,7 +2135,7 @@
                   data-league="${entry.id}">${entry.name}</button>
         </div>
         <div class="mega-links">${categoryLinks(entry)}</div>
-        ${tail}
+        ${teamsSectionHtml(entry)}
       </div>`;
   }
 
@@ -2087,6 +2151,16 @@
     openNodeId = node.id;
     markOpenTab(node.id);
     wireMegaLinks();
+
+    // Fetch (once, ever, per id) the real roster for anything in this panel
+    // that isn't cached yet, then repaint this exact panel in place once it
+    // lands — only if the reader hasn't already moved to a different sport.
+    node.children.forEach(entry => {
+      if (teamsCache[entry.id]) return; // already loaded, or already in flight
+      fetchTeamsForLeague(entry.id).then(() => {
+        if (openNodeId === node.id) renderMega(node);
+      });
+    });
   }
 
   // Every control in the panel resolves to the same place: pick a league. Cups
@@ -2257,7 +2331,14 @@
   //
   // Without a key the route is absent, the fetch fails, and we fall back to the
   // demo set above so the prototype stays usable.
-  const FB_API_BASE = '/api';
+  // A relative path is correct whenever the page and the API share an
+  // origin (production, or any dev setup that proxies /api through to
+  // server/api.js). The one case that needs an absolute URL is the
+  // documented local split — a static file server on :8080 with the API
+  // standalone on :3000 — where a relative /api has nothing to resolve
+  // against on :8080 at all. Nothing else changes: same-origin setups are
+  // untouched, and the key stays server-side either way.
+  const FB_API_BASE = (location.port === '8080') ? 'http://localhost:3000/api' : '/api';
 
   async function getGames({ sport, league, date } = {}){
     try {
@@ -2268,10 +2349,19 @@
       const res = await fetch(`${FB_API_BASE}/games?${qs}`, { headers:{ 'Accept':'application/json' } });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data.games)) return data.games; // already normalized server-side
+        if (Array.isArray(data.games)) {
+          // The server itself can be in demo mode (no provider key, or a
+          // provider outage) without the fetch ever failing — its envelope
+          // says so via `source`. Stamp the same `demo:true` flag the
+          // client-only fallback below already carries, so server-sourced
+          // demo rows get the exact same "Demo" badge instead of looking
+          // indistinguishable from real Highlightly data.
+          const isDemo = data.source !== 'highlightly';
+          return isDemo ? data.games.map(g => ({ ...g, demo: true })) : data.games;
+        }
       }
     } catch (e) {
-      // no API layer running (static prototype) -> demo data
+      // no API layer running at all (static prototype) -> demo data
     }
     let rows = SCORE_DEMO;
     if (league) rows = rows.filter(g => g.league === league);
@@ -2281,6 +2371,17 @@
 
   // display names come from the one config source, not a second hardcoded map
   const leagueNames = Object.fromEntries(LEAGUES_CFG.map(l => [l.id, l.name]));
+
+  // A not-yet-started game's kickoff time, in the viewer's own local time.
+  // Demo rows already carry a pre-formatted string ("9:30 PM") and pass
+  // through unchanged (Date can't parse that, so it's returned as-is);
+  // Highlightly's real ISO datetime gets converted, never shown raw.
+  function gameTimeLabel(iso){
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return iso;
+    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  }
 
   // Formats the clock line for the ONE score component, per sport.
   // Sport-specific period labels for the one shared score component.
@@ -2306,10 +2407,74 @@
     return parts.join('<span class="gs-sep">\u00b7</span>');
   }
 
+  // A real team logo when the backend provides one (Highlightly's remote
+  // URL, never downloaded/stored), sized to the existing 22px badge box
+  // exactly. A missing or broken image falls back to the plain abbreviation
+  // text the box has always shown — same onerror-swap pattern as logoMark()
+  // above, just targeting a box that already supplies its own chrome
+  // (background/border) rather than nesting a second styled fallback inside it.
+  function teamBadge(logoUrl, label){
+    if (!logoUrl) return `<span class="team-badge">${label}</span>`;
+    return `<span class="team-badge"><img src="${logoUrl}" alt="" loading="lazy"
+      onerror="this.parentElement.textContent='${label}'"></span>`;
+  }
+
+  // Single owner of the score-rail refresh loop — never more than one timer
+  // pending. Every entry point (a league switch, or the loop itself) clears
+  // any previous timer before doing anything else, so switching leagues
+  // can't leave a stale auto-refresh racing the fresh one.
+  //
+  // Visibility is only consulted for the AUTOMATIC tick, never for a direct
+  // call — renderScoreRail() always renders when called (a league switch, or
+  // the initial load, must never be silently skipped just because the tab
+  // happens to be backgrounded at that instant). A skipped background tick
+  // simply reschedules itself rather than fetching; a `visibilitychange`
+  // listener below catches the tab back up the moment it's shown again,
+  // instead of leaving it stale until the next full interval.
+  // Guards against an out-of-order response: switching leagues quickly (or
+  // the auto-refresh firing mid-switch) can have two fetches in flight at
+  // once, and the network gives no guarantee the one that STARTED first
+  // FINISHES first. Without this, a slow response for the league the user
+  // just left can land after a fast one for the league they switched to and
+  // silently overwrite it — invisible with instant demo data, but a real,
+  // observed bug once requests have real (variable) network latency. Each
+  // call claims the next id; a response only gets to touch the DOM if its id
+  // is still the most recent one issued by the time it resolves.
+  let scoreRailRequestId = 0;
+  let scoreRailTimer = null;
+  function scheduleScoreRailRefresh(hasLive){
+    clearTimeout(scoreRailTimer);
+    // ~20s while something is actually live, ~2min otherwise — a live score
+    // is worth checking often; an all-scheduled slate is not.
+    scoreRailTimer = setTimeout(() => {
+      if (document.hidden) { scheduleScoreRailRefresh(hasLive); return; }
+      renderScoreRail();
+    }, hasLive ? 20000 : 120000);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) renderScoreRail();
+  });
+
   async function renderScoreRail(){
+    clearTimeout(scoreRailTimer);
+    const myRequestId = ++scoreRailRequestId;
     const body  = document.getElementById('scoreRailBody');
     const label = document.getElementById('scoreRailLabel');
     const games = await getGames({ league: activeLeague });
+    if (myRequestId !== scoreRailRequestId) return; // superseded — discard
+
+    // Reflect what THIS fetch actually returned, not an assumption about
+    // which leagues are "the real ones" — every competition can serve real
+    // Highlightly data, and the games array already carries the true source.
+    const notice = document.getElementById('leagueNotice');
+    if (notice) {
+      const anyDemo = games.some(g => g.demo);
+      notice.hidden = !anyDemo;
+      if (anyDemo) {
+        notice.textContent =
+          `Scores for ${leagueNames[activeLeague] || activeLeague.toUpperCase()} are demo data until a provider key is configured. Stories above are verified reporting.`;
+      }
+    }
 
     const hasLive = games.some(g => g.status === 'live');
     label.classList.toggle('is-live', hasLive);
@@ -2326,8 +2491,12 @@
     if (!games.length) {
       const empty = document.createElement('div');
       empty.className = 'score-empty';
-      empty.textContent = 'No games scheduled.';
+      // The backend always scopes /api/games to today, so an empty result
+      // means exactly one thing — there is nothing on the slate today, live
+      // or otherwise. Never a placeholder score in its place.
+      empty.textContent = 'No games today.';
       body.appendChild(empty);
+      scheduleScoreRailRefresh(false);
       return;
     }
 
@@ -2350,14 +2519,29 @@
         const card = document.createElement('div');
         card.className = 'game-card' + (g.status === 'live' ? ' is-live' : '');
 
+        // Demo data's startTime was always a pre-formatted string ("9:30 PM").
+        // Real Highlightly data gives a full ISO datetime, which needs its own
+        // label per status rather than being printed raw — a finished game
+        // showing its kickoff timestamp instead of "Final" isn't a state the
+        // demo set ever exercised, since it never included status:'final' rows.
+        const nonLiveLabel = g.status === 'final' ? 'Final'
+          : g.status === 'postponed' ? 'Postponed'
+          : g.status === 'cancelled' ? 'Cancelled'
+          : (gameTimeLabel(g.startTime) || '');
+        // The demo badge has to reach both branches — the server's own
+        // fallback set includes rows with status:'live' (its NBA placeholder
+        // game), so a live demo card needs the same "Demo" marker a
+        // scheduled/final one gets, or it would silently look indistinguishable
+        // from a real live Highlightly game.
+        const demoBadge = g.demo ? '<span class="gs-demo">Demo</span>' : '';
         const statusRow = g.status === 'live'
-          ? `<div class="game-status-row"><span class="gs-live"><span class="pulse"></span>${periodLine(g)}</span></div>`
-          : `<div class="game-status-row"><span class="gs-time">${g.startTime || ''}</span>${g.demo ? '<span class="gs-demo">Demo</span>' : ''}</div>`;
+          ? `<div class="game-status-row"><span class="gs-live"><span class="pulse"></span>${periodLine(g)}</span>${demoBadge}</div>`
+          : `<div class="game-status-row"><span class="gs-time">${nonLiveLabel}</span>${demoBadge}</div>`;
 
         const scored = g.status === 'live' || g.status === 'final';
         const teams = `<div class="game-teams">
-               <div class="game-team-row"><span class="game-team"><span class="team-badge">${g.awayTeam}</span>${g.awayTeam}</span>${scored ? `<span class="game-score">${g.awayScore}</span>` : ''}</div>
-               <div class="game-team-row"><span class="game-team"><span class="team-badge">${g.homeTeam}</span>${g.homeTeam}</span>${scored ? `<span class="game-score">${g.homeScore}</span>` : ''}</div>
+               <div class="game-team-row"><span class="game-team">${teamBadge(g.awayTeamLogo, g.awayTeam)}${g.awayTeam}</span>${scored ? `<span class="game-score">${g.awayScore}</span>` : ''}</div>
+               <div class="game-team-row"><span class="game-team">${teamBadge(g.homeTeamLogo, g.homeTeam)}${g.homeTeam}</span>${scored ? `<span class="game-score">${g.homeScore}</span>` : ''}</div>
              </div>`;
 
         const broadcast = g.broadcast ? `<div class="game-broadcast">${g.broadcast}</div>` : '';
@@ -2369,6 +2553,8 @@
       group.appendChild(row);
       body.appendChild(group);
     });
+
+    scheduleScoreRailRefresh(hasLive);
   }
 
   // ===========================================================================
