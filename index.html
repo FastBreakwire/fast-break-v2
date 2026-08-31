@@ -2515,23 +2515,53 @@
     football: new Set(['1H', '2H', 'ET'])
   };
 
+  // Real, official period lengths — never inferred from provider data
+  // (Highlightly's response carries no quarter-length field at all, only
+  // the raw elapsed count). NBA: 12-minute quarters, 5-minute overtime
+  // (NBA Rule Book). WNBA: 10-minute quarters, 5-minute overtime (WNBA
+  // Rule Book) — genuinely shorter than NBA's, so this is keyed by LEAGUE,
+  // not by sport: applying NBA's 12 to a WNBA game would silently produce
+  // a wrong remaining-time value.
+  const BASKETBALL_PERIOD_MINUTES = {
+    nba:  { quarter: 12, overtime: 5 },
+    wnba: { quarter: 10, overtime: 5 }
+  };
+
   // Normalizes the raw normalized-game clock into what's honestly
   // displayable, per sport:
   //   - football (soccer): server/highlightlyProvider.js's formatClock()
   //     already appends the trailing apostrophe ("67'") — passed through.
-  //   - basketball / american football: confirmed live (WNBA, 31 Aug 2026)
-  //     that Highlightly's state.clock for these sports is a bare whole
-  //     number of MINUTES — {clock:4, description:"Second quarter"} — with
-  //     no seconds component anywhere in the response. A "MM:SS" display
-  //     would fabricate the seconds; "4m" shows exactly the precision the
-  //     provider actually gives, nothing invented.
+  //   - basketball: confirmed live (WNBA, 31 Aug 2026 — two separate
+  //     verification passes, one showing state.clock strictly increasing
+  //     within a single quarter and resetting to 0 at the next period) that
+  //     Highlightly's state.clock counts ELAPsed minutes up from 0. Fast
+  //     Break shows minutes REMAINING instead (reads naturally high->low),
+  //     computed as the real period length minus that elapsed count —
+  //     recalculated fresh from the CURRENT api response every time, never
+  //     carried over or ticked locally between polls.
+  //   - american football: no such remaining-time conversion — NFL keeps
+  //     its own actual provider semantics, elapsed-minutes-as-given.
+  //   Whole minutes only, either way — Highlightly gives no seconds for
+  //   basketball/NFL, and a "MM:SS" display would fabricate them.
   function formatLiveClock(g){
     if (g.clock === null || g.clock === undefined || g.clock === '') return '';
     const clockPeriods = CLOCK_PERIODS[g.sport];
     if (clockPeriods && !clockPeriods.has(g.period)) return ''; // a named break, not a running clock
     if (g.sport === 'football') return g.clock; // already "N'" from the backend
     const n = Number(g.clock);
-    return Number.isFinite(n) ? `${n}m` : '';
+    if (!Number.isFinite(n)) return '';
+
+    if (g.sport === 'basketball') {
+      const lengths = BASKETBALL_PERIOD_MINUTES[g.league];
+      // Only nba/wnba ever carry sport:'basketball', so `lengths` is always
+      // real here — the fallback exists only so an unrecognized league can
+      // never crash or show a fabricated remaining value.
+      if (!lengths) return `${n}m`;
+      const periodLength = g.period === 'OT' ? lengths.overtime : lengths.quarter;
+      return `${Math.max(0, periodLength - n)}m`;
+    }
+
+    return `${n}m`; // americanfootball — unchanged, elapsed as provided
   }
 
   // Broadcast-style live line: LIVE · Q3 · 7m, LIVE · 1st half · 38',
