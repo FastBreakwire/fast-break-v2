@@ -2505,7 +2505,36 @@
     americanfootball: { HT:'Halftime', OT:'Overtime' }
   };
 
-  // Broadcast-style live line: LIVE · Q3 · 7:41, LIVE · 1st half · 38',
+  // Periods that actually carry a running clock — named breaks (Halftime,
+  // Full time, Extra time's own halftime, Penalties, Overtime-not-yet-
+  // started) don't, even if the raw state.clock field happens to hold a
+  // stale/leftover number from the period that just ended.
+  const CLOCK_PERIODS = {
+    basketball: new Set(['Q1', 'Q2', 'Q3', 'Q4', 'OT']),
+    americanfootball: new Set(['Q1', 'Q2', 'Q3', 'Q4', 'OT']),
+    football: new Set(['1H', '2H', 'ET'])
+  };
+
+  // Normalizes the raw normalized-game clock into what's honestly
+  // displayable, per sport:
+  //   - football (soccer): server/highlightlyProvider.js's formatClock()
+  //     already appends the trailing apostrophe ("67'") — passed through.
+  //   - basketball / american football: confirmed live (WNBA, 31 Aug 2026)
+  //     that Highlightly's state.clock for these sports is a bare whole
+  //     number of MINUTES — {clock:4, description:"Second quarter"} — with
+  //     no seconds component anywhere in the response. A "MM:SS" display
+  //     would fabricate the seconds; "4m" shows exactly the precision the
+  //     provider actually gives, nothing invented.
+  function formatLiveClock(g){
+    if (g.clock === null || g.clock === undefined || g.clock === '') return '';
+    const clockPeriods = CLOCK_PERIODS[g.sport];
+    if (clockPeriods && !clockPeriods.has(g.period)) return ''; // a named break, not a running clock
+    if (g.sport === 'football') return g.clock; // already "N'" from the backend
+    const n = Number(g.clock);
+    return Number.isFinite(n) ? `${n}m` : '';
+  }
+
+  // Broadcast-style live line: LIVE · Q3 · 7m, LIVE · 1st half · 38',
   // LIVE · Halftime. Period and clock are separate spans so the clock can
   // carry tabular figures and its own tone.
   function periodLine(g){
@@ -2515,8 +2544,8 @@
     const period = named || g.period;
     const parts = ['<span class="gs-tag">Live</span>'];
     if (period) parts.push(`<span class="gs-period">${period}</span>`);
-    // Named breaks (halftime, penalties) have no running clock to show.
-    if (g.clock) parts.push(`<span class="gs-clock">${g.clock}</span>`);
+    const clock = formatLiveClock(g);
+    if (clock) parts.push(`<span class="gs-clock">${clock}</span>`);
     return parts.join('<span class="gs-sep">\u00b7</span>');
   }
 
@@ -2843,7 +2872,8 @@
     const period = (PERIOD_LABELS[g.sport] || {})[g.period] || g.period;
     const parts = ['Live'];
     if (period) parts.push(period);
-    if (g.clock) parts.push(g.clock);
+    const clock = formatLiveClock(g);
+    if (clock) parts.push(clock);
     return parts.join(' · ');
   }
 
