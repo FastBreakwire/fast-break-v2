@@ -2574,15 +2574,24 @@
   const GAME_RAIL_DAYS = 14; // mirrors server/api.js SCHEDULE_DAYS default
 
   // Per-competition cache (never one combined cache — the key includes
-  // `league`), short-lived so a game going live/final is caught within a
-  // few minutes without re-fetching on every render.
+  // `league`). TTL depends on request scale, matching the same distinction
+  // server/highlightlyProvider.js makes: the rail (days === GAME_RAIL_DAYS)
+  // is polled every 20s while something is live, so its cache MUST expire
+  // faster than that or the poll never reaches the network at all — the
+  // actual root cause of a real reported bug (a live clock/score never
+  // advanced without a manual page reload, because every 20s poll kept
+  // finding this cache still "fresh"). The full-schedule scale isn't
+  // polled at all (fetched once, paged through client-side), so it keeps a
+  // much longer TTL — no reason to spend extra requests there.
   const scheduleCache = {};
-  const SCHEDULE_CACHE_MS = 4 * 60 * 1000;
+  const RAIL_SCALE_CACHE_MS = 15 * 1000;      // must stay below the 20s live-poll interval
+  const FULL_SCHEDULE_CACHE_MS = 4 * 60 * 1000;
 
   async function fetchSchedule(league, days){
     const key = `${league}:${days}`;
+    const cacheTtl = days > 31 ? FULL_SCHEDULE_CACHE_MS : RAIL_SCALE_CACHE_MS;
     const cached = scheduleCache[key];
-    if (cached && Date.now() - cached.at < SCHEDULE_CACHE_MS) return cached;
+    if (cached && Date.now() - cached.at < cacheTtl) return cached;
     let result = { games: [], demo: false };
     try {
       const res = await fetch(`${FB_API_BASE}/schedule?league=${league}&days=${days}`,

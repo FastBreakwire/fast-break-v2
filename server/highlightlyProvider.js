@@ -587,17 +587,32 @@ function startOfDayInZone(ms, timeZone) {
 // Cached in memory PER COMPETITION (never a combined football cache — the
 // cache key already includes `league`) so repeat loads across visitors
 // don't re-spend the request budget within the cache window.
+//
+// TTL depends on request scale, not one flat number: this same function
+// serves both the compact live rail (days <= 31, polled by the frontend
+// every 20s while something is live — see GAME_RAIL_DAYS in index.html)
+// and the full schedule page (days > 31, fetched once and paged through
+// client-side, effectively never re-requested for the same league within
+// a session). A single 5-minute TTL across both was the actual root cause
+// of a real reported bug: it silently outlived every live-rail poll, so a
+// live score/clock never advanced without a manual page reload — fixed by
+// giving the rail's scale a TTL below its own poll interval, while the
+// full-schedule scale keeps the original 5 minutes (it doesn't need to be
+// any fresher, and a shorter TTL there would only spend requests for no
+// visible benefit).
 // ---------------------------------------------------------------------------
-const UPCOMING_CACHE_MS = 5 * 60 * 1000;
+const RAIL_SCALE_CACHE_MS = 15 * 1000;      // must stay below the 20s live-poll interval
+const FULL_SCHEDULE_CACHE_MS = 5 * 60 * 1000;
 const upcomingCache = new Map(); // `${league}:${days}:${maxPages}` -> { at, games }
 
 async function getUpcomingGames({ league, days = 14, maxPages = 3 } = {}) {
   const cfg = LEAGUE_CONFIG[league];
   if (!cfg) return [];
 
+  const cacheTtl = days > 31 ? FULL_SCHEDULE_CACHE_MS : RAIL_SCALE_CACHE_MS;
   const cacheKey = `${league}:${days}:${maxPages}`;
   const cached = upcomingCache.get(cacheKey);
-  if (cached && Date.now() - cached.at < UPCOMING_CACHE_MS) return cached.games;
+  if (cached && Date.now() - cached.at < cacheTtl) return cached.games;
 
   const effectiveSeason = CURRENT_SEASON[league];
   const baseParams = cfg.paramStyle === 'id'
