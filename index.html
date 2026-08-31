@@ -332,17 +332,12 @@
     color:var(--cool-faint); padding:8px 12px; border-top:1px solid var(--cool-line);
   }
 
-  .score-league-group{ margin-bottom:14px; }
-  .score-league-group:last-child{ margin-bottom:0; }
-  .score-league-name{
-    font-family:var(--label); font-size:10.5px; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
-    color:var(--cool-faint); margin-bottom:8px;
-  }
   .score-row{
     display:flex; gap:var(--sp-3); overflow-x:auto; padding-bottom:4px;
-    scrollbar-width:none;
+    scrollbar-width:none; scroll-behavior:smooth;
   }
   .score-row::-webkit-scrollbar{ display:none; }
+  .score-row:focus-visible{ outline:2px solid var(--indigo); outline-offset:2px; border-radius:12px; }
   .game-card{
     flex:none; width:188px;
     background:var(--black); border:1px solid var(--cool-line); border-radius:12px;
@@ -370,15 +365,152 @@
   .game-team-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
   .game-team{ display:flex; align-items:center; gap:8px; font-family:var(--label); font-size:12.5px; font-weight:600; letter-spacing:.04em; color:var(--ink-soft); text-transform:uppercase; }
   .team-badge{
-    width:22px; height:22px; border-radius:6px; background:#151515; border:1px solid var(--cool-line);
-    display:flex; align-items:center; justify-content:center; font-family:var(--label); font-size:8.5px; font-weight:700; color:var(--cool-muted); flex:none;
+    width:28px; height:28px; border-radius:7px; background:#151515; border:1px solid var(--cool-line);
+    display:flex; align-items:center; justify-content:center; font-family:var(--label); font-size:9.5px; font-weight:700; color:var(--cool-muted); flex:none;
     overflow:hidden; /* clips a real logo to the box's rounded corners */
   }
-  /* Real team logo, when the backend provides one. Sized to the existing
-     22px box exactly — a logo never changes the card's footprint. */
+  /* Real team logo, when the backend provides one. Sized to the badge box
+     exactly (bumped from the original 22px — easier to recognize at a
+     glance — the box grows, the card's own footprint does not: .game-card
+     has no fixed height, and 6px of extra badge height is absorbed by its
+     existing row gap/padding without resizing the card itself). One size,
+     used identically for live, scheduled, and final cards, and reused as-is
+     on the full-schedule page — never a second logo size. */
   .team-badge img{ width:100%; height:100%; object-fit:contain; display:block; }
   .game-score{ font-family:var(--label); font-weight:700; font-size:15.5px; color:var(--ink); font-variant-numeric:tabular-nums; }
   .game-broadcast{ font-family:var(--label); font-size:10px; letter-spacing:.04em; color:var(--cool-faint); border-top:1px solid var(--cool-line); padding-top:8px; }
+
+  /* ============ GAME CARD — competition + date/time addenda ============
+     .game-card / .game-status-row / .game-teams / .game-team / .game-score
+     are the existing score-rail language, reused verbatim (not reinvented)
+     for the single unified rail below. These two small classes are the only
+     additions: a competition label (still shown per card even though the
+     rail is single-competition-scoped, since a card should be legible on
+     its own) and a two-line date+time block for the status row (the score
+     rail's own .gs-time only ever showed a bare time because every card
+     used to be "today" by construction — that's no longer true now that
+     the rail spans GAME_RAIL_DAYS). */
+  .gc-comp{
+    font-family:var(--label); font-size:9px; font-weight:700; letter-spacing:.07em;
+    text-transform:uppercase; color:var(--cool-faint);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .gc-datetime{ display:flex; flex-direction:column; gap:1px; }
+  .gc-date{ font-size:9px; letter-spacing:.05em; color:var(--cool-faint); text-transform:uppercase; }
+  .gc-kickoff{ font-size:12.5px; font-weight:700; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+
+  /* ============ RAIL SCRUBBER ============
+     A compact, premium alternative to a browser scrollbar — violet/indigo
+     throughout, never the LIVE red (that stays exclusive to live-game
+     semantics). Hidden by JS whenever the rail's content already fits
+     without scrolling. */
+  .rail-scrubber{ display:flex; align-items:center; gap:10px; margin-top:12px; }
+  .rail-arrow{
+    flex:none; width:26px; height:26px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--indigo-veil); border:1px solid var(--indigo-line); color:var(--indigo);
+    font-size:15px; line-height:1; cursor:pointer; padding:0;
+    transition:background .18s var(--ease), color .18s var(--ease), border-color .18s var(--ease);
+  }
+  .rail-arrow:hover:not(:disabled){ background:var(--indigo-deep); color:var(--ink); border-color:var(--indigo); }
+  .rail-arrow:focus-visible{ outline:2px solid var(--indigo); outline-offset:2px; }
+  .rail-arrow:disabled{ opacity:.32; cursor:default; }
+  .rail-track{
+    position:relative; flex:1 1 auto; height:4px; border-radius:999px;
+    background:var(--indigo-deep); cursor:pointer;
+  }
+  .rail-track:focus-visible{ outline:2px solid var(--indigo); outline-offset:5px; }
+  .rail-thumb{
+    position:absolute; top:50%; left:0; height:13px; width:56px;
+    transform:translateY(-50%); border-radius:999px; background:var(--indigo);
+    cursor:grab; transition:filter .15s var(--ease);
+  }
+  .rail-thumb:hover, .rail-thumb.is-dragging{ filter:brightness(1.2); }
+  .rail-thumb.is-dragging{ cursor:grabbing; transition:none; }
+  .rail-footer{ margin-top:14px; text-align:center; }
+  .rail-full-link{
+    display:inline-block; font-family:var(--label); font-size:12.5px; font-weight:700; letter-spacing:.03em;
+    color:var(--indigo); background:none; border:none; cursor:pointer; padding:8px 14px;
+    border-radius:999px; text-decoration:none; transition:background .18s var(--ease), color .18s var(--ease);
+  }
+  .rail-full-link:hover{ background:var(--indigo-veil); color:var(--ink); }
+  .rail-full-link:focus-visible{ outline:2px solid var(--indigo); outline-offset:2px; }
+
+  /* ============ FULL SCHEDULE PAGE ============
+     One competition's complete available window. A readable week-at-a-time
+     list — not another card rail, since a full schedule is meant to be
+     scanned, not scrolled through 188px boxes. Same normalized game data,
+     same teamBadge()/PERIOD_LABELS, same demo/real split as everything
+     else — only the presentation differs from the rail. */
+  .schedule-page{ padding:var(--sp-7) 0 var(--sp-9); }
+  .schedule-back{
+    font-family:var(--label); font-size:12.5px; font-weight:700; color:var(--indigo);
+    background:none; border:none; cursor:pointer; padding:6px 0; margin-bottom:var(--sp-4);
+  }
+  .schedule-back:hover{ color:var(--ink); }
+  .schedule-head{
+    display:flex; align-items:flex-end; justify-content:space-between; gap:var(--sp-4); flex-wrap:wrap;
+    border-bottom:1px solid var(--line); padding-bottom:var(--sp-4); margin-bottom:var(--sp-5);
+  }
+  .schedule-title-group{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .schedule-title{ font-family:var(--display); font-weight:600; font-size:clamp(24px,3vw,34px); letter-spacing:-.015em; }
+  .schedule-sub{ color:var(--ink-faint); font-size:13px; }
+  .schedule-nav{ display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:var(--sp-6); }
+  .schedule-nav-btn{
+    font-family:var(--label); font-size:12.5px; font-weight:700; letter-spacing:.03em;
+    color:var(--indigo); background:var(--indigo-veil); border:1px solid var(--indigo-line);
+    padding:8px 16px; border-radius:999px; cursor:pointer; transition:background .18s var(--ease), color .18s var(--ease);
+  }
+  .schedule-nav-btn:hover:not(:disabled){ background:var(--indigo-deep); color:var(--ink); }
+  .schedule-nav-btn:focus-visible{ outline:2px solid var(--indigo); outline-offset:2px; }
+  .schedule-nav-btn:disabled{ opacity:.35; cursor:default; }
+  .schedule-nav-label{
+    font-family:var(--label); font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-soft); min-width:170px; text-align:center;
+  }
+  .schedule-date-group{ margin-bottom:26px; }
+  .schedule-date-group:last-child{ margin-bottom:0; }
+  .schedule-date-heading{
+    font-family:var(--label); font-size:11.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--ink-faint); margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  .schedule-row{
+    display:flex; align-items:center; gap:14px; padding:11px 6px; border-radius:8px;
+    border-bottom:1px solid var(--cool-line); transition:background .15s var(--ease);
+  }
+  .schedule-row:hover{ background:var(--indigo-veil); }
+  .schedule-row:last-child{ border-bottom:none; }
+  .schedule-comp{
+    flex:none; width:112px; font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.05em;
+    text-transform:uppercase; color:var(--cool-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .schedule-team{
+    flex:1 1 0; min-width:0; display:flex; align-items:center; gap:9px;
+    font-family:var(--label); font-size:14px; font-weight:600; color:var(--ink-soft);
+  }
+  .schedule-team.is-away{ justify-content:flex-end; text-align:right; }
+  .schedule-team-name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .schedule-score{ font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .schedule-mid{
+    flex:none; width:100px; text-align:center; font-family:var(--label); font-size:12px; font-weight:700;
+    color:var(--cool-muted); font-variant-numeric:tabular-nums;
+  }
+  .schedule-mid.is-live{ color:var(--live-bright); display:flex; align-items:center; justify-content:center; gap:5px; }
+  .schedule-mid.is-live .pulse{ width:5px; height:5px; }
+  .schedule-mid.is-final{ color:var(--ink-faint); }
+  .schedule-broadcast{
+    flex:none; width:64px; text-align:right; font-family:var(--label); font-size:10px;
+    color:var(--cool-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .schedule-empty{ font-family:var(--label); font-size:13px; color:var(--cool-faint); padding:32px 0; text-align:center; }
+
+  @media (max-width:640px){
+    .schedule-comp{ width:60px; font-size:8.5px; }
+    .schedule-team{ font-size:12px; gap:6px; }
+    .schedule-mid{ width:58px; font-size:10.5px; }
+    .schedule-broadcast{ display:none; } /* still in the data — just no room to show it here */
+    .schedule-row{ gap:8px; }
+  }
 
   /* ============ TICKER ============ */
 
@@ -1245,12 +1377,34 @@
     <!-- HOME VIEW -->
     <div id="homeView">
 
+  <!-- THE game rail — one single horizontal row of game cards for the
+       active competition only. A card's own status (scheduled/live/final)
+       is what it shows; there is no separate "live" vs "upcoming" section
+       here, just one rail scoped to GAME_RAIL_DAYS (see index.html script).
+       #scoreRailBody carries .score-row's existing horizontal-scroll rules
+       directly — reused, not reinvented. -->
   <div class="score-rail wrap" id="scores">
     <div class="score-rail-head">
       <span class="score-rail-label" id="scoreRailLabel"><span class="pulse"></span>Live</span>
     </div>
-    <div id="scoreRailBody"></div>
+    <div class="score-row" id="scoreRailBody" tabindex="0" aria-label="Games, scroll horizontally"></div>
     <p class="league-notice" id="leagueNotice" hidden></p>
+    <!-- Compact scrubber — a violet/indigo alternative to a browser
+         scrollbar, kept in sync with the rail's real scroll position both
+         ways (drag the thumb -> rail scrolls; scroll the rail -> thumb
+         moves). Hidden whenever the rail's content already fits without
+         scrolling (nothing to scrub). -->
+    <div class="rail-scrubber" id="railScrubber" hidden>
+      <button type="button" class="rail-arrow" id="railArrowLeft" aria-label="Scroll games earlier">‹</button>
+      <div class="rail-track" id="railTrack" role="slider" aria-label="Game rail position"
+           aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+        <div class="rail-thumb" id="railThumb"></div>
+      </div>
+      <button type="button" class="rail-arrow" id="railArrowRight" aria-label="Scroll games later">›</button>
+    </div>
+    <div class="rail-footer">
+      <a href="#" class="rail-full-link" id="railFullLink">View full schedule →</a>
+    </div>
   </div>
 
   <!-- NBA-specific edition metadata: scoped with the existing data-league
@@ -1412,6 +1566,13 @@
          There is no second article system and no per-story HTML file. -->
     <div id="articleView" class="wrap article-page" hidden></div>
 
+    <!-- FULL SCHEDULE VIEW — one competition's complete available window,
+         rendered by renderSchedulePage(). Same normalized game objects and
+         same fetch (/api/schedule) as the rail; a week-at-a-time list,
+         because a full schedule is meant to be read, not scrolled through a
+         184px card. No second data model, no second game-status system. -->
+    <div id="scheduleView" class="wrap schedule-page" hidden></div>
+
     </div><!-- /.shell-body -->
   </div><!-- /.shell -->
 
@@ -1513,7 +1674,12 @@
         { id:'bundesliga', sport:'football',         name:'Bundesliga',     country:'DE', logo:null },
         { id:'nfl',        sport:'americanfootball', name:'NFL',            country:'US', logo:_E('nfl','nfl') }
       ],
-      TEAMS_CFG: []
+      TEAMS_CFG: [],
+      COMPETITION_TIMEZONES: {
+        nba:'America/New_York', wnba:'America/New_York', nfl:'America/New_York',
+        epl:'Europe/London', laliga:'Europe/Madrid', bundesliga:'Europe/Berlin',
+        ucl:'Europe/Berlin', uel:'Europe/Berlin'
+      }
     };
   }
   if (!Array.isArray(window.FB_STORIES)) { window.FB_STORIES = []; }
@@ -1951,7 +2117,9 @@
     // what that fetch actually returned — not guessed here per league. All
     // eight competitions can serve real Highlightly data now, so a static
     // "these two are real, the rest are demo" assumption would be wrong the
-    // moment any of the others has live data (as they do).
+    // moment any of the others has live data (as they do). The rail is
+    // scoped to exactly this one competition (never a merged sport), so a
+    // league switch always means a genuinely different game set.
     if (typeof renderScoreRail === 'function') renderScoreRail();
     if (!opts.silent && articleView.hidden) window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -2274,63 +2442,14 @@
   // ===========================================================================
 
   // ---------------------------------------------------------------------------
-  // DEMO / FALLBACK GAMES  — clearly separated from provider data.
-  // Every object already matches the normalized model the provider adapter
-  // emits, so switching to Highlightly changes the source, not this UI:
-  //
-  //   { id, sport, league, status, homeTeam, awayTeam, homeScore, awayScore,
-  //     period, clock, startTime, venue, broadcast }
-  //
-  // status:  scheduled | live | final
-  // period:  basketball -> Q1 Q2 HT Q3 Q4 OT
-  //          football   -> 1H HT 2H ET PENS FT
-  //          nfl        -> Q1 Q2 HT Q3 Q4 OT
-  // Rows carrying `demo:true` are placeholders, not real fixtures.
-  // ---------------------------------------------------------------------------
-  const SCORE_DEMO = [
-    // --- NBA ---
-    { id:"nba-1", sport:"basketball", league:"nba", status:"live",
-      homeTeam:"NYK", awayTeam:"PHI", homeScore:74, awayScore:68,
-      period:"Q3", clock:"7:41", startTime:null, venue:"Madison Square Garden", broadcast:"ABC" },
-    { id:"nba-2", sport:"basketball", league:"nba", status:"live",
-      homeTeam:"CLE", awayTeam:"MIA", homeScore:51, awayScore:48,
-      period:"Q2", clock:"2:15", startTime:null, venue:"Rocket Arena", broadcast:"ESPN" },
-    { id:"nba-3", sport:"basketball", league:"nba", status:"scheduled",
-      homeTeam:"DEN", awayTeam:"GSW", homeScore:null, awayScore:null,
-      period:null, clock:null, startTime:"9:30 PM", venue:"Ball Arena", broadcast:"TNT" },
-    // --- WNBA ---
-    { id:"wnba-1", sport:"basketball", league:"wnba", status:"scheduled",
-      homeTeam:"IND", awayTeam:"NYL", homeScore:null, awayScore:null,
-      period:null, clock:null, startTime:"7:00 PM", venue:"Gainbridge Fieldhouse", broadcast:"ESPN" },
-    { id:"wnba-2", sport:"basketball", league:"wnba", status:"scheduled",
-      homeTeam:"LVA", awayTeam:"SEA", homeScore:null, awayScore:null,
-      period:null, clock:null, startTime:"10:00 PM", venue:"Michelob ULTRA Arena", broadcast:"NBA TV" },
-    // --- Football / NFL placeholders (no real fixtures invented) ---
-    { id:"epl-1", sport:"football", league:"epl", status:"scheduled",
-      homeTeam:"HOM", awayTeam:"AWY", homeScore:null, awayScore:null,
-      period:null, clock:null, startTime:"Demo", venue:null, broadcast:null, demo:true },
-    { id:"laliga-1", sport:"football", league:"laliga", status:"scheduled",
-      homeTeam:"HOM", awayTeam:"AWY", homeScore:null, awayScore:null,
-      period:null, clock:null, startTime:"Demo", venue:null, broadcast:null, demo:true },
-    { id:"bundesliga-1", sport:"football", league:"bundesliga", status:"scheduled",
-      homeTeam:"HOM", awayTeam:"AWY", homeScore:null, awayScore:null,
-      period:null, clock:null, startTime:"Demo", venue:null, broadcast:null, demo:true },
-    { id:"nfl-1", sport:"americanfootball", league:"nfl", status:"scheduled",
-      homeTeam:"HOM", awayTeam:"AWY", homeScore:null, awayScore:null,
-      period:null, clock:null, startTime:"Demo", venue:null, broadcast:null, demo:true }
-  ];
-
-  // ---------------------------------------------------------------------------
   // DATA LAYER ENTRY POINT
   // ---------------------------------------------------------------------------
   // The browser only ever talks to our own API layer. The Highlightly key lives
   // in the server process (HIGHLIGHTLY_API_KEY) and is never shipped to the
   // client — see server/highlightlyProvider.js and server/api.js.
   //
-  //   Browser -> /api/games -> highlightlyProvider -> Highlightly API
+  //   Browser -> /api/schedule -> highlightlyProvider -> Highlightly API
   //
-  // Without a key the route is absent, the fetch fails, and we fall back to the
-  // demo set above so the prototype stays usable.
   // A relative path is correct whenever the page and the API share an
   // origin (production, or any dev setup that proxies /api through to
   // server/api.js). The one case that needs an absolute URL is the
@@ -2340,47 +2459,41 @@
   // untouched, and the key stays server-side either way.
   const FB_API_BASE = (location.port === '8080') ? 'http://localhost:3000/api' : '/api';
 
-  async function getGames({ sport, league, date } = {}){
-    try {
-      const qs = new URLSearchParams();
-      if (sport)  qs.set('sport', sport);
-      if (league) qs.set('league', league);
-      if (date)   qs.set('date', date);
-      const res = await fetch(`${FB_API_BASE}/games?${qs}`, { headers:{ 'Accept':'application/json' } });
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.games)) {
-          // The server itself can be in demo mode (no provider key, or a
-          // provider outage) without the fetch ever failing — its envelope
-          // says so via `source`. Stamp the same `demo:true` flag the
-          // client-only fallback below already carries, so server-sourced
-          // demo rows get the exact same "Demo" badge instead of looking
-          // indistinguishable from real Highlightly data.
-          const isDemo = data.source !== 'highlightly';
-          return isDemo ? data.games.map(g => ({ ...g, demo: true })) : data.games;
-        }
-      }
-    } catch (e) {
-      // no API layer running at all (static prototype) -> demo data
-    }
-    let rows = SCORE_DEMO;
-    if (league) rows = rows.filter(g => g.league === league);
-    if (sport)  rows = rows.filter(g => g.sport === sport);
-    return rows;
-  }
-
   // display names come from the one config source, not a second hardcoded map
-  const leagueNames = Object.fromEntries(LEAGUES_CFG.map(l => [l.id, l.name]));
+  // Includes COMPETITIONS_CFG (ucl/uel) alongside domestic leagues.
+  const leagueNames = Object.fromEntries(
+    [...LEAGUES_CFG, ...COMPETITIONS_CFG].map(l => [l.id, l.name])
+  );
 
-  // A not-yet-started game's kickoff time, in the viewer's own local time.
-  // Demo rows already carry a pre-formatted string ("9:30 PM") and pass
-  // through unchanged (Date can't parse that, so it's returned as-is);
-  // Highlightly's real ISO datetime gets converted, never shown raw.
-  function gameTimeLabel(iso){
+  // COMPETITION TIMEZONES — see data/sports.js for the source of truth and
+  // the comment explaining why this is duplicated server-side too. Every
+  // date/time shown anywhere in the rail or the full schedule goes through
+  // one of the two helpers below, so there is exactly one place that reads
+  // this map for display purposes.
+  const COMPETITION_TIMEZONES = (window.FB_SPORTS_CONFIG && window.FB_SPORTS_CONFIG.COMPETITION_TIMEZONES) || {};
+  const tzFor = league => COMPETITION_TIMEZONES[league] || 'UTC';
+
+  // Fixed editorial locale as well as a fixed editorial timezone — a
+  // Premier League kickoff reads "7:30 PM" the same way for every visitor,
+  // not "19:30" for one reader and "7:30 PM" for another depending on their
+  // OS language. Never a raw ISO string either way.
+  function formatKickoffTime(iso, league){
     if (!iso) return '';
     const d = new Date(iso);
-    if (isNaN(d)) return iso;
-    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    if (isNaN(d)) return '';
+    return d.toLocaleTimeString('en-US', { timeZone: tzFor(league), hour: 'numeric', minute: '2-digit' });
+  }
+  function formatKickoffDateShort(iso, league){
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('en-US', { timeZone: tzFor(league), weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
+  }
+  function formatKickoffDateLong(iso, league){
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('en-US', { timeZone: tzFor(league), weekday: 'long', month: 'long', day: 'numeric' });
   }
 
   // Formats the clock line for the ONE score component, per sport.
@@ -2408,37 +2521,98 @@
   }
 
   // A real team logo when the backend provides one (Highlightly's remote
-  // URL, never downloaded/stored), sized to the existing 22px badge box
-  // exactly. A missing or broken image falls back to the plain abbreviation
-  // text the box has always shown — same onerror-swap pattern as logoMark()
-  // above, just targeting a box that already supplies its own chrome
-  // (background/border) rather than nesting a second styled fallback inside it.
+  // URL, never downloaded/stored), sized to the .team-badge box exactly (one
+  // coherent size, used identically for live/scheduled/final cards and on
+  // the full schedule — see the .team-badge CSS comment). A missing or
+  // broken image falls back to the plain abbreviation text the box has
+  // always shown — same onerror-swap pattern as logoMark() above, just
+  // targeting a box that already supplies its own chrome (background/
+  // border) rather than nesting a second styled fallback inside it.
   function teamBadge(logoUrl, label){
     if (!logoUrl) return `<span class="team-badge">${label}</span>`;
     return `<span class="team-badge"><img src="${logoUrl}" alt="" loading="lazy"
       onerror="this.parentElement.textContent='${label}'"></span>`;
   }
 
-  // Single owner of the score-rail refresh loop — never more than one timer
-  // pending. Every entry point (a league switch, or the loop itself) clears
-  // any previous timer before doing anything else, so switching leagues
-  // can't leave a stale auto-refresh racing the fresh one.
+  // ===========================================================================
+  // THE GAME RAIL — one single horizontal row of game cards, scoped to the
+  // ACTIVE COMPETITION only (never merged across a sport). A card's own
+  // status field is what changes it from scheduled -> live -> final; there
+  // is no separate live/upcoming system and no second card design here —
+  // buildGameCard() below is the one function that builds a card, shared by
+  // the rail render below.
+  // ===========================================================================
+  const GAME_RAIL_DAYS = 14; // mirrors server/api.js SCHEDULE_DAYS default
+
+  // Per-competition cache (never one combined cache — the key includes
+  // `league`), short-lived so a game going live/final is caught within a
+  // few minutes without re-fetching on every render.
+  const scheduleCache = {};
+  const SCHEDULE_CACHE_MS = 4 * 60 * 1000;
+
+  async function fetchSchedule(league, days){
+    const key = `${league}:${days}`;
+    const cached = scheduleCache[key];
+    if (cached && Date.now() - cached.at < SCHEDULE_CACHE_MS) return cached;
+    let result = { games: [], demo: false };
+    try {
+      const res = await fetch(`${FB_API_BASE}/schedule?league=${league}&days=${days}`,
+        { headers: { 'Accept': 'application/json' } });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.games)) result = { games: data.games, demo: data.source !== 'highlightly' };
+      }
+    } catch (e) { /* no API layer running — surfaces as an empty rail, never fake fixtures */ }
+    scheduleCache[key] = { ...result, at: Date.now() };
+    return scheduleCache[key];
+  }
+
+  // The one card builder — used by the rail (and nowhere else needs one).
+  // status decides the middle line only; team rows, logos and scores follow
+  // the exact same score-rail language regardless of status.
+  function buildGameCard(g){
+    const comp = leagueNames[g.league] || g.league.toUpperCase();
+    let statusRow;
+    if (g.status === 'live') {
+      statusRow = `<div class="game-status-row"><span class="gs-live"><span class="pulse"></span>${periodLine(g)}</span></div>`;
+    } else if (g.status === 'final') {
+      statusRow = `<div class="game-status-row"><span class="gs-time">Final</span></div>`;
+    } else if (g.status === 'postponed') {
+      statusRow = `<div class="game-status-row"><span class="gs-time">Postponed</span></div>`;
+    } else {
+      statusRow = `<div class="game-status-row"><span class="gs-time gc-datetime">
+        <span class="gc-date">${formatKickoffDateShort(g.startTime, g.league)}</span><span class="gc-kickoff">${formatKickoffTime(g.startTime, g.league)}</span>
+      </span></div>`;
+    }
+    const scored = g.status === 'live' || g.status === 'final';
+    const broadcast = g.broadcast ? `<div class="game-broadcast">${g.broadcast}</div>` : '';
+    return `<div class="game-card${g.status === 'live' ? ' is-live' : ''}" data-game-id="${g.id}">
+      <div class="gc-comp">${comp}</div>
+      ${statusRow}
+      <div class="game-teams">
+        <div class="game-team-row"><span class="game-team">${teamBadge(g.awayTeamLogo, g.awayTeam)}${g.awayTeamName || g.awayTeam}</span>${scored ? `<span class="game-score">${g.awayScore}</span>` : ''}</div>
+        <div class="game-team-row"><span class="game-team">${teamBadge(g.homeTeamLogo, g.homeTeam)}${g.homeTeamName || g.homeTeam}</span>${scored ? `<span class="game-score">${g.homeScore}</span>` : ''}</div>
+      </div>
+      ${broadcast}
+    </div>`;
+  }
+
+  // Single owner of the rail refresh loop — never more than one timer
+  // pending. Every entry point (a competition switch, or the loop itself)
+  // clears any previous timer first, so switching competitions can't leave
+  // a stale auto-refresh racing the fresh one.
   //
   // Visibility is only consulted for the AUTOMATIC tick, never for a direct
-  // call — renderScoreRail() always renders when called (a league switch, or
-  // the initial load, must never be silently skipped just because the tab
+  // call — renderScoreRail() always renders when called (a switch, or the
+  // initial load, must never be silently skipped just because the tab
   // happens to be backgrounded at that instant). A skipped background tick
-  // simply reschedules itself rather than fetching; a `visibilitychange`
-  // listener below catches the tab back up the moment it's shown again,
-  // instead of leaving it stale until the next full interval.
-  // Guards against an out-of-order response: switching leagues quickly (or
-  // the auto-refresh firing mid-switch) can have two fetches in flight at
-  // once, and the network gives no guarantee the one that STARTED first
-  // FINISHES first. Without this, a slow response for the league the user
-  // just left can land after a fast one for the league they switched to and
-  // silently overwrite it — invisible with instant demo data, but a real,
-  // observed bug once requests have real (variable) network latency. Each
-  // call claims the next id; a response only gets to touch the DOM if its id
+  // simply reschedules itself; a `visibilitychange` listener below catches
+  // the tab back up the moment it's shown again.
+  //
+  // Guards against an out-of-order response: switching competitions quickly
+  // (or the auto-refresh firing mid-switch) can have two fetches in flight
+  // at once, with no guarantee the one that STARTED first FINISHES first.
+  // Each call claims the next id; a response only touches the DOM if its id
   // is still the most recent one issued by the time it resolves.
   let scoreRailRequestId = 0;
   let scoreRailTimer = null;
@@ -2460,19 +2634,16 @@
     const myRequestId = ++scoreRailRequestId;
     const body  = document.getElementById('scoreRailBody');
     const label = document.getElementById('scoreRailLabel');
-    const games = await getGames({ league: activeLeague });
+    const result = await fetchSchedule(activeLeague, GAME_RAIL_DAYS);
     if (myRequestId !== scoreRailRequestId) return; // superseded — discard
+    const games = result.games;
 
-    // Reflect what THIS fetch actually returned, not an assumption about
-    // which leagues are "the real ones" — every competition can serve real
-    // Highlightly data, and the games array already carries the true source.
     const notice = document.getElementById('leagueNotice');
     if (notice) {
-      const anyDemo = games.some(g => g.demo);
-      notice.hidden = !anyDemo;
-      if (anyDemo) {
+      notice.hidden = !result.demo;
+      if (result.demo) {
         notice.textContent =
-          `Scores for ${leagueNames[activeLeague] || activeLeague.toUpperCase()} are demo data until a provider key is configured. Stories above are verified reporting.`;
+          `${leagueNames[activeLeague] || activeLeague.toUpperCase()} isn't connected to a live provider right now. Stories above are verified reporting.`;
       }
     }
 
@@ -2486,75 +2657,298 @@
       ? '<span class="pulse"></span>Live'
       : '<span class="pulse"></span>Upcoming';
 
-    body.innerHTML = '';
+    body.innerHTML = games.length
+      ? games.map(buildGameCard).join('')
+      : `<div class="score-empty">No games in the next ${GAME_RAIL_DAYS} days.</div>`;
 
-    if (!games.length) {
-      const empty = document.createElement('div');
-      empty.className = 'score-empty';
-      // The backend always scopes /api/games to today, so an empty result
-      // means exactly one thing — there is nothing on the slate today, live
-      // or otherwise. Never a placeholder score in its place.
-      empty.textContent = 'No games today.';
-      body.appendChild(empty);
-      scheduleScoreRailRefresh(false);
-      return;
+    // Kept pointing at the CURRENT competition's schedule at all times, not
+    // just on click — a real href (not "#") so hover preview, right-click
+    // "open in new tab" and middle-click all resolve correctly too.
+    const fullLink = document.getElementById('railFullLink');
+    if (fullLink) fullLink.href = scheduleUrl(activeLeague);
+
+    updateScrubber();
+    scheduleScoreRailRefresh(hasLive);
+  }
+
+  // ===========================================================================
+  // RAIL SCRUBBER — a compact violet/indigo alternative to a browser
+  // scrollbar, kept in sync with the rail's true scroll position both ways.
+  // Pointer Events unify mouse + touch + pen drag handling in one code path.
+  // The only genuinely new UI control this task adds — every game card and
+  // the rail itself are 100% reused, not reinvented.
+  // ===========================================================================
+  function prefersReducedMotion(){
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+  const CARD_STEP = 200; // .game-card width (188px) + its .score-row gap (12px)
+
+  function updateScrubber(){
+    const rail = document.getElementById('scoreRailBody');
+    const scrubber = document.getElementById('railScrubber');
+    const track = document.getElementById('railTrack');
+    const thumb = document.getElementById('railThumb');
+    if (!rail || !scrubber || !track || !thumb) return;
+
+    const scrollable = rail.scrollWidth - rail.clientWidth;
+    if (scrollable <= 4) { scrubber.hidden = true; return; }
+    scrubber.hidden = false;
+
+    const trackWidth = track.clientWidth || 1;
+    const thumbWidth = Math.min(trackWidth, Math.max(32, (rail.clientWidth / rail.scrollWidth) * trackWidth));
+    const maxThumbLeft = trackWidth - thumbWidth;
+    const progress = Math.min(1, Math.max(0, rail.scrollLeft / scrollable));
+    thumb.style.width = thumbWidth + 'px';
+    thumb.style.left = (progress * maxThumbLeft) + 'px';
+    track.setAttribute('aria-valuenow', String(Math.round(progress * 100)));
+
+    const arrowLeft = document.getElementById('railArrowLeft');
+    const arrowRight = document.getElementById('railArrowRight');
+    if (arrowLeft)  arrowLeft.disabled  = rail.scrollLeft <= 1;
+    if (arrowRight) arrowRight.disabled = rail.scrollLeft >= scrollable - 1;
+  }
+
+  (function wireRailScrubber(){
+    const rail = document.getElementById('scoreRailBody');
+    const track = document.getElementById('railTrack');
+    const thumb = document.getElementById('railThumb');
+    const arrowLeft = document.getElementById('railArrowLeft');
+    const arrowRight = document.getElementById('railArrowRight');
+    if (!rail || !track || !thumb || !arrowLeft || !arrowRight) return;
+
+    let ticking = false;
+    rail.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { updateScrubber(); ticking = false; });
+    }, { passive: true });
+
+    function scrollByCards(dir){
+      rail.scrollBy({ left: dir * 3 * CARD_STEP, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
     }
+    arrowLeft.addEventListener('click', () => scrollByCards(-1));
+    arrowRight.addEventListener('click', () => scrollByCards(1));
 
-    const byLeague = {};
-    games.forEach(g => { (byLeague[g.league] = byLeague[g.league] || []).push(g); });
-
-    Object.keys(byLeague).forEach(league => {
-      const group = document.createElement('div');
-      group.className = 'score-league-group';
-
-      const name = document.createElement('div');
-      name.className = 'score-league-name';
-      name.textContent = leagueNames[league] || league.toUpperCase();
-      group.appendChild(name);
-
-      const row = document.createElement('div');
-      row.className = 'score-row';
-
-      byLeague[league].forEach(g => {
-        const card = document.createElement('div');
-        card.className = 'game-card' + (g.status === 'live' ? ' is-live' : '');
-
-        // Demo data's startTime was always a pre-formatted string ("9:30 PM").
-        // Real Highlightly data gives a full ISO datetime, which needs its own
-        // label per status rather than being printed raw — a finished game
-        // showing its kickoff timestamp instead of "Final" isn't a state the
-        // demo set ever exercised, since it never included status:'final' rows.
-        const nonLiveLabel = g.status === 'final' ? 'Final'
-          : g.status === 'postponed' ? 'Postponed'
-          : g.status === 'cancelled' ? 'Cancelled'
-          : (gameTimeLabel(g.startTime) || '');
-        // The demo badge has to reach both branches — the server's own
-        // fallback set includes rows with status:'live' (its NBA placeholder
-        // game), so a live demo card needs the same "Demo" marker a
-        // scheduled/final one gets, or it would silently look indistinguishable
-        // from a real live Highlightly game.
-        const demoBadge = g.demo ? '<span class="gs-demo">Demo</span>' : '';
-        const statusRow = g.status === 'live'
-          ? `<div class="game-status-row"><span class="gs-live"><span class="pulse"></span>${periodLine(g)}</span>${demoBadge}</div>`
-          : `<div class="game-status-row"><span class="gs-time">${nonLiveLabel}</span>${demoBadge}</div>`;
-
-        const scored = g.status === 'live' || g.status === 'final';
-        const teams = `<div class="game-teams">
-               <div class="game-team-row"><span class="game-team">${teamBadge(g.awayTeamLogo, g.awayTeam)}${g.awayTeam}</span>${scored ? `<span class="game-score">${g.awayScore}</span>` : ''}</div>
-               <div class="game-team-row"><span class="game-team">${teamBadge(g.homeTeamLogo, g.homeTeam)}${g.homeTeam}</span>${scored ? `<span class="game-score">${g.homeScore}</span>` : ''}</div>
-             </div>`;
-
-        const broadcast = g.broadcast ? `<div class="game-broadcast">${g.broadcast}</div>` : '';
-
-        card.innerHTML = statusRow + teams + broadcast;
-        row.appendChild(card);
-      });
-
-      group.appendChild(row);
-      body.appendChild(group);
+    function jumpToClientX(clientX){
+      const rect = track.getBoundingClientRect();
+      const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+      const scrollable = rail.scrollWidth - rail.clientWidth;
+      rail.scrollTo({ left: ratio * scrollable, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    }
+    track.addEventListener('click', e => {
+      if (e.target === thumb) return; // a click that starts a drag is handled below
+      jumpToClientX(e.clientX);
     });
 
-    scheduleScoreRailRefresh(hasLive);
+    // Thumb drag. Move/up listen on `document`, not just the thumb — a fast
+    // drag routinely puts the cursor/finger outside the thumb's own small
+    // hit area mid-gesture, and pointer capture (attempted as a belt-and-
+    // braces extra, but wrapped in try/catch since it can legitimately
+    // throw) is not load-bearing for correctness here the way it would be
+    // if move/up were only listened for on the thumb itself.
+    let dragging = false, dragStartX = 0, dragStartLeft = 0;
+    thumb.addEventListener('pointerdown', e => {
+      dragging = true;
+      dragStartX = e.clientX;
+      dragStartLeft = rail.scrollLeft;
+      thumb.classList.add('is-dragging');
+      try { thumb.setPointerCapture(e.pointerId); } catch (_) { /* document-level listeners still track the drag */ }
+      e.preventDefault();
+    });
+    // NOTE: .score-row has scroll-behavior:smooth (for the arrow buttons and
+    // track-click jumps). A drag must NOT inherit that — setting .scrollLeft
+    // directly still honors CSS scroll-behavior per the CSSOM View spec, so
+    // it would animate/lag behind the pointer instead of tracking it 1:1.
+    // scrollTo({..., behavior:'instant'}) explicitly overrides that, which
+    // plain assignment cannot.
+    document.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      const trackWidth = track.clientWidth || 1;
+      const scrollable = rail.scrollWidth - rail.clientWidth;
+      const deltaScroll = ((e.clientX - dragStartX) / trackWidth) * scrollable;
+      rail.scrollTo({ left: Math.min(scrollable, Math.max(0, dragStartLeft + deltaScroll)), behavior: 'instant' });
+    });
+    function endDrag(e){
+      if (!dragging) return;
+      dragging = false;
+      thumb.classList.remove('is-dragging');
+      try { thumb.releasePointerCapture(e.pointerId); } catch (_) { /* already released, or was never captured */ }
+    }
+    document.addEventListener('pointerup', endDrag);
+    document.addEventListener('pointercancel', endDrag);
+
+    // Keyboard on the track (role="slider") — arrows nudge one card width,
+    // Home/End jump to the ends. Instant for the same reason as the drag
+    // handler above — direct response, not an animated catch-up.
+    track.addEventListener('keydown', e => {
+      const scrollable = rail.scrollWidth - rail.clientWidth;
+      if (e.key === 'ArrowRight') { rail.scrollTo({ left: Math.min(scrollable, rail.scrollLeft + CARD_STEP), behavior: 'instant' }); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft') { rail.scrollTo({ left: Math.max(0, rail.scrollLeft - CARD_STEP), behavior: 'instant' }); e.preventDefault(); }
+      else if (e.key === 'Home') { rail.scrollTo({ left: 0, behavior: 'instant' }); e.preventDefault(); }
+      else if (e.key === 'End') { rail.scrollTo({ left: scrollable, behavior: 'instant' }); e.preventDefault(); }
+    });
+
+    window.addEventListener('resize', updateScrubber);
+  })();
+
+  // "View full schedule" -> a real route, /schedule/{league} (see the router
+  // below). Rendered as a normal <a> (right-click/open-in-new-tab keep
+  // working) with a click handler that intercepts a plain click for SPA
+  // navigation — the same pattern every story link already uses.
+  (function wireRailFullLink(){
+    const link = document.getElementById('railFullLink');
+    if (!link) return;
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      navigate(scheduleUrl(activeLeague));
+    });
+  })();
+
+  // ===========================================================================
+  // FULL SCHEDULE PAGE — one competition's complete available window, a
+  // week at a time. Same normalized game objects and same /api/schedule
+  // fetch as the rail (fetchSchedule() above) — the only new thing here is
+  // the presentation and the week-slicing, never a second data model.
+  // ===========================================================================
+  const FULL_SCHEDULE_DAYS = 240; // "all currently available future games" — bounded only by what the provider itself returns (see server/highlightlyProvider.js)
+
+  // {y,mo,d,h,mi,s} for `ms` as observed in `timeZone` — same technique (and
+  // verified against the same DST cases) as startOfDayInZone() in
+  // server/highlightlyProvider.js, duplicated here because the two runtimes
+  // can't share a module.
+  function tzStartOfDay(ms, timeZone){
+    function parts(t){
+      const fmt = new Intl.DateTimeFormat('en-US', {
+        timeZone, hour12: false, year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+      const p = {};
+      fmt.formatToParts(t).forEach(x => { if (x.type !== 'literal') p[x.type] = x.value; });
+      let h = Number(p.hour); if (h === 24) h = 0;
+      return { y: Number(p.year), mo: Number(p.month), d: Number(p.day), h, mi: Number(p.minute), s: Number(p.second) };
+    }
+    const p = parts(ms);
+    const utcGuess = Date.UTC(p.y, p.mo - 1, p.d, 0, 0, 0);
+    const observed = parts(utcGuess);
+    const observedAsUTC = Date.UTC(observed.y, observed.mo - 1, observed.d, observed.h, observed.mi, observed.s);
+    return utcGuess - (observedAsUTC - utcGuess);
+  }
+
+  function weekRangeMs(league, weekOffset){
+    const start = tzStartOfDay(Date.now(), tzFor(league)) + weekOffset * 7 * 86400000;
+    return { start, end: start + 7 * 86400000 };
+  }
+
+  function liveLabelText(g){
+    const period = (PERIOD_LABELS[g.sport] || {})[g.period] || g.period;
+    const parts = ['Live'];
+    if (period) parts.push(period);
+    if (g.clock) parts.push(g.clock);
+    return parts.join(' · ');
+  }
+
+  function buildScheduleRow(g){
+    const comp = leagueNames[g.league] || g.league.toUpperCase();
+    let mid;
+    if (g.status === 'live') mid = `<span class="schedule-mid is-live"><span class="pulse"></span>${liveLabelText(g)}</span>`;
+    else if (g.status === 'final') mid = `<span class="schedule-mid is-final">Final</span>`;
+    else if (g.status === 'postponed') mid = `<span class="schedule-mid">Postponed</span>`;
+    else mid = `<span class="schedule-mid">${formatKickoffTime(g.startTime, g.league)}</span>`;
+
+    const scored = g.status === 'live' || g.status === 'final';
+    const broadcast = `<span class="schedule-broadcast">${g.broadcast || ''}</span>`;
+    return `<div class="schedule-row" data-game-id="${g.id}">
+      <span class="schedule-comp">${comp}</span>
+      <span class="schedule-team">${teamBadge(g.homeTeamLogo, g.homeTeam)}<span class="schedule-team-name">${g.homeTeamName || g.homeTeam}</span>${scored ? `<span class="schedule-score">${g.homeScore}</span>` : ''}</span>
+      ${mid}
+      <span class="schedule-team is-away">${scored ? `<span class="schedule-score">${g.awayScore}</span>` : ''}<span class="schedule-team-name">${g.awayTeamName || g.awayTeam}</span>${teamBadge(g.awayTeamLogo, g.awayTeam)}</span>
+      ${broadcast}
+    </div>`;
+  }
+
+  let scheduleRequestId = 0;
+  let scheduleAllGames = [];
+  let scheduleWeekOffset = 0;
+  let scheduleLeague = null;
+
+  async function renderSchedulePage(league){
+    scheduleLeague = league;
+    scheduleWeekOffset = 0;
+    const myRequestId = ++scheduleRequestId;
+    const view = document.getElementById('scheduleView');
+    if (!view) return;
+    view.innerHTML = `<button type="button" class="schedule-back" id="scheduleBackBtn">← Back to ${leagueNames[league] || league.toUpperCase()}</button>
+      <p class="schedule-empty">Loading schedule…</p>`;
+    wireScheduleBack();
+
+    const result = await fetchSchedule(league, FULL_SCHEDULE_DAYS);
+    if (myRequestId !== scheduleRequestId) return; // superseded — a different competition's page was requested since
+    scheduleAllGames = result.games;
+    renderScheduleWeek();
+  }
+
+  function wireScheduleBack(){
+    const btn = document.getElementById('scheduleBackBtn');
+    if (btn) btn.addEventListener('click', e => { e.preventDefault(); navigate(homeUrl()); });
+  }
+
+  function renderScheduleWeek(){
+    const league = scheduleLeague;
+    const view = document.getElementById('scheduleView');
+    if (!view || !league) return;
+    const tz = tzFor(league);
+    const { start, end } = weekRangeMs(league, scheduleWeekOffset);
+
+    const weekGames = scheduleAllGames
+      .filter(g => { const t = Date.parse(g.startTime || 0); return Number.isFinite(t) && t >= start && t < end; })
+      .sort((a, b) => Date.parse(a.startTime || 0) - Date.parse(b.startTime || 0));
+
+    const maxKnown = scheduleAllGames.reduce((max, g) => {
+      const t = Date.parse(g.startTime || 0);
+      return Number.isFinite(t) && t > max ? t : max;
+    }, 0);
+    const canGoBack = scheduleWeekOffset > 0;
+    const canGoForward = scheduleAllGames.length > 0 && end <= maxKnown;
+
+    const weekLabel = `${new Date(start).toLocaleDateString('en-US', { timeZone: tz, month: 'short', day: 'numeric' })}`
+      + ` – ${new Date(end - 86400000).toLocaleDateString('en-US', { timeZone: tz, month: 'short', day: 'numeric' })}`;
+
+    const byDay = {};
+    const order = [];
+    weekGames.forEach(g => {
+      const key = new Date(g.startTime).toLocaleDateString('en-US', { timeZone: tz });
+      if (!byDay[key]) { byDay[key] = []; order.push(key); }
+      byDay[key].push(g);
+    });
+
+    const body = weekGames.length
+      ? order.map(key => `<div class="schedule-date-group">
+          <div class="schedule-date-heading">${formatKickoffDateLong(byDay[key][0].startTime, league)}</div>
+          ${byDay[key].map(buildScheduleRow).join('')}
+        </div>`).join('')
+      : `<p class="schedule-empty">No games in this week.</p>`;
+
+    view.innerHTML = `
+      <button type="button" class="schedule-back" id="scheduleBackBtn">← Back to ${leagueNames[league] || league.toUpperCase()}</button>
+      <div class="schedule-head">
+        <div class="schedule-title-group">
+          <h1 class="schedule-title">${leagueNames[league] || league.toUpperCase()} Schedule</h1>
+          <span class="schedule-sub">${scheduleAllGames.length} game${scheduleAllGames.length === 1 ? '' : 's'} currently available</span>
+        </div>
+      </div>
+      <div class="schedule-nav">
+        <button type="button" class="schedule-nav-btn" id="scheduleNavPrev" ${canGoBack ? '' : 'disabled'}>‹ Previous</button>
+        <span class="schedule-nav-label">${weekLabel}</span>
+        <button type="button" class="schedule-nav-btn" id="scheduleNavNext" ${canGoForward ? '' : 'disabled'}>Next ›</button>
+      </div>
+      ${body}
+    `;
+
+    wireScheduleBack();
+    const prev = document.getElementById('scheduleNavPrev');
+    const next = document.getElementById('scheduleNavNext');
+    if (prev) prev.addEventListener('click', () => { if (scheduleWeekOffset > 0) { scheduleWeekOffset--; renderScheduleWeek(); window.scrollTo({ top: 0, behavior: 'auto' }); } });
+    if (next) next.addEventListener('click', () => { scheduleWeekOffset++; renderScheduleWeek(); window.scrollTo({ top: 0, behavior: 'auto' }); });
   }
 
   // ===========================================================================
@@ -2587,12 +2981,15 @@
   // (see netlify.toml) so a refresh on an article URL still resolves.
   // ===========================================================================
 
-  // Everything before "/story/" is the base, so the routes keep working when
-  // the site is served from a subdirectory rather than a domain root.
+  // Everything before "/story/" or "/schedule/" is the base, so the routes
+  // keep working when the site is served from a subdirectory rather than a
+  // domain root.
   const BASE = (function(){
     const path = location.pathname;
-    const i = path.indexOf('/story/');
-    if (i !== -1) return path.slice(0, i);
+    const storyIdx = path.indexOf('/story/');
+    if (storyIdx !== -1) return path.slice(0, storyIdx);
+    const scheduleIdx = path.indexOf('/schedule/');
+    if (scheduleIdx !== -1) return path.slice(0, scheduleIdx);
     return path.replace(/\/[^/]*$/, '');
   })();
 
@@ -2606,9 +3003,17 @@
     const m = path.match(/\/story\/([^/?#]+)/);
     return m ? decodeURIComponent(m[1]) : null;
   };
+  // Full schedule route — always the CURRENT active competition, never a
+  // whole-sport or all-sports view (item 15 of the task this shipped in).
+  const scheduleUrl = league => (BASE || '') + '/schedule/' + league;
+  const scheduleLeagueFromPath = path => {
+    const m = path.match(/\/schedule\/([^/?#]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+  };
 
-  const homeView    = document.getElementById('homeView');
-  const articleView = document.getElementById('articleView');
+  const homeView     = document.getElementById('homeView');
+  const articleView  = document.getElementById('articleView');
+  const scheduleView = document.getElementById('scheduleView');
   const readProgress = document.getElementById('readProgress');
 
   function navigate(url, opts){
@@ -2617,12 +3022,20 @@
     route(opts);
   }
 
-  // The single view switch. Nothing else toggles these two containers.
+  // The single view switch. Exactly one of homeView / articleView /
+  // scheduleView is ever visible at a time.
   function route(opts){
     opts = opts || {};
     closeMega();
     const id = storyIdFromPath(location.pathname);
     const story = id ? STORIES.find(x => x.id === id) : null;
+    const scheduleLeagueId = !story ? scheduleLeagueFromPath(location.pathname) : null;
+    // LEAGUES_CFG alone would wrongly 404 a direct link to a competition's
+    // schedule (ucl/uel live in COMPETITIONS_CFG, not LEAGUES_CFG) — the
+    // schedule route validates against every id the backend can actually
+    // serve, same list leagueNames already merges.
+    const scheduleLeagueValid = scheduleLeagueId &&
+      [...LEAGUES_CFG, ...COMPETITIONS_CFG].some(l => l.id === scheduleLeagueId);
 
     if (story) {
       // Reading an article about another league should move the whole app to
@@ -2636,16 +3049,40 @@
       renderArticlePage(story);
       homeView.hidden = true;
       articleView.hidden = false;
+      scheduleView.hidden = true;
       document.title = story.headline + ' — Fast Break';
       if (!opts.keepScroll) window.scrollTo({ top: 0, behavior: 'auto' });
       updateProgress();
       return;
     }
 
-    // Unknown /story/ id: fall back to the homepage rather than a blank page.
-    if (id) history.replaceState({}, '', homeUrl());
+    if (scheduleLeagueValid) {
+      // Same league-sync as the article branch above — the schedule page
+      // for a competition should also be the app's active competition, so
+      // the sport rail and the eventual "back" link agree with the page.
+      if (scheduleLeagueId !== activeLeague && LEAGUES[scheduleLeagueId]) {
+        activeLeague = scheduleLeagueId;
+        renderStories();
+        if (typeof renderScoreRail === 'function') renderScoreRail();
+      }
+      markActiveSport();
+      homeView.hidden = true;
+      articleView.hidden = true;
+      articleView.innerHTML = '';
+      scheduleView.hidden = false;
+      document.title = `${leagueNames[scheduleLeagueId] || scheduleLeagueId.toUpperCase()} Schedule — Fast Break`;
+      if (typeof renderSchedulePage === 'function') renderSchedulePage(scheduleLeagueId);
+      if (!opts.keepScroll) window.scrollTo({ top: 0, behavior: 'auto' });
+      return;
+    }
+
+    // Unknown /story/ or /schedule/ path: fall back to the homepage rather
+    // than a blank page.
+    if (id || scheduleLeagueId) history.replaceState({}, '', homeUrl());
     articleView.hidden = true;
     articleView.innerHTML = '';
+    scheduleView.hidden = true;
+    scheduleView.innerHTML = '';
     homeView.hidden = false;
     readProgress.style.width = '0%';
     document.title = 'Fast Break';

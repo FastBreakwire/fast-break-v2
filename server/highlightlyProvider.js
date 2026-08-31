@@ -524,6 +524,159 @@ async function getGames({ league, date, season } = {}) {
   return rows(data).map(r => mapGame(r, league, cfg));
 }
 
+// ---------------------------------------------------------------------------
+// COMPETITION TIMEZONES — the one place that maps a league to its fixed
+// editorial timezone (IANA name, so DST is handled automatically). Fast
+// Break shows a competition's own kickoff-market time, not the visitor's
+// browser zone. Mirrored in data/sports.js for the frontend (this file
+// can't be imported by a classic <script>) — keep the two in sync.
+// ---------------------------------------------------------------------------
+const COMPETITION_TIMEZONES = {
+  nba: 'America/New_York', wnba: 'America/New_York', nfl: 'America/New_York',
+  epl: 'Europe/London', laliga: 'Europe/Madrid', bundesliga: 'Europe/Berlin',
+  ucl: 'Europe/Berlin', uel: 'Europe/Berlin'
+};
+
+// {y,mo,d,h,mi,s} for `ms` as observed in `timeZone`.
+function zonedParts(ms, timeZone) {
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone, hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
+  const parts = {};
+  fmt.formatToParts(ms).forEach(p => { if (p.type !== 'literal') parts[p.type] = p.value; });
+  let h = Number(parts.hour);
+  if (h === 24) h = 0; // some engines report midnight as "24"
+  return { y: Number(parts.year), mo: Number(parts.month), d: Number(parts.day), h, mi: Number(parts.minute), s: Number(parts.second) };
+}
+
+// UTC epoch ms for 00:00:00 local time, in `timeZone`, on the calendar day
+// containing `ms`. Correct across DST because the zone's offset is
+// re-measured at the guessed instant rather than assumed fixed — standard
+// double-format technique (Node has no built-in "construct Date in an
+// arbitrary IANA zone" primitive).
+function startOfDayInZone(ms, timeZone) {
+  const p = zonedParts(ms, timeZone);
+  const utcGuess = Date.UTC(p.y, p.mo - 1, p.d, 0, 0, 0);
+  const observed = zonedParts(utcGuess, timeZone);
+  const observedAsUTC = Date.UTC(observed.y, observed.mo - 1, observed.d, observed.h, observed.mi, observed.s);
+  return utcGuess - (observedAsUTC - utcGuess);
+}
+
+// ---------------------------------------------------------------------------
+// SCHEDULE WINDOW — a forward-looking window of games for one competition
+// (plus today's finals, in that competition's own timezone, so a game that
+// just ended doesn't vanish from the rail the instant it finishes). Built
+// on the same /matches endpoint and the same mapGame() normalizer
+// getGames() already uses — never a second game-status system, just a
+// different fetch/filter shape on top of it. Used for BOTH the compact
+// 14-day game rail and the full schedule view (a larger `days`/`maxPages`),
+// so there is exactly one fetch/cache/normalize path for schedule data.
+//
+// The Sport API has no date-RANGE parameter (only a single `date`), so a
+// window is built by paging the date-less /matches response instead. Two
+// real responses were inspected while building this (EPL: totalCount 180
+// across 2 pages; NBA: totalCount 1380, all in the past — the 2026-27
+// schedule isn't published by the provider yet) and both came back sorted
+// newest-first. Paging stops once a page's OLDEST date has already reached
+// today — everything after that point can only be older still, so it can't
+// contain anything inside a forward-looking window — bounded by `maxPages`
+// as a hard backstop in case some competition doesn't follow that ordering.
+//
+// Cached in memory PER COMPETITION (never a combined football cache — the
+// cache key already includes `league`) so repeat loads across visitors
+// don't re-spend the request budget within the cache window.
+// ---------------------------------------------------------------------------
+const UPCOMING_CACHE_MS = 5 * 60 * 1000;
+const upcomingCache = new Map(); // `${league}:${days}:${maxPages}` -> { at, games }
+
+async function getUpcomingGames({ league, days = 14, maxPages = 3 } = {}) {
+  const cfg = LEAGUE_CONFIG[league];
+  if (!cfg) return [];
+
+  const cacheKey = `${league}:${days}:${maxPages}`;
+  const cached = upcomingCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < UPCOMING_CACHE_MS) return cached.games;
+
+  const effectiveSeason = CURRENT_SEASON[league];
+  const baseParams = cfg.paramStyle === 'id'
+    ? { leagueId: cfg.leagueId, season: effectiveSeason }
+    : { league: cfg.leagueName, season: effectiveSeason };
+
+  const now = Date.now();
+  const horizon = now + days * 24 * 60 * 60 * 1000;
+  const timeZone = COMPETITION_TIMEZONES[league] || 'UTC';
+  const todayStart = startOfDayInZone(now, timeZone);
+
+  let raw = [];
+  for (let page = 0; page < maxPages; page++) {
+    const data = await request(cfg.sportSlug, '/matches', { ...baseParams, limit: 100, offset: page * 100 });
+    const batch = rows(data);
+    if (!batch.length) break;
+    raw = raw.concat(batch);
+
+    const total = data && data.pagination ? data.pagination.totalCount : raw.length;
+    if (raw.length >= total) break; // every match already fetched
+
+    const oldestOnPage = batch.reduce((min, m) => {
+      const t = m.date ? Date.parse(m.date) : NaN;
+      return Number.isFinite(t) && (min === null || t < min) ? t : min;
+    }, null);
+    if (oldestOnPage !== null && oldestOnPage <= now) break; // rest can only be older
+  }
+
+  // Confirmed on a live response (Europa League, 30 Aug 2026): consecutive
+  // pages of /matches can return the same match id more than once — 44 of
+  // 144 rows duplicated in one observed fetch. Not a pagination bug on this
+  // side (offsets increment by a fixed 100 with no overlap); the provider's
+  // own paginated ordering isn't perfectly stable. Deduped by id before
+  // mapping rather than trusting each page to be disjoint.
+  const seenIds = new Set();
+  const deduped = raw.filter(m => {
+    if (seenIds.has(m.id)) return false;
+    seenIds.add(m.id);
+    return true;
+  });
+
+  const games = deduped
+    .map(r => mapGame(r, league, cfg))
+    .filter(g => {
+      if (g.status === 'cancelled') return false;
+      // A live game is "now" by definition, regardless of its nominal
+      // (already-past) kickoff timestamp — never excluded by the window.
+      if (g.status === 'live') return true;
+      if (!g.startTime) return false;
+      const t = Date.parse(g.startTime);
+      if (!Number.isFinite(t)) return false;
+      if (g.status === 'final') {
+        // A final game stays on the rail for the rest of ITS competition's
+        // calendar day (not a rolling "last N hours" window, and not the
+        // reader's own timezone) — the same "today" the score rail always
+        // showed, just computed against the fixed editorial zone now.
+        return t >= todayStart;
+      }
+      return t >= now && t <= horizon;
+    })
+    // Live first, then today's finals, then everything still scheduled —
+    // each tier chronological within itself. A plain ascending-by-kickoff
+    // sort would NOT do this on its own: a final that kicked off earlier
+    // today can have an EARLIER startTime than a game still live right now
+    // (e.g. a 2pm final vs. a 4pm match still in progress), which would
+    // sort the final first under pure chronological order. The explicit
+    // status tier is what guarantees "live first" holds regardless.
+    .sort((a, b) => {
+      const rank = { live: 0, final: 1, scheduled: 2, postponed: 3 };
+      const ra = rank[a.status] ?? 4;
+      const rb = rank[b.status] ?? 4;
+      if (ra !== rb) return ra - rb;
+      return Date.parse(a.startTime || 0) - Date.parse(b.startTime || 0);
+    });
+
+  upcomingCache.set(cacheKey, { at: Date.now(), games });
+  return games;
+}
+
 async function getStandings({ league, season } = {}) {
   const cfg = LEAGUE_CONFIG[league];
   if (!cfg) return [];
@@ -599,6 +752,7 @@ module.exports = {
   name: 'highlightly',
   isEnabled,
   getGames,
+  getUpcomingGames,
   getStandings,
   getTeams,
   getPlayers,

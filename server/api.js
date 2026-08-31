@@ -16,6 +16,12 @@ const { LEAGUE_IDS } = require('./models');
 
 const PORT = process.env.PORT || 3000;
 
+// How far ahead the schedule route looks by default — matches the compact
+// game rail's own GAME_RAIL_DAYS (index.html). A caller can override with
+// ?days= (the full-schedule view asks for a much larger window), clamped
+// below to a sane range either way.
+const SCHEDULE_DAYS = 14;
+
 /* -------------------------------------------------- demo fallback source */
 /* Mirrors the demo set in the page so behaviour is identical with or without
    a running API. These are placeholders, never presented as real results. */
@@ -56,6 +62,39 @@ async function handleGames(params) {
   }
 }
 
+// The upcoming schedule has no demo dataset of its own — DEMO_GAMES is a
+// single "today" slate, not a dated range, so faking one here would mean
+// inventing dates rather than reusing an existing placeholder. When the
+// provider is unavailable this route degrades to an honestly empty list
+// instead (the frontend already hides the whole section when it gets none),
+// never a fabricated schedule.
+async function handleSchedule(params) {
+  const league = params.get('league');
+  if (league && !LEAGUE_IDS.includes(league)) {
+    return { status: 400, body: { error: 'unsupported league', supported: LEAGUE_IDS } };
+  }
+  const daysParam = Number(params.get('days'));
+  // The full-schedule view legitimately asks for a season-scale window
+  // (up to ~280 days); the compact rail always asks for GAME_RAIL_DAYS.
+  const days = Number.isFinite(daysParam) && daysParam > 0
+    ? Math.min(Math.round(daysParam), 280)
+    : SCHEDULE_DAYS;
+  // More pages only for a caller that actually asked for a wide window —
+  // the compact rail's normal 14-day request stays at the cheap default.
+  const maxPages = days > 31 ? 6 : 3;
+
+  if (!provider.isEnabled()) {
+    return { status: 200, body: { games: [], source: 'demo' } };
+  }
+  try {
+    const games = await provider.getUpcomingGames({ league, days, maxPages });
+    return { status: 200, body: { games, source: provider.name } };
+  } catch (err) {
+    console.error('[api/schedule]', err.code || err.message);
+    return { status: 200, body: { games: [], source: 'demo', providerError: err.code || 'PROVIDER_ERROR' } };
+  }
+}
+
 function passthrough(method) {
   return async params => {
     if (!provider.isEnabled()) {
@@ -77,6 +116,7 @@ function passthrough(method) {
 
 const ROUTES = {
   '/api/games': handleGames,
+  '/api/schedule': handleSchedule,
   '/api/standings': passthrough('getStandings'),
   '/api/teams': passthrough('getTeams'),
   '/api/players': passthrough('getPlayers'),

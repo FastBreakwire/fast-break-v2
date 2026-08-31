@@ -124,5 +124,18 @@
   // one uniform shape without inspecting which array they came from.
   LEAGUES_CFG.forEach(l => { l.kind = "league"; });
 
-  window.FB_SPORTS_CONFIG = { SPORTS_CFG, LEAGUES_CFG, COMPETITIONS_CFG, TEAMS_CFG };
+  // ---------------------------------------------------------------------------
+  // COMPETITION TIMEZONES — fixed editorial zones (IANA names, so DST is
+  // handled automatically), NOT the visitor's own browser timezone. Game
+  // dates/times in the rail and full schedule are always shown in the
+  // competition's own market. Mirrored in server/highlightlyProvider.js
+  // (that file can't be imported by this classic <script>) — keep in sync.
+  // ---------------------------------------------------------------------------
+  const COMPETITION_TIMEZONES = {
+    nba: "America/New_York", wnba: "America/New_York", nfl: "America/New_York",
+    epl: "Europe/London", laliga: "Europe/Madrid", bundesliga: "Europe/Berlin",
+    ucl: "Europe/Berlin", uel: "Europe/Berlin"
+  };
+
+  window.FB_SPORTS_CONFIG = { SPORTS_CFG, LEAGUES_CFG, COMPETITIONS_CFG, TEAMS_CFG, COMPETITION_TIMEZONES };
 })();
