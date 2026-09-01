@@ -635,52 +635,75 @@
   .gd-periods td:first-child, .gd-periods th:first-child{ text-align:left; color:var(--ink-soft); font-weight:600; }
   .gd-periods tr:not(:last-child) td{ border-bottom:1px solid var(--cool-line); }
 
-  /* --- events timeline (icon-driven, compact) --- */
-  .gd-events{ display:flex; flex-direction:column; }
-  .gd-event{
-    display:flex; align-items:center; gap:10px; padding:7px 4px;
-    border-bottom:1px solid var(--cool-line); font-family:var(--label); font-size:13px;
+  /* --- team actions: two columns, split by real event.teamId — never by
+     player-name inference. The icon chip classes (.gd-event-icon and its
+     type-* modifiers) are unchanged from the single-list version; only the
+     surrounding row/column structure is new. --- */
+  .gd-actions{ display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-5); }
+  .gd-actions-col{ min-width:0; }
+  .gd-actions-head{
+    display:flex; align-items:center; gap:8px; margin-bottom:10px; padding-bottom:8px;
+    border-bottom:1px solid var(--line);
   }
-  .gd-event:last-child{ border-bottom:none; }
-  .gd-event-min{ flex:none; width:30px; color:var(--indigo); font-weight:700; font-size:12px; font-variant-numeric:tabular-nums; }
+  .gd-actions-head img{ width:22px; height:22px; object-fit:contain; flex:none; }
+  .gd-actions-head span{
+    font-family:var(--label); font-size:11.5px; font-weight:700; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .gd-actions-list{ display:flex; flex-direction:column; }
+  .gd-action{
+    display:flex; align-items:center; gap:8px; padding:6px 0;
+    border-bottom:1px solid var(--cool-line); font-family:var(--label); font-size:12.5px;
+  }
+  .gd-action:last-child{ border-bottom:none; }
+  .gd-action-min{ flex:none; width:26px; color:var(--indigo); font-weight:700; font-size:11px; font-variant-numeric:tabular-nums; }
+  .gd-action-body{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .gd-action-player{ color:var(--ink); font-weight:600; }
+  .gd-action-assist{ color:var(--cool-faint); font-size:10.5px; margin-left:3px; }
+  .gd-action-empty{ font-family:var(--label); font-size:12px; color:var(--cool-faint); padding:6px 0; }
   .gd-event-icon{
-    flex:none; width:24px; height:24px; border-radius:7px;
+    flex:none; width:22px; height:22px; border-radius:7px;
     display:flex; align-items:center; justify-content:center;
   }
-  .gd-event-icon svg{ width:13px; height:13px; display:block; }
+  .gd-event-icon svg{ width:12px; height:12px; display:block; }
   .gd-event-icon.type-goal{ background:var(--indigo-veil); color:var(--ink); }
   .gd-event-icon.type-yellow{ background:var(--yellow-tint); }
   .gd-event-icon.type-red{ background:var(--live-veil); }
   .gd-event-icon.type-yellowred{ background:linear-gradient(135deg, var(--yellow-tint) 50%, var(--live-veil) 50%); }
   .gd-event-icon.type-sub{ background:var(--neutral-tint); color:var(--ink-soft); }
   .gd-event-icon.type-other{ background:var(--neutral-tint); color:var(--ink-faint); }
-  .gd-event-body{ min-width:0; line-height:1.35; }
-  .gd-event-player{ color:var(--ink); font-weight:600; font-size:13px; }
-  .gd-event-desc{ color:var(--ink-soft); }
-  .gd-event-meta{
-    display:flex; align-items:center; gap:5px; color:var(--cool-faint); font-size:11px; margin-top:1px;
-  }
-  .gd-event-crest{ width:13px; height:13px; object-fit:contain; flex:none; }
 
-  /* --- stats: compact proportional bars --- */
+  /* --- stats: modern violet/indigo capsule bars --- */
   .gd-stats{ display:flex; flex-direction:column; gap:0; }
   .gd-stat-teams{
     display:flex; justify-content:space-between; font-family:var(--label); font-size:11.5px;
-    font-weight:700; letter-spacing:.03em; color:var(--cool-faint); margin-bottom:10px; text-transform:uppercase;
+    font-weight:700; letter-spacing:.03em; color:var(--cool-faint); margin-bottom:12px; text-transform:uppercase;
   }
-  .gd-stat-row{ padding:6px 0 9px; }
+  .gd-stat-row{ padding:9px 0 15px; }
   .gd-stat-row:not(:last-child){ border-bottom:1px solid var(--cool-line); }
-  .gd-stat-top{
-    display:flex; align-items:baseline; justify-content:space-between; gap:8px;
-    font-family:var(--label); font-size:12.5px; margin-bottom:5px;
+  .gd-stat-values{
+    display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px;
   }
-  .gd-stat-val{ font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; flex:none; }
-  .gd-stat-label{ color:var(--ink-faint); font-size:11px; text-align:center; flex:1 1 auto; }
+  .gd-stat-val{
+    font-family:var(--display); font-weight:600; font-size:19px; color:var(--ink);
+    font-variant-numeric:tabular-nums; letter-spacing:-.01em;
+  }
   .gd-stat-bar{
-    position:relative; height:5px; border-radius:999px; background:var(--cool-line); overflow:hidden;
+    position:relative; height:11px; border-radius:999px; background:var(--indigo-deep); overflow:hidden;
   }
   .gd-stat-bar-fill{
-    position:absolute; top:0; left:0; height:100%; background:var(--indigo); border-radius:999px;
+    position:absolute; top:0; left:0; height:100%; border-radius:999px;
+    background:linear-gradient(90deg, var(--indigo-dim), var(--indigo));
+    box-shadow:0 0 9px rgba(155,144,214,.45), 0 0 1px rgba(155,144,214,.7);
+  }
+  .gd-stat-label{
+    margin-top:8px; text-align:center; font-family:var(--label); font-size:10.5px; font-weight:700;
+    letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint);
+  }
+  @media (max-width:640px){
+    .gd-actions{ grid-template-columns:1fr; gap:var(--sp-4); }
+    .gd-stat-bar{ height:9px; }
+    .gd-stat-val{ font-size:17px; }
   }
 
   /* --- football pitch --- */
@@ -694,11 +717,10 @@
   .gd-pitch-note{
     font-family:var(--label); font-size:11px; color:var(--cool-faint); text-align:center; max-width:46ch;
   }
-  .gd-pitch-goal{ fill:var(--indigo); stroke:var(--ink); stroke-width:1.2; }
-  .gd-pitch-goal-label{
-    font-family:var(--label); font-size:9px; font-weight:700; fill:var(--ink-soft);
-    font-variant-numeric:tabular-nums;
-  }
+  /* No .gd-pitch-goal / .gd-pitch-goal-label rules — deliberately removed
+     along with the marker code in buildPitchSection(). Nothing in this file
+     draws a marker on the pitch; re-add styling here only alongside a real
+     e.x/e.y-driven marker, never before. */
 
   /* --- venue --- */
   .gd-venue{ font-family:var(--label); font-size:13px; color:var(--ink-soft); }
@@ -708,7 +730,7 @@
     .gd-header{ padding:var(--sp-4); }
     .gd-scoreboard{ gap:var(--sp-2); }
     .gd-team-badge{ width:clamp(56px, 17vw, 76px); height:clamp(56px, 17vw, 76px); }
-    .gd-event{ font-size:12px; }
+    .gd-action{ font-size:11.5px; }
   }
 
   /* ============ TICKER ============ */
@@ -3630,42 +3652,55 @@
     return { cls: 'type-other', svg: EVENT_ICON_SVG.other };
   }
 
-  // Football goal/card/substitution timeline — only the fields the backend
-  // normalizer actually carries (time, type, player, assist, team, teamId).
-  // Sorted chronologically; Highlightly's own event order was not confirmed
-  // stable during this task, so this re-sorts rather than trusting it.
-  // Team association is ID-based (event.teamId against g.homeTeamId/
-  // awayTeamId) wherever possible — the real crest for the correct side is
-  // shown next to the team name rather than guessed from the name string.
-  // `data-team-id` is attached (not a link) so a future team page can hook
-  // in without this task inventing a route that doesn't exist yet.
-  function buildEventsSection(g){
-    if (!Array.isArray(g.events) || !g.events.length) return '';
-    const rows = g.events
-      .slice()
-      .sort((a, b) => (parseInt(a.time, 10) || 0) - (parseInt(b.time, 10) || 0))
-      .map(e => {
-        const minute = e.time ? `${e.time}'` : '';
-        const visual = eventVisual(e.type);
-        const player = e.player || '';
-        const desc = player ? '' : (e.type || '');
-        const assist = e.assist ? ` <span class="gd-event-desc">(assist: ${e.assist})</span>` : '';
-        let crest = '';
-        if (e.teamId && e.teamId === g.awayTeamId && g.awayTeamLogo) crest = `<img class="gd-event-crest" src="${g.awayTeamLogo}" alt="" loading="lazy" onerror="this.remove()">`;
-        else if (e.teamId && e.teamId === g.homeTeamId && g.homeTeamLogo) crest = `<img class="gd-event-crest" src="${g.homeTeamLogo}" alt="" loading="lazy" onerror="this.remove()">`;
-        const teamLabel = e.team ? `<span data-team-id="${e.teamId || ''}">${e.team}</span>` : '';
-        return `<div class="gd-event">
-          <span class="gd-event-min">${minute}</span>
-          <span class="gd-event-icon ${visual.cls}">${visual.svg}</span>
-          <span class="gd-event-body">
-            ${player ? `<span class="gd-event-player">${player}</span>` : `<span class="gd-event-desc">${desc}</span>`}${assist}
-            ${teamLabel ? `<span class="gd-event-meta">${crest}${teamLabel}</span>` : ''}
-          </span>
-        </div>`;
-      }).join('');
+  // ===========================================================================
+  // TEAM ACTIONS — football only. Replaces the single central events list
+  // with two columns, one per team, split STRICTLY by the real
+  // event.teamId against g.homeTeamId/g.awayTeamId — never inferred from
+  // the player name or from event.team's display string. An event whose
+  // teamId matches neither side (should not happen in practice, but the
+  // provider's data is never assumed perfect) simply doesn't appear in
+  // either column rather than being guessed into one.
+  // ===========================================================================
+  function buildActionRow(e){
+    const minute = e.time ? `${e.time}'` : '';
+    const visual = eventVisual(e.type);
+    const player = e.player || e.type || '';
+    const assist = e.assist ? `<span class="gd-action-assist">(assist: ${e.assist})</span>` : '';
+    return `<div class="gd-action">
+      <span class="gd-action-min">${minute}</span>
+      <span class="gd-event-icon ${visual.cls}">${visual.svg}</span>
+      <span class="gd-action-body"><span class="gd-action-player">${player}</span>${assist}</span>
+    </div>`;
+  }
+
+  function buildTeamActionColumn(teamName, teamLogo, events){
+    const rows = events.length
+      ? events.map(buildActionRow).join('')
+      : `<div class="gd-action-empty">No events</div>`;
+    const crest = teamLogo ? `<img src="${teamLogo}" alt="" loading="lazy" onerror="this.remove()">` : '';
+    return `<div class="gd-actions-col">
+      <div class="gd-actions-head">${crest}<span>${teamName}</span></div>
+      <div class="gd-actions-list">${rows}</div>
+    </div>`;
+  }
+
+  // Sorted chronologically per column; Highlightly's own event order was not
+  // confirmed stable during an earlier task, so this re-sorts rather than
+  // trusting it. Away on the left, home on the right — the same convention
+  // already used by the header and the pitch.
+  function buildTeamActionsSection(g){
+    if (g.sport !== 'football' || !Array.isArray(g.events) || !g.events.length) return '';
+    const sortByMinute = (a, b) => (parseInt(a.time, 10) || 0) - (parseInt(b.time, 10) || 0);
+    const awayEvents = g.events.filter(e => e.teamId && e.teamId === g.awayTeamId).slice().sort(sortByMinute);
+    const homeEvents = g.events.filter(e => e.teamId && e.teamId === g.homeTeamId).slice().sort(sortByMinute);
+    if (!awayEvents.length && !homeEvents.length) return ''; // real events exist but none carried a reliable teamId — omit rather than guess
+
     return `<div class="gd-section">
-      <div class="gd-section-title">Match events</div>
-      <div class="gd-events">${rows}</div>
+      <div class="gd-section-title">Team Actions</div>
+      <div class="gd-actions">
+        ${buildTeamActionColumn(g.awayTeamName || g.awayTeam, g.awayTeamLogo, awayEvents)}
+        ${buildTeamActionColumn(g.homeTeamName || g.homeTeam, g.homeTeamLogo, homeEvents)}
+      </div>
     </div>`;
   }
 
@@ -3727,12 +3762,12 @@
       const pct = barPct(label, a, h);
       const bar = pct === null ? '' : `<div class="gd-stat-bar"><div class="gd-stat-bar-fill" style="width:${pct}%"></div></div>`;
       return `<div class="gd-stat-row">
-        <div class="gd-stat-top">
+        <div class="gd-stat-values">
           <span class="gd-stat-val">${display(label, a)}</span>
-          <span class="gd-stat-label">${label}</span>
           <span class="gd-stat-val">${display(label, h)}</span>
         </div>
         ${bar}
+        <div class="gd-stat-label">${label}</div>
       </div>`;
     }).join('');
     return `<div class="gd-section">
@@ -3755,22 +3790,27 @@
 
   // ===========================================================================
   // FOOTBALL PITCH — football/soccer only. Highlightly's real event/shot data
-  // was checked directly during this task (raw dump of a live match) and
-  // confirmed to carry NO coordinates anywhere (not on events, not on the
-  // per-team shots list — "goalTarget" there describes where ON THE GOAL a
-  // shot was aimed, e.g. "High Left", not where on the PITCH it was taken
-  // from). So there is no real spatial data to plot shot locations with, and
-  // none is invented.
+  // was checked directly (raw dump of a live match) and confirmed to carry
+  // NO coordinates anywhere — not on events, not on the per-team shots list
+  // ("goalTarget" there describes where ON THE GOAL a shot was aimed, e.g.
+  // "High Left", not where on the PITCH it was taken from). So there is no
+  // real spatial data to plot anything with.
   //
-  // What IS real and safely plottable without guessing a coordinate: a real
-  // Goal event's team (ID-matched, never inferred from a name) and minute.
-  // Every goal is, by the sport's own definition, scored at the CONCEDING
-  // side's goal frame — that is the one spatial fact about a goal that is
-  // true regardless of missing coordinates, not a fabricated position. Goals
-  // are drawn at a fixed end per side (away team's goals at the top end,
-  // home's at the bottom — a consistent Fast Break page convention, not a
-  // claim about which end either team really defended) purely so the reader
-  // can see who scored, when, and how many, at a glance.
+  // CORRECTION: an earlier version of this section plotted a marker for
+  // every real `Goal` event at a fixed "scoring team's end" position,
+  // reasoning that a goal is always scored at the conceding side's frame.
+  // That was wrong to ship: it is still a PLOTTED POSITION the event data
+  // does not actually contain — `event.type === 'Goal'` tells us a goal
+  // happened, never where on the pitch it happened, and a real reader can't
+  // tell a "we know this for certain" marker apart from a "we're guessing"
+  // one just by looking at it. Removed entirely, not just hidden — see
+  // buildPitchSection() below, which now draws ONLY the field markings and
+  // plots nothing, regardless of how many Goal events exist.
+  //
+  // FUTURE: if a provider ever supplies real per-event x/y pitch
+  // coordinates, that is the ONLY condition under which a marker should be
+  // added back — e.g. `if (e.x != null && e.y != null) { ...plot at e.x,
+  // e.y... }` — never derived from team/minute/event-type alone again.
   // ===========================================================================
   // Landscape orientation (a real pitch is ~105x68m, wider than tall — this
   // both reads as the familiar broadcast/tactical-board view and keeps the
@@ -3796,49 +3836,35 @@
     <path d="M18 230 A8 8 0 0 1 10 222"/>
     <path d="M370 222 A8 8 0 0 1 362 230"/>
   `;
+  // No marker of any kind is ever computed here — there is no per-event
+  // coordinate field on `g.events` to plot, on this match or any other, so
+  // there is structurally nothing for this function to derive a position
+  // from. A Goal event's count/team/minute are real and shown in Team
+  // Actions instead; this section draws the field only.
   function buildPitchSection(g){
     if (g.sport !== 'football') return '';
-    const goals = (Array.isArray(g.events) ? g.events : []).filter(e => eventVisual(e.type).cls === 'type-goal');
-
-    // Spread multiple goals by the same side vertically along the goal mouth
-    // so markers don't stack directly on top of one another.
-    const awayGoals = goals.filter(e => e.teamId && e.teamId === g.awayTeamId);
-    const homeGoals = goals.filter(e => e.teamId && e.teamId === g.homeTeamId);
-    const spreadY = i => 98 + Math.min(i, 4) * 12; // clamps rather than running off the goal mouth
-
-    const markers = [
-      ...awayGoals.map((e, i) => ({ x: 26, y: spreadY(i), e })),
-      ...homeGoals.map((e, i) => ({ x: 354, y: spreadY(i), e }))
-    ].map(({ x, y, e }) => {
-      const label = e.time ? `${e.time}'` : '';
-      const labelX = x < 190 ? x + 16 : x - 16;
-      const anchor = x < 190 ? 'start' : 'end';
-      return `<circle cx="${x}" cy="${y}" r="4" class="gd-pitch-goal"/>` +
-        (label ? `<text x="${labelX}" y="${y + 3}" class="gd-pitch-goal-label" text-anchor="${anchor}">${label}</text>` : '');
-    }).join('');
-
-    const unassigned = goals.length - awayGoals.length - homeGoals.length;
-    const note = goals.length
-      ? `${goals.length} goal${goals.length === 1 ? '' : 's'} shown at the scoring team's target end — Highlightly doesn't provide shot/goal coordinates for this match, so nothing is plotted mid-pitch.${unassigned ? ' Some events had no reliable team ID and are omitted from the pitch.' : ''}`
-      : `Highlightly doesn't provide shot or goal coordinates for this match, so no markers are plotted.`;
 
     return `<div class="gd-section">
       <div class="gd-section-title">Pitch</div>
       <div class="gd-pitch-wrap">
         <svg class="gd-pitch" viewBox="0 0 380 240" fill="none" stroke="var(--line-strong)" stroke-width="1.5" color="var(--cool-faint)">
           ${PITCH_MARKINGS_SVG}
-          <g stroke="none">${markers}</g>
         </svg>
-        <div class="gd-pitch-note">${note}</div>
+        <div class="gd-pitch-note">Highlightly doesn't provide shot or goal coordinates for this match, so no markers are plotted.</div>
       </div>
     </div>`;
   }
 
+  // Page order (item 6 of the task this shipped in): header, then
+  // sport-specific action detail (periods for basketball/NFL, the two-
+  // column team actions for football — mutually exclusive, never both),
+  // then the pitch (football only), THEN stats, then venue. The pitch must
+  // sit above Match Stats, not below it.
   function buildGameDetailPage(g){
     return `<button type="button" class="gd-back" id="gdBackBtn">← Back to ${leagueNames[g.league] || g.league.toUpperCase()}</button>
       ${buildGameHeader(g)}
       ${buildPeriodsSection(g)}
-      ${buildEventsSection(g)}
+      ${buildTeamActionsSection(g)}
       ${buildPitchSection(g)}
       ${buildStatsSection(g)}
       ${buildVenueSection(g)}`;
