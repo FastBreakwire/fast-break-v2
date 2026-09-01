@@ -95,6 +95,31 @@ async function handleSchedule(params) {
   }
 }
 
+// One real match, by id, for the game detail page. `id` is the Highlightly
+// match id already carried on every normalized game object (g.id) — the
+// same id the rail/schedule cards already render, never a second id scheme.
+async function handleMatch(params) {
+  const league = params.get('league');
+  const id = params.get('id');
+  if (!league || !LEAGUE_IDS.includes(league)) {
+    return { status: 400, body: { error: 'unsupported league', supported: LEAGUE_IDS } };
+  }
+  if (!id) {
+    return { status: 400, body: { error: 'id required' } };
+  }
+  if (!provider.isEnabled()) {
+    return { status: 503, body: { error: 'provider not configured', source: 'demo' } };
+  }
+  try {
+    const game = await provider.getMatchDetail({ league, id });
+    if (!game) return { status: 404, body: { error: 'not found' } };
+    return { status: 200, body: { game, source: provider.name } };
+  } catch (err) {
+    console.error('[api/match]', err.code || err.message);
+    return { status: 502, body: { error: err.code || 'PROVIDER_ERROR' } };
+  }
+}
+
 function passthrough(method) {
   return async params => {
     if (!provider.isEnabled()) {
@@ -117,6 +142,7 @@ function passthrough(method) {
 const ROUTES = {
   '/api/games': handleGames,
   '/api/schedule': handleSchedule,
+  '/api/match': handleMatch,
   '/api/standings': passthrough('getStandings'),
   '/api/teams': passthrough('getTeams'),
   '/api/players': passthrough('getPlayers'),

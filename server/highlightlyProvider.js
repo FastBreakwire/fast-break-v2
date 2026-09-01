@@ -346,11 +346,19 @@ function extractPeriods(raw, sportSlug) {
 
 // Only present on a single-match detail fetch (/matches/{id}), never on the
 // list endpoint — pass through what's there, invent nothing when absent.
+//
+// teamId (added for the match-detail visual refinement task): the raw event
+// already carries a real team id (e.team.id) that was being discarded here,
+// leaving only the display name — not enough to reliably associate an event
+// with a team by ID rather than by matching name strings. Kept alongside
+// `team` (the display name, unchanged) rather than replacing it, so nothing
+// that already reads `event.team` breaks.
 function mapEvent(e) {
   return {
     time: e.time ?? null,
     type: e.type ?? null,
     team: e.team?.name ?? null,
+    teamId: e.team?.id != null ? String(e.team.id) : null,
     player: e.player ?? null,
     playerId: e.playerId != null ? String(e.playerId) : null,
     assist: e.assist ?? null
@@ -692,6 +700,86 @@ async function getUpcomingGames({ league, days = 14, maxPages = 3 } = {}) {
   return games;
 }
 
+// ---------------------------------------------------------------------------
+// MATCH DETAIL — one real Highlightly match, fetched by id, for the game
+// detail page. Built directly on mapGame() (the exact same mapper /matches
+// and /matches?date= already use), so the detail view's team/score/period/
+// clock/events fields are identically sourced — no second normalizer, no
+// second game model. Only additive detail-only fields are appended on top:
+// venue city/country, referee, and a per-team statistics breakdown.
+//
+// Endpoint confirmed against the live Sport API PRO spec (highlightly.net/
+// sport-api/documentation/, 31 Aug 2026) AND by direct live requests during
+// this task: GET /{sport}/matches/{id} for all three sports, response is a
+// ONE-ELEMENT ARRAY (not a bare object) — unwrapped via rows()[0] below,
+// same helper the list endpoints already use.
+// ---------------------------------------------------------------------------
+
+// Football & basketball: raw.statistics is an array of
+// { team:{id,name,...}, statistics:[{displayName,value}] }, one entry per
+// side — confirmed on a real finished EPL match (39 stat rows/side) and a
+// real finished WNBA match (21 stat rows/side). American football exposes
+// the same shape under `matchStatistics` instead (per the OpenAPI spec) —
+// this could not be verified against a real filled response during this
+// task (every current NFL match is still scheduled, so raw.matchStatistics
+// was observed only as null); the mapper below is defensive about that: any
+// row that doesn't match the expected shape is dropped rather than guessed,
+// so an unexpected NFL shape degrades to "no stats section" instead of
+// throwing or fabricating values.
+function mapMatchStatistics(raw, sportSlug) {
+  const src = sportSlug === 'american-football' ? raw.matchStatistics : raw.statistics;
+  if (!Array.isArray(src)) return null;
+  const out = src
+    .filter(t => t && t.team && Array.isArray(t.statistics))
+    .map(t => ({
+      teamId: t.team.id != null ? String(t.team.id) : null,
+      teamName: t.team.name ?? null,
+      stats: t.statistics
+        .filter(s => s && s.displayName != null && s.value !== undefined && s.value !== null)
+        .map(s => ({ label: s.displayName, value: s.value }))
+    }))
+    .filter(t => t.stats.length);
+  return out.length ? out : null;
+}
+
+function mapMatchDetail(raw, leagueId, cfg) {
+  const base = mapGame(raw, leagueId, cfg);
+  return {
+    ...base,
+    venueCity: raw.venue?.city || null,
+    venueCountry: raw.venue?.country || null,
+    referee: raw.referee?.name || null,
+    statistics: mapMatchStatistics(raw, cfg.sportSlug)
+  };
+}
+
+// Cached at the SAME scale/TTL as the rail (RAIL_SCALE_CACHE_MS, defined
+// above for getUpcomingGames): a single-match detail view is exactly the
+// kind of request that gets polled while live, so its cache must stay below
+// that poll interval for the same reason the rail's does — see the comment
+// on getUpcomingGames. Detail traffic is far lower-volume than the rail
+// (one match, one visitor) so there is no case here for a second, longer
+// tier the way the full-schedule scale needed one.
+const matchDetailCache = new Map(); // id -> { at, detail }
+
+async function getMatchDetail({ league, id } = {}) {
+  const cfg = LEAGUE_CONFIG[league];
+  if (!cfg || !id) return null;
+
+  const cached = matchDetailCache.get(id);
+  if (cached && Date.now() - cached.at < RAIL_SCALE_CACHE_MS) return cached.detail;
+
+  const data = await request(cfg.sportSlug, `/matches/${id}`);
+  const raw = rows(data)[0];
+  if (!raw) {
+    matchDetailCache.delete(id);
+    return null;
+  }
+  const detail = mapMatchDetail(raw, league, cfg);
+  matchDetailCache.set(id, { at: Date.now(), detail });
+  return detail;
+}
+
 async function getStandings({ league, season } = {}) {
   const cfg = LEAGUE_CONFIG[league];
   if (!cfg) return [];
@@ -768,6 +856,7 @@ module.exports = {
   isEnabled,
   getGames,
   getUpcomingGames,
+  getMatchDetail,
   getStandings,
   getTeams,
   getPlayers,

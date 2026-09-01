@@ -342,9 +342,20 @@
     flex:none; width:188px;
     background:var(--black); border:1px solid var(--cool-line); border-radius:12px;
     padding:13px 14px; display:flex; flex-direction:column; gap:9px;
-    transition:border-color .3s var(--ease);
+    transition:border-color .3s var(--ease), transform .18s var(--ease), box-shadow .18s var(--ease);
+    text-decoration:none; cursor:pointer;
   }
-  .game-card:hover{ border-color:#404040; }
+  .game-card:hover{ border-color:#404040; transform:translateY(-2px); }
+  /* A restrained, indigo "this opens something" cue — deliberately separate
+     from the red LIVE treatment below so the two never mix: a live card's
+     hover/focus stays red, a non-live card's stays indigo. */
+  .game-card:not(.is-live):hover{
+    border-color:var(--indigo-line);
+    box-shadow:0 10px 24px -18px rgba(155,144,214,.4);
+  }
+  .game-card:focus-visible{
+    outline:2px solid var(--indigo); outline-offset:2px; transform:translateY(-2px);
+  }
   /* Live game: a red edge and a low bloom. The card body stays black — red
      marks the state, it never becomes the surface. */
   .game-card.is-live{
@@ -477,8 +488,10 @@
   .schedule-row{
     display:flex; align-items:center; gap:14px; padding:11px 6px; border-radius:8px;
     border-bottom:1px solid var(--cool-line); transition:background .15s var(--ease);
+    text-decoration:none; cursor:pointer;
   }
   .schedule-row:hover{ background:var(--indigo-veil); }
+  .schedule-row:focus-visible{ outline:2px solid var(--indigo); outline-offset:-2px; }
   .schedule-row:last-child{ border-bottom:none; }
   .schedule-comp{
     flex:none; width:112px; font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.05em;
@@ -510,6 +523,177 @@
     .schedule-mid{ width:58px; font-size:10.5px; }
     .schedule-broadcast{ display:none; } /* still in the data — just no room to show it here */
     .schedule-row{ gap:8px; }
+  }
+
+  /* ============ GAME DETAIL PAGE ============
+     One real Highlightly match. Reuses the existing editorial language
+     (--display for the headline weight, --label for meta, PERIOD_LABELS/
+     formatLiveClock for the live line) rather than a second visual identity.
+     Visual-refinement pass: standalone crests, icon-driven event timeline,
+     proportional stat bars, an optional football pitch — same data, same
+     sections, denser and more visual presentation throughout. */
+  .game-detail-page{ padding:var(--sp-5) 0 var(--sp-8); }
+  .gd-back{
+    font-family:var(--label); font-size:12.5px; font-weight:700; color:var(--indigo);
+    background:none; border:none; cursor:pointer; padding:6px 0; margin-bottom:var(--sp-4);
+  }
+  .gd-back:hover{ color:var(--ink); }
+  .gd-back:focus-visible{ outline:2px solid var(--indigo); outline-offset:2px; }
+
+  .gd-state{
+    font-family:var(--label); font-size:13px; color:var(--cool-faint);
+    padding:var(--sp-8) 0; text-align:center;
+  }
+  .gd-state h2{
+    font-family:var(--display); font-size:22px; font-weight:600; color:var(--ink);
+    margin-bottom:8px; letter-spacing:-.01em;
+  }
+  .gd-retry{
+    margin-top:14px; font-family:var(--label); font-size:12.5px; font-weight:700;
+    color:var(--indigo); background:var(--indigo-veil); border:1px solid var(--indigo-line);
+    padding:8px 18px; border-radius:999px; cursor:pointer;
+  }
+  .gd-retry:hover{ background:var(--indigo-deep); color:var(--ink); }
+
+  /* --- header: compact, score-dominant --- */
+  .gd-header{
+    background:var(--black); border:1px solid var(--line); border-radius:var(--r-lg);
+    padding:var(--sp-4) var(--sp-5); margin-bottom:var(--sp-5);
+  }
+  .gd-header.is-live{ border-color:var(--live-edge); box-shadow:0 14px 36px -22px rgba(226,59,59,.5); }
+  .gd-comp{
+    text-align:center; font-family:var(--label); font-size:10.5px; font-weight:700;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--cool-faint); margin-bottom:4px;
+  }
+  .gd-status{
+    text-align:center; font-family:var(--label); font-size:12.5px; font-weight:700;
+    letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:var(--sp-3);
+    display:flex; align-items:center; justify-content:center; gap:7px;
+  }
+  .gd-status.is-live{ color:var(--live-bright); }
+  .gd-status.is-live .pulse{ width:6px; height:6px; }
+  .gd-status .gs-clock{ color:var(--live-clock); font-variant-numeric:tabular-nums; }
+  .gd-scoreboard{
+    display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:var(--sp-4);
+  }
+  .gd-team{ display:flex; flex-direction:column; align-items:center; gap:10px; min-width:0; }
+  /* Standalone crest — no box, no border, no background. Just the real logo
+     (or, absent one, its plain fallback text — still no container drawn
+     around it, per the "no logo-in-box" requirement). */
+  .gd-team-badge{
+    width:clamp(64px, 8vw, 88px); height:clamp(64px, 8vw, 88px);
+    display:flex; align-items:center; justify-content:center; flex:none;
+    font-family:var(--label); font-size:15px; font-weight:700; color:var(--cool-muted);
+  }
+  .gd-team-badge img{ width:100%; height:100%; object-fit:contain; display:block; }
+  .gd-team-name{
+    font-family:var(--display); font-size:clamp(14px,1.6vw,17px); font-weight:600;
+    color:var(--ink); text-align:center; max-width:22ch; letter-spacing:-.005em;
+  }
+  .gd-score-mid{ display:flex; align-items:center; gap:var(--sp-3); }
+  .gd-score{
+    font-family:var(--display); font-weight:600; font-size:clamp(38px,5.5vw,60px);
+    color:var(--ink); font-variant-numeric:tabular-nums; letter-spacing:-.02em;
+  }
+  .gd-score-sep{ font-family:var(--display); font-size:clamp(24px,3vw,36px); color:var(--cool-line); }
+  .gd-time-mid{
+    font-family:var(--label); font-size:13px; font-weight:700; color:var(--ink-faint);
+    text-align:center;
+  }
+
+  .gd-section{ margin-bottom:var(--sp-5); }
+  .gd-section-title{
+    font-family:var(--label); font-size:11.5px; font-weight:700; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--ink-faint); margin-bottom:10px;
+    padding-bottom:6px; border-bottom:1px solid var(--line);
+  }
+
+  /* --- periods (basketball / NFL) --- */
+  .gd-periods{ width:100%; border-collapse:collapse; }
+  .gd-periods th, .gd-periods td{
+    font-family:var(--label); font-size:12.5px; text-align:center; padding:6px 10px;
+    font-variant-numeric:tabular-nums;
+  }
+  .gd-periods th{
+    color:var(--cool-faint); font-weight:700; letter-spacing:.04em; text-transform:uppercase; font-size:10.5px;
+  }
+  .gd-periods td:first-child, .gd-periods th:first-child{ text-align:left; color:var(--ink-soft); font-weight:600; }
+  .gd-periods tr:not(:last-child) td{ border-bottom:1px solid var(--cool-line); }
+
+  /* --- events timeline (icon-driven, compact) --- */
+  .gd-events{ display:flex; flex-direction:column; }
+  .gd-event{
+    display:flex; align-items:center; gap:10px; padding:7px 4px;
+    border-bottom:1px solid var(--cool-line); font-family:var(--label); font-size:13px;
+  }
+  .gd-event:last-child{ border-bottom:none; }
+  .gd-event-min{ flex:none; width:30px; color:var(--indigo); font-weight:700; font-size:12px; font-variant-numeric:tabular-nums; }
+  .gd-event-icon{
+    flex:none; width:24px; height:24px; border-radius:7px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .gd-event-icon svg{ width:13px; height:13px; display:block; }
+  .gd-event-icon.type-goal{ background:var(--indigo-veil); color:var(--ink); }
+  .gd-event-icon.type-yellow{ background:var(--yellow-tint); }
+  .gd-event-icon.type-red{ background:var(--live-veil); }
+  .gd-event-icon.type-yellowred{ background:linear-gradient(135deg, var(--yellow-tint) 50%, var(--live-veil) 50%); }
+  .gd-event-icon.type-sub{ background:var(--neutral-tint); color:var(--ink-soft); }
+  .gd-event-icon.type-other{ background:var(--neutral-tint); color:var(--ink-faint); }
+  .gd-event-body{ min-width:0; line-height:1.35; }
+  .gd-event-player{ color:var(--ink); font-weight:600; font-size:13px; }
+  .gd-event-desc{ color:var(--ink-soft); }
+  .gd-event-meta{
+    display:flex; align-items:center; gap:5px; color:var(--cool-faint); font-size:11px; margin-top:1px;
+  }
+  .gd-event-crest{ width:13px; height:13px; object-fit:contain; flex:none; }
+
+  /* --- stats: compact proportional bars --- */
+  .gd-stats{ display:flex; flex-direction:column; gap:0; }
+  .gd-stat-teams{
+    display:flex; justify-content:space-between; font-family:var(--label); font-size:11.5px;
+    font-weight:700; letter-spacing:.03em; color:var(--cool-faint); margin-bottom:10px; text-transform:uppercase;
+  }
+  .gd-stat-row{ padding:6px 0 9px; }
+  .gd-stat-row:not(:last-child){ border-bottom:1px solid var(--cool-line); }
+  .gd-stat-top{
+    display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+    font-family:var(--label); font-size:12.5px; margin-bottom:5px;
+  }
+  .gd-stat-val{ font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; flex:none; }
+  .gd-stat-label{ color:var(--ink-faint); font-size:11px; text-align:center; flex:1 1 auto; }
+  .gd-stat-bar{
+    position:relative; height:5px; border-radius:999px; background:var(--cool-line); overflow:hidden;
+  }
+  .gd-stat-bar-fill{
+    position:absolute; top:0; left:0; height:100%; background:var(--indigo); border-radius:999px;
+  }
+
+  /* --- football pitch --- */
+  .gd-pitch-wrap{ display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .gd-pitch{
+    width:min(100%, 340px); height:auto; display:block;
+  }
+  @media (min-width:900px){
+    .gd-pitch{ width:min(100%, 560px); }
+  }
+  .gd-pitch-note{
+    font-family:var(--label); font-size:11px; color:var(--cool-faint); text-align:center; max-width:46ch;
+  }
+  .gd-pitch-goal{ fill:var(--indigo); stroke:var(--ink); stroke-width:1.2; }
+  .gd-pitch-goal-label{
+    font-family:var(--label); font-size:9px; font-weight:700; fill:var(--ink-soft);
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* --- venue --- */
+  .gd-venue{ font-family:var(--label); font-size:13px; color:var(--ink-soft); }
+  .gd-venue b{ color:var(--ink); font-weight:600; }
+
+  @media (max-width:640px){
+    .gd-header{ padding:var(--sp-4); }
+    .gd-scoreboard{ gap:var(--sp-2); }
+    .gd-team-badge{ width:clamp(56px, 17vw, 76px); height:clamp(56px, 17vw, 76px); }
+    .gd-event{ font-size:12px; }
   }
 
   /* ============ TICKER ============ */
@@ -1572,6 +1756,12 @@
          because a full schedule is meant to be read, not scrolled through a
          184px card. No second data model, no second game-status system. -->
     <div id="scheduleView" class="wrap schedule-page" hidden></div>
+
+    <!-- GAME DETAIL VIEW — one real Highlightly match, rendered by
+         renderGameDetail(). Reached by clicking any card in the rail or the
+         full schedule, or by a direct /game/{league}/{id} URL. Fetches
+         /api/match, never a second game model. -->
+    <div id="gameView" class="wrap game-detail-page" hidden></div>
 
     </div><!-- /.shell-body -->
   </div><!-- /.shell -->
@@ -2654,7 +2844,11 @@
     }
     const scored = g.status === 'live' || g.status === 'final';
     const broadcast = g.broadcast ? `<div class="game-broadcast">${g.broadcast}</div>` : '';
-    return `<div class="game-card${g.status === 'live' ? ' is-live' : ''}" data-game-id="${g.id}">
+    // A real <a href> — same reasoning as buildStoryCard(): hover preview,
+    // middle-click and "copy link address" all work, and native Enter-to-
+    // activate + Tab-focus come for free. The delegated listener below
+    // (wireGameCardClicks) intercepts only a plain left click/Space.
+    return `<a class="game-card${g.status === 'live' ? ' is-live' : ''}" href="${gameUrl(g.league, g.id)}" data-game-id="${g.id}" data-game-league="${g.league}">
       <div class="gc-comp">${comp}</div>
       ${statusRow}
       <div class="game-teams">
@@ -2662,8 +2856,40 @@
         <div class="game-team-row"><span class="game-team">${teamBadge(g.homeTeamLogo, g.homeTeam)}${g.homeTeamName || g.homeTeam}</span>${scored ? `<span class="game-score">${g.homeScore}</span>` : ''}</div>
       </div>
       ${broadcast}
-    </div>`;
+    </a>`;
   }
+
+  // Delegated click/keyboard handling for game cards — bound ONCE per
+  // container (the container element itself persists across re-renders;
+  // only its innerHTML is replaced), rather than re-attaching a listener to
+  // every card on every render. Handles both the rail's .game-card and the
+  // full schedule's .schedule-row through the same [data-game-id] contract.
+  function wireGameCardClicks(containerId){
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.addEventListener('click', e => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      const card = e.target.closest('[data-game-id]');
+      if (!card || !el.contains(card)) return;
+      e.preventDefault();
+      navigate(gameUrl(card.dataset.gameLeague, card.dataset.gameId));
+    });
+    // Native <a> activates on Enter automatically (via a real click event,
+    // already caught above) but NOT on Space — only <button> gets that for
+    // free, so Space is wired explicitly to keep the two keys equivalent.
+    el.addEventListener('keydown', e => {
+      if (e.key !== ' ' && e.key !== 'Spacebar') return;
+      const card = e.target.closest('[data-game-id]');
+      if (!card || !el.contains(card)) return;
+      e.preventDefault();
+      navigate(gameUrl(card.dataset.gameLeague, card.dataset.gameId));
+    });
+  }
+  // Bound once — both containers are static elements already in the markup;
+  // only their innerHTML is replaced on every render, so the listeners never
+  // need to be re-attached.
+  wireGameCardClicks('scoreRailBody');
+  wireGameCardClicks('scheduleView');
 
   // Single owner of the rail refresh loop — never more than one timer
   // pending. Every entry point (a competition switch, or the loop itself)
@@ -2926,13 +3152,13 @@
 
     const scored = g.status === 'live' || g.status === 'final';
     const broadcast = `<span class="schedule-broadcast">${g.broadcast || ''}</span>`;
-    return `<div class="schedule-row" data-game-id="${g.id}">
+    return `<a class="schedule-row" href="${gameUrl(g.league, g.id)}" data-game-id="${g.id}" data-game-league="${g.league}">
       <span class="schedule-comp">${comp}</span>
       <span class="schedule-team">${teamBadge(g.homeTeamLogo, g.homeTeam)}<span class="schedule-team-name">${g.homeTeamName || g.homeTeam}</span>${scored ? `<span class="schedule-score">${g.homeScore}</span>` : ''}</span>
       ${mid}
       <span class="schedule-team is-away">${scored ? `<span class="schedule-score">${g.awayScore}</span>` : ''}<span class="schedule-team-name">${g.awayTeamName || g.awayTeam}</span>${teamBadge(g.awayTeamLogo, g.awayTeam)}</span>
       ${broadcast}
-    </div>`;
+    </a>`;
   }
 
   let scheduleRequestId = 0;
@@ -3021,6 +3247,443 @@
   }
 
   // ===========================================================================
+  // GAME DETAIL — one real Highlightly match, by id. Reached from any card in
+  // the rail or the full schedule, or a direct /game/{league}/{id} URL. Built
+  // entirely on the SAME normalized game object the rail/schedule already
+  // render (periods/events/statistics/venue* are simply additional fields on
+  // it, added server-side in getMatchDetail()) — no second game model, no
+  // second card design, no second fetch layer.
+  // ===========================================================================
+
+  // Cached at the exact same rail-scale TTL server/highlightlyProvider.js
+  // uses for this same endpoint (RAIL_SCALE_CACHE_MS, already defined above
+  // for the rail) — a detail page is exactly the kind of view that gets
+  // polled while its game is live, so its cache must stay below that poll
+  // interval or it repeats the Task 6 bug (a cache silently outliving the
+  // poll it's meant to serve).
+  const matchDetailCache = {};
+  async function fetchMatchDetail(league, id){
+    const key = `${league}:${id}`;
+    const cached = matchDetailCache[key];
+    if (cached && Date.now() - cached.at < RAIL_SCALE_CACHE_MS) return cached;
+    // ok=true + game=null distinguishes a confirmed "this match doesn't
+    // exist" (404) from a genuine fetch/provider failure — the two get
+    // different, honest UI states below (GAME NOT FOUND vs a retry prompt).
+    let result = { game: null, ok: false, notFound: false };
+    try {
+      const res = await fetch(`${FB_API_BASE}/match?league=${encodeURIComponent(league)}&id=${encodeURIComponent(id)}`,
+        { headers: { 'Accept': 'application/json' } });
+      if (res.status === 404) {
+        result = { game: null, ok: true, notFound: true };
+      } else if (res.ok) {
+        const data = await res.json();
+        if (data && data.game) result = { game: data.game, ok: true, notFound: false };
+      }
+    } catch (e) { /* no API layer running — surfaces as the retry state below */ }
+    matchDetailCache[key] = { ...result, at: Date.now() };
+    return matchDetailCache[key];
+  }
+
+  // Large-format team badge for the detail header — same teamBadge()
+  // logo/onerror-fallback technique, just sized for a scoreboard rather than
+  // a compact card (see .gd-team-badge, 64px vs .team-badge's 28px).
+  function teamBadgeLarge(logoUrl, label){
+    if (!logoUrl) return `<span class="gd-team-badge">${label}</span>`;
+    return `<span class="gd-team-badge"><img src="${logoUrl}" alt="" loading="lazy"
+      onerror="this.parentElement.textContent='${label}'"></span>`;
+  }
+
+  function buildGameHeader(g){
+    const comp = leagueNames[g.league] || g.league.toUpperCase();
+    let statusLine;
+    if (g.status === 'live') {
+      statusLine = `<div class="gd-status is-live"><span class="pulse"></span>${periodLine(g)}</div>`;
+    } else if (g.status === 'final') {
+      statusLine = `<div class="gd-status">Final</div>`;
+    } else if (g.status === 'postponed') {
+      statusLine = `<div class="gd-status">Postponed</div>`;
+    } else if (g.status === 'cancelled') {
+      statusLine = `<div class="gd-status">Cancelled</div>`;
+    } else {
+      statusLine = `<div class="gd-status">${formatKickoffDateLong(g.startTime, g.league)} · ${formatKickoffTime(g.startTime, g.league)}</div>`;
+    }
+    const scored = g.status === 'live' || g.status === 'final';
+    const mid = scored
+      ? `<div class="gd-score-mid"><span class="gd-score">${g.awayScore ?? '–'}</span><span class="gd-score-sep">–</span><span class="gd-score">${g.homeScore ?? '–'}</span></div>`
+      : `<div class="gd-time-mid">${formatKickoffDateShort(g.startTime, g.league)}<br>${formatKickoffTime(g.startTime, g.league)}</div>`;
+
+    return `<div class="gd-header${g.status === 'live' ? ' is-live' : ''}">
+      <div class="gd-comp">${comp}</div>
+      ${statusLine}
+      <div class="gd-scoreboard">
+        <div class="gd-team is-away">
+          ${teamBadgeLarge(g.awayTeamLogo, g.awayTeam)}
+          <span class="gd-team-name">${g.awayTeamName || g.awayTeam}</span>
+        </div>
+        ${mid}
+        <div class="gd-team is-home">
+          ${teamBadgeLarge(g.homeTeamLogo, g.homeTeam)}
+          <span class="gd-team-name">${g.homeTeamName || g.homeTeam}</span>
+        </div>
+      </div>
+      ${g.broadcast ? `<div class="gd-comp" style="margin-top:14px;margin-bottom:0;">${g.broadcast}</div>` : ''}
+    </div>`;
+  }
+
+  // Basketball/NFL quarter-by-quarter score breakdown — only the columns
+  // actually present in g.periods are shown (a game that hasn't reached OT
+  // simply has no 'ot' key, so no OT column is drawn; nothing padded with a
+  // fabricated 0 or dash for a period that hasn't happened).
+  const PERIOD_TABLE_COLUMNS = {
+    basketball: [['q1', 'Q1'], ['q2', 'Q2'], ['q3', 'Q3'], ['q4', 'Q4'], ['ot', 'OT']],
+    americanfootball: [['q1', 'Q1'], ['q2', 'Q2'], ['q3', 'Q3'], ['q4', 'Q4'], ['ot1', 'OT'], ['ot2', 'OT2']]
+  };
+  function buildPeriodsSection(g){
+    const cols = PERIOD_TABLE_COLUMNS[g.sport];
+    if (!cols || !g.periods) return '';
+    const present = cols.filter(([key]) => g.periods[key]);
+    if (!present.length) return '';
+    return `<div class="gd-section">
+      <div class="gd-section-title">Period by period</div>
+      <table class="gd-periods">
+        <thead><tr><th></th>${present.map(([, label]) => `<th>${label}</th>`).join('')}</tr></thead>
+        <tbody>
+          <tr><td>${g.awayTeamName || g.awayTeam}</td>${present.map(([key]) => `<td>${g.periods[key].away ?? '–'}</td>`).join('')}</tr>
+          <tr><td>${g.homeTeamName || g.homeTeam}</td>${present.map(([key]) => `<td>${g.periods[key].home ?? '–'}</td>`).join('')}</tr>
+        </tbody>
+      </table>
+    </div>`;
+  }
+
+  // ===========================================================================
+  // EVENT ICONS — minimal inline SVG, no emoji (keeps the existing Fast Break
+  // visual language rather than mixing in platform emoji rendering). Colors
+  // are drawn ONLY from the existing token set: --yellow/--yellow-tint for
+  // cards already carry that exact meaning elsewhere in the design system,
+  // --live-bright/--live-veil is the same red already reserved for LIVE and
+  // red-card semantics, --indigo-veil is the existing Fast Break accent tint
+  // (used for the goal chip's "subtle Fast Break treatment"), and neutral
+  // substitution/other icons use the existing --neutral-tint. No new colors.
+  // ===========================================================================
+  const EVENT_ICON_SVG = {
+    goal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8.5"/><path d="M12 6.2l3.6 2.6-1.4 4.3h-4.4L8.4 8.8z" fill="currentColor" stroke="none"/><path d="M12 6.2V3.6M15.6 8.8l2.9-.9M14.2 13.1l1.8 2.9M9.8 13.1L8 16M8.4 8.8l-2.9-.9"/></svg>',
+    yellow: '<svg viewBox="0 0 24 24"><rect x="7" y="3.5" width="10" height="15" rx="1.6" fill="var(--yellow)"/></svg>',
+    red: '<svg viewBox="0 0 24 24"><rect x="7" y="3.5" width="10" height="15" rx="1.6" fill="var(--live-bright)"/></svg>',
+    yellowred: '<svg viewBox="0 0 24 24"><rect x="9.5" y="4.5" width="9" height="14" rx="1.4" fill="var(--live-bright)"/><rect x="5.5" y="3.5" width="9" height="14" rx="1.4" fill="var(--yellow)"/></svg>',
+    sub: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5v13M8 5L5 8M8 5l3 3"/><path d="M16 19V6M16 19l-3-3M16 19l3-3"/></svg>',
+    other: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>'
+  };
+  // Maps a real provider event.type string to an icon + CSS class. Matches by
+  // keyword rather than an exact list, so a type string not literally seen
+  // during this task (e.g. a real red card, or "Own Goal") still gets a
+  // sensible icon instead of silently falling through — and anything that
+  // matches nothing still renders (as `type-other`, with the real type text
+  // shown), never hidden or guessed at.
+  function eventVisual(type){
+    const t = String(type || '').toLowerCase();
+    if (t.includes('yellow') && t.includes('red')) return { cls: 'type-yellowred', svg: EVENT_ICON_SVG.yellowred };
+    if (t.includes('red'))                          return { cls: 'type-red', svg: EVENT_ICON_SVG.red };
+    if (t.includes('yellow'))                        return { cls: 'type-yellow', svg: EVENT_ICON_SVG.yellow };
+    if (t.includes('goal'))                          return { cls: 'type-goal', svg: EVENT_ICON_SVG.goal };
+    if (t.includes('sub'))                           return { cls: 'type-sub', svg: EVENT_ICON_SVG.sub };
+    return { cls: 'type-other', svg: EVENT_ICON_SVG.other };
+  }
+
+  // Football goal/card/substitution timeline — only the fields the backend
+  // normalizer actually carries (time, type, player, assist, team, teamId).
+  // Sorted chronologically; Highlightly's own event order was not confirmed
+  // stable during this task, so this re-sorts rather than trusting it.
+  // Team association is ID-based (event.teamId against g.homeTeamId/
+  // awayTeamId) wherever possible — the real crest for the correct side is
+  // shown next to the team name rather than guessed from the name string.
+  // `data-team-id` is attached (not a link) so a future team page can hook
+  // in without this task inventing a route that doesn't exist yet.
+  function buildEventsSection(g){
+    if (!Array.isArray(g.events) || !g.events.length) return '';
+    const rows = g.events
+      .slice()
+      .sort((a, b) => (parseInt(a.time, 10) || 0) - (parseInt(b.time, 10) || 0))
+      .map(e => {
+        const minute = e.time ? `${e.time}'` : '';
+        const visual = eventVisual(e.type);
+        const player = e.player || '';
+        const desc = player ? '' : (e.type || '');
+        const assist = e.assist ? ` <span class="gd-event-desc">(assist: ${e.assist})</span>` : '';
+        let crest = '';
+        if (e.teamId && e.teamId === g.awayTeamId && g.awayTeamLogo) crest = `<img class="gd-event-crest" src="${g.awayTeamLogo}" alt="" loading="lazy" onerror="this.remove()">`;
+        else if (e.teamId && e.teamId === g.homeTeamId && g.homeTeamLogo) crest = `<img class="gd-event-crest" src="${g.homeTeamLogo}" alt="" loading="lazy" onerror="this.remove()">`;
+        const teamLabel = e.team ? `<span data-team-id="${e.teamId || ''}">${e.team}</span>` : '';
+        return `<div class="gd-event">
+          <span class="gd-event-min">${minute}</span>
+          <span class="gd-event-icon ${visual.cls}">${visual.svg}</span>
+          <span class="gd-event-body">
+            ${player ? `<span class="gd-event-player">${player}</span>` : `<span class="gd-event-desc">${desc}</span>`}${assist}
+            ${teamLabel ? `<span class="gd-event-meta">${crest}${teamLabel}</span>` : ''}
+          </span>
+        </div>`;
+      }).join('');
+    return `<div class="gd-section">
+      <div class="gd-section-title">Match events</div>
+      <div class="gd-events">${rows}</div>
+    </div>`;
+  }
+
+  // A compact, sport-appropriate slice of the real box score/team-stat rows
+  // the provider returned — never every field it has (that runs 20-40 rows
+  // deep per side), and never a field neither side actually reported. Each
+  // sport's priority list only picks among labels CONFIRMED real from a live
+  // response during this task; anything not present on both sides is simply
+  // skipped, not shown blank or zero.
+  const STAT_PRIORITY = {
+    football: ['Possession', 'Shots on target', 'Shots off target', 'Corners', 'Fouls', 'Offsides', 'Yellow cards', 'Red cards'],
+    basketball: ['Succesful Field Goals', 'Field Goals', 'Succesful 3 Pointers', '3 Pointers', 'Succesful Free Throws', 'Free Throws', 'Rebounds', 'Assists', 'Steals', 'Blocks', 'Turnovers']
+  };
+  function buildStatsSection(g){
+    if (!Array.isArray(g.statistics) || g.statistics.length !== 2) return '';
+    const away = g.statistics.find(t => t.teamId === g.awayTeamId) || g.statistics[0];
+    const home = g.statistics.find(t => t.teamId === g.homeTeamId) || g.statistics[1];
+    if (!away || !home || !away.stats.length || !home.stats.length) return '';
+    const val = (team, label) => { const s = team.stats.find(x => x.label === label); return s ? s.value : null; };
+    // "Possession" is confirmed real data as a 0..1 fraction (e.g. 0.61 —
+    // checked directly against a live response during this task), not a
+    // pre-formatted percentage. Rendering it as "61%" is a display-only
+    // conversion of that same real number to the conventional way a reading
+    // possession stat is shown — nothing invented, no other label is touched.
+    const display = (label, v) => {
+      if (v === null) return '–';
+      if (label === 'Possession' && typeof v === 'number' && v <= 1) return `${Math.round(v * 100)}%`;
+      return v;
+    };
+    // Proportional bar width, computed only from the two REAL values already
+    // on screen — never a fabricated percentage. Returns null (no bar drawn)
+    // whenever either side is missing or both are zero, exactly per the "do
+    // not create a misleading bar for a single-sided/undefined metric"
+    // requirement; a genuine percentage metric (Possession) uses its own
+    // real share directly instead of re-deriving one from two counts.
+    const barPct = (label, a, h) => {
+      if (label === 'Possession' && typeof a === 'number' && a <= 1) return Math.round(a * 100);
+      if (typeof a !== 'number' || typeof h !== 'number') return null;
+      const sum = a + h;
+      if (sum <= 0) return null;
+      return Math.round((a / sum) * 100);
+    };
+
+    const priority = STAT_PRIORITY[g.sport] || [];
+    let labels = priority.filter(l => val(away, l) !== null || val(home, l) !== null);
+    if (!labels.length) {
+      // No confirmed priority list for this sport (american football — no
+      // finished/live match was available to confirm its real label set
+      // during this task) — fall back to whatever labels both sides
+      // actually share, capped so the section stays a readable size rather
+      // than dumping the provider's full stat list.
+      const homeLabels = new Set(home.stats.map(s => s.label));
+      labels = away.stats.map(s => s.label).filter(l => homeLabels.has(l)).slice(0, 10);
+    }
+    if (!labels.length) return '';
+
+    const rows = labels.map(label => {
+      const a = val(away, label), h = val(home, label);
+      const pct = barPct(label, a, h);
+      const bar = pct === null ? '' : `<div class="gd-stat-bar"><div class="gd-stat-bar-fill" style="width:${pct}%"></div></div>`;
+      return `<div class="gd-stat-row">
+        <div class="gd-stat-top">
+          <span class="gd-stat-val">${display(label, a)}</span>
+          <span class="gd-stat-label">${label}</span>
+          <span class="gd-stat-val">${display(label, h)}</span>
+        </div>
+        ${bar}
+      </div>`;
+    }).join('');
+    return `<div class="gd-section">
+      <div class="gd-section-title">Match stats</div>
+      <div class="gd-stats">
+        <div class="gd-stat-teams"><span>${g.awayTeamName || g.awayTeam}</span><span>${g.homeTeamName || g.homeTeam}</span></div>
+        ${rows}
+      </div>
+    </div>`;
+  }
+
+  function buildVenueSection(g){
+    const bits = [g.venueCity, g.venueCountry].filter(Boolean).join(', ');
+    if (!g.venue && !bits) return '';
+    return `<div class="gd-section">
+      <div class="gd-section-title">Venue</div>
+      <div class="gd-venue">${g.venue ? `<b>${g.venue}</b>` : ''}${g.venue && bits ? ' — ' : ''}${bits}</div>
+    </div>`;
+  }
+
+  // ===========================================================================
+  // FOOTBALL PITCH — football/soccer only. Highlightly's real event/shot data
+  // was checked directly during this task (raw dump of a live match) and
+  // confirmed to carry NO coordinates anywhere (not on events, not on the
+  // per-team shots list — "goalTarget" there describes where ON THE GOAL a
+  // shot was aimed, e.g. "High Left", not where on the PITCH it was taken
+  // from). So there is no real spatial data to plot shot locations with, and
+  // none is invented.
+  //
+  // What IS real and safely plottable without guessing a coordinate: a real
+  // Goal event's team (ID-matched, never inferred from a name) and minute.
+  // Every goal is, by the sport's own definition, scored at the CONCEDING
+  // side's goal frame — that is the one spatial fact about a goal that is
+  // true regardless of missing coordinates, not a fabricated position. Goals
+  // are drawn at a fixed end per side (away team's goals at the top end,
+  // home's at the bottom — a consistent Fast Break page convention, not a
+  // claim about which end either team really defended) purely so the reader
+  // can see who scored, when, and how many, at a glance.
+  // ===========================================================================
+  // Landscape orientation (a real pitch is ~105x68m, wider than tall — this
+  // both reads as the familiar broadcast/tactical-board view and keeps the
+  // rendered height under control at the wider desktop CSS width; an earlier
+  // portrait draft measured 886px tall at 560px wide and was replaced).
+  const PITCH_MARKINGS_SVG = `
+    <rect x="10" y="10" width="360" height="220" rx="2"/>
+    <line x1="190" y1="10" x2="190" y2="230"/>
+    <circle cx="190" cy="120" r="32"/>
+    <circle cx="190" cy="120" r="1.6" fill="currentColor" stroke="none"/>
+    <rect x="10" y="65" width="50" height="110"/>
+    <rect x="10" y="95" width="18" height="50"/>
+    <circle cx="46" cy="120" r="1.4" fill="currentColor" stroke="none"/>
+    <path d="M60 95 A32 32 0 0 1 60 145"/>
+    <rect x="5" y="105" width="5" height="30"/>
+    <rect x="320" y="65" width="50" height="110"/>
+    <rect x="352" y="95" width="18" height="50"/>
+    <circle cx="334" cy="120" r="1.4" fill="currentColor" stroke="none"/>
+    <path d="M320 95 A32 32 0 0 0 320 145"/>
+    <rect x="370" y="105" width="5" height="30"/>
+    <path d="M10 18 A8 8 0 0 1 18 10"/>
+    <path d="M362 10 A8 8 0 0 1 370 18"/>
+    <path d="M18 230 A8 8 0 0 1 10 222"/>
+    <path d="M370 222 A8 8 0 0 1 362 230"/>
+  `;
+  function buildPitchSection(g){
+    if (g.sport !== 'football') return '';
+    const goals = (Array.isArray(g.events) ? g.events : []).filter(e => eventVisual(e.type).cls === 'type-goal');
+
+    // Spread multiple goals by the same side vertically along the goal mouth
+    // so markers don't stack directly on top of one another.
+    const awayGoals = goals.filter(e => e.teamId && e.teamId === g.awayTeamId);
+    const homeGoals = goals.filter(e => e.teamId && e.teamId === g.homeTeamId);
+    const spreadY = i => 98 + Math.min(i, 4) * 12; // clamps rather than running off the goal mouth
+
+    const markers = [
+      ...awayGoals.map((e, i) => ({ x: 26, y: spreadY(i), e })),
+      ...homeGoals.map((e, i) => ({ x: 354, y: spreadY(i), e }))
+    ].map(({ x, y, e }) => {
+      const label = e.time ? `${e.time}'` : '';
+      const labelX = x < 190 ? x + 16 : x - 16;
+      const anchor = x < 190 ? 'start' : 'end';
+      return `<circle cx="${x}" cy="${y}" r="4" class="gd-pitch-goal"/>` +
+        (label ? `<text x="${labelX}" y="${y + 3}" class="gd-pitch-goal-label" text-anchor="${anchor}">${label}</text>` : '');
+    }).join('');
+
+    const unassigned = goals.length - awayGoals.length - homeGoals.length;
+    const note = goals.length
+      ? `${goals.length} goal${goals.length === 1 ? '' : 's'} shown at the scoring team's target end — Highlightly doesn't provide shot/goal coordinates for this match, so nothing is plotted mid-pitch.${unassigned ? ' Some events had no reliable team ID and are omitted from the pitch.' : ''}`
+      : `Highlightly doesn't provide shot or goal coordinates for this match, so no markers are plotted.`;
+
+    return `<div class="gd-section">
+      <div class="gd-section-title">Pitch</div>
+      <div class="gd-pitch-wrap">
+        <svg class="gd-pitch" viewBox="0 0 380 240" fill="none" stroke="var(--line-strong)" stroke-width="1.5" color="var(--cool-faint)">
+          ${PITCH_MARKINGS_SVG}
+          <g stroke="none">${markers}</g>
+        </svg>
+        <div class="gd-pitch-note">${note}</div>
+      </div>
+    </div>`;
+  }
+
+  function buildGameDetailPage(g){
+    return `<button type="button" class="gd-back" id="gdBackBtn">← Back to ${leagueNames[g.league] || g.league.toUpperCase()}</button>
+      ${buildGameHeader(g)}
+      ${buildPeriodsSection(g)}
+      ${buildEventsSection(g)}
+      ${buildPitchSection(g)}
+      ${buildStatsSection(g)}
+      ${buildVenueSection(g)}`;
+  }
+
+  function wireGameDetailBack(league){
+    const btn = document.getElementById('gdBackBtn');
+    if (btn) btn.addEventListener('click', e => { e.preventDefault(); navigate(homeUrl()); });
+  }
+
+  function buildGameErrorState(league){
+    return `<button type="button" class="gd-back" id="gdBackBtn">← Back to ${leagueNames[league] || league.toUpperCase()}</button>
+      <div class="gd-state">
+        <h2>Couldn't load this game</h2>
+        <p>The live data provider didn't respond. Try again in a moment.</p>
+        <button type="button" class="gd-retry" id="gdRetry">Retry</button>
+      </div>`;
+  }
+  function buildGameNotFoundState(league){
+    return `<button type="button" class="gd-back" id="gdBackBtn">← Back to ${leagueNames[league] || league.toUpperCase()}</button>
+      <div class="gd-state">
+        <h2>Game not found</h2>
+        <p>This match isn't available.</p>
+      </div>`;
+  }
+
+  // Single-owner poll, same pattern (and the same live-only cadence) as
+  // scheduleScoreRailRefresh() above — never a second, independently-paced
+  // polling system. Only live games self-update; a scheduled/final/
+  // postponed game has nothing that will change without a navigation.
+  let gameDetailRequestId = 0;
+  let gameDetailTimer = null;
+  let gameDetailCurrent = null; // {league, id} currently on screen, or null
+  function scheduleGameDetailRefresh(league, id, isLive){
+    clearTimeout(gameDetailTimer);
+    gameDetailTimer = null;
+    if (!isLive) return;
+    gameDetailTimer = setTimeout(() => {
+      if (document.hidden) { scheduleGameDetailRefresh(league, id, isLive); return; }
+      if (gameView.hidden || !gameDetailCurrent || gameDetailCurrent.league !== league || gameDetailCurrent.id !== id) return; // navigated away
+      renderGameDetail(league, id, { poll: true });
+    }, 20000); // same live cadence the rail already uses
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && !gameView.hidden && gameDetailCurrent) {
+      renderGameDetail(gameDetailCurrent.league, gameDetailCurrent.id, { poll: true });
+    }
+  });
+
+  async function renderGameDetail(league, id, opts){
+    opts = opts || {};
+    clearTimeout(gameDetailTimer);
+    const myRequestId = ++gameDetailRequestId;
+    gameDetailCurrent = { league, id };
+
+    if (!opts.poll) {
+      gameView.innerHTML = `<div class="gd-state">Loading match…</div>`;
+      document.title = 'Game — Fast Break';
+    }
+
+    const result = await fetchMatchDetail(league, id);
+    if (myRequestId !== gameDetailRequestId) return; // superseded — discard
+
+    if (!result.ok) {
+      gameView.innerHTML = buildGameErrorState(league);
+      wireGameDetailBack(league);
+      const retry = document.getElementById('gdRetry');
+      if (retry) retry.addEventListener('click', () => renderGameDetail(league, id));
+      return;
+    }
+    if (result.notFound || !result.game) {
+      gameView.innerHTML = buildGameNotFoundState(league);
+      wireGameDetailBack(league);
+      document.title = 'Game not found — Fast Break';
+      return;
+    }
+
+    const g = result.game;
+    document.title = `${g.awayTeamName || g.awayTeam} @ ${g.homeTeamName || g.homeTeam} — Fast Break`;
+    gameView.innerHTML = buildGameDetailPage(g);
+    wireGameDetailBack(league);
+
+    scheduleGameDetailRefresh(league, id, g.status === 'live');
+  }
+
+  // ===========================================================================
   // FB VIDEO COMPONENT (reusable)
   // ---------------------------------------------------------------------------
   // renderVideo({ src, poster, caption }) -> HTML string, or '' when no source.
@@ -3059,6 +3722,8 @@
     if (storyIdx !== -1) return path.slice(0, storyIdx);
     const scheduleIdx = path.indexOf('/schedule/');
     if (scheduleIdx !== -1) return path.slice(0, scheduleIdx);
+    const gameIdx = path.indexOf('/game/');
+    if (gameIdx !== -1) return path.slice(0, gameIdx);
     return path.replace(/\/[^/]*$/, '');
   })();
 
@@ -3079,10 +3744,22 @@
     const m = path.match(/\/schedule\/([^/?#]+)/);
     return m ? decodeURIComponent(m[1]) : null;
   };
+  // Game detail route carries BOTH league and id — the match id alone is not
+  // enough to know which Highlightly sport/league host to query, and item 16
+  // of the task this shipped in explicitly requires the URL itself (not the
+  // app's currently-active nav league) to be the authoritative source of a
+  // directly-opened game's competition, so it has to be in the path already
+  // rather than guessed or looked up.
+  const gameUrl = (league, id) => (BASE || '') + '/game/' + league + '/' + encodeURIComponent(id);
+  const gameRouteFromPath = path => {
+    const m = path.match(/\/game\/([^/]+)\/([^/?#]+)/);
+    return m ? { league: decodeURIComponent(m[1]), id: decodeURIComponent(m[2]) } : null;
+  };
 
   const homeView     = document.getElementById('homeView');
   const articleView  = document.getElementById('articleView');
   const scheduleView = document.getElementById('scheduleView');
+  const gameView      = document.getElementById('gameView');
   const readProgress = document.getElementById('readProgress');
 
   function navigate(url, opts){
@@ -3092,13 +3769,16 @@
   }
 
   // The single view switch. Exactly one of homeView / articleView /
-  // scheduleView is ever visible at a time.
+  // scheduleView / gameView is ever visible at a time.
   function route(opts){
     opts = opts || {};
     closeMega();
     const id = storyIdFromPath(location.pathname);
     const story = id ? STORIES.find(x => x.id === id) : null;
-    const scheduleLeagueId = !story ? scheduleLeagueFromPath(location.pathname) : null;
+    const gameRoute = !story ? gameRouteFromPath(location.pathname) : null;
+    const gameRouteValid = gameRoute &&
+      [...LEAGUES_CFG, ...COMPETITIONS_CFG].some(l => l.id === gameRoute.league);
+    const scheduleLeagueId = (!story && !gameRouteValid) ? scheduleLeagueFromPath(location.pathname) : null;
     // LEAGUES_CFG alone would wrongly 404 a direct link to a competition's
     // schedule (ucl/uel live in COMPETITIONS_CFG, not LEAGUES_CFG) — the
     // schedule route validates against every id the backend can actually
@@ -3119,9 +3799,32 @@
       homeView.hidden = true;
       articleView.hidden = false;
       scheduleView.hidden = true;
+      gameView.hidden = true;
       document.title = story.headline + ' — Fast Break';
       if (!opts.keepScroll) window.scrollTo({ top: 0, behavior: 'auto' });
       updateProgress();
+      return;
+    }
+
+    if (gameRouteValid) {
+      // Same league-sync as the article/schedule branches — the app's active
+      // competition follows the page being shown. The FETCH itself, though,
+      // never uses activeLeague — renderGameDetail() below is always called
+      // with gameRoute.league straight from the URL, which stays the sole
+      // authority for which competition a directly-opened game belongs to.
+      if (gameRoute.league !== activeLeague && LEAGUES[gameRoute.league]) {
+        activeLeague = gameRoute.league;
+        renderStories();
+        if (typeof renderScoreRail === 'function') renderScoreRail();
+      }
+      markActiveSport();
+      homeView.hidden = true;
+      articleView.hidden = true;
+      articleView.innerHTML = '';
+      scheduleView.hidden = true;
+      gameView.hidden = false;
+      if (typeof renderGameDetail === 'function') renderGameDetail(gameRoute.league, gameRoute.id);
+      if (!opts.keepScroll) window.scrollTo({ top: 0, behavior: 'auto' });
       return;
     }
 
@@ -3139,19 +3842,22 @@
       articleView.hidden = true;
       articleView.innerHTML = '';
       scheduleView.hidden = false;
+      gameView.hidden = true;
       document.title = `${leagueNames[scheduleLeagueId] || scheduleLeagueId.toUpperCase()} Schedule — Fast Break`;
       if (typeof renderSchedulePage === 'function') renderSchedulePage(scheduleLeagueId);
       if (!opts.keepScroll) window.scrollTo({ top: 0, behavior: 'auto' });
       return;
     }
 
-    // Unknown /story/ or /schedule/ path: fall back to the homepage rather
-    // than a blank page.
-    if (id || scheduleLeagueId) history.replaceState({}, '', homeUrl());
+    // Unknown /story/, /schedule/ or /game/ path: fall back to the homepage
+    // rather than a blank page.
+    if (id || scheduleLeagueId || gameRoute) history.replaceState({}, '', homeUrl());
     articleView.hidden = true;
     articleView.innerHTML = '';
     scheduleView.hidden = true;
     scheduleView.innerHTML = '';
+    gameView.hidden = true;
+    gameView.innerHTML = '';
     homeView.hidden = false;
     readProgress.style.width = '0%';
     document.title = 'Fast Break';

@@ -15,3 +15,11 @@
   from = "/story/*"
   to = "/index.html"
   status = 200
+
+# Game detail routes are client-side too (/game/{league}/{id}). Same reasoning
+# as /story/* above — a refresh or a shared link must resolve to the app, not
+# a 404, so the router can read the path and fetch the right match.
+[[redirects]]
+  from = "/game/*"
+  to = "/index.html"
+  status = 200
