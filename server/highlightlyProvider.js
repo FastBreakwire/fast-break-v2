@@ -482,7 +482,13 @@ function mapNflStanding(row, group, index) {
     wins: statValue(stats, 'Wins'), losses: statValue(stats, 'Losses'),
     draws: statValue(stats, 'Ties'), points: null,
     scoreFor: statValue(stats, 'Points For'), scoreAgainst: statValue(stats, 'Points Against'),
-    group, conference: row.abbreviation || null, division: null
+    // The real `abbreviation` field ("AFC") lives on the GROUP object in the
+    // raw response, not on each per-team row (row.abbreviation never
+    // existed — confirmed during the Team Pages task, this previously left
+    // conference permanently null). `group` itself is already the real,
+    // human-readable conference name ("American Football Conference"), so
+    // it's reused here rather than inventing a second lookup.
+    group, conference: group || null, division: null
   });
 }
 
@@ -490,7 +496,13 @@ function mapNflStanding(row, group, index) {
 // with the group name carried on every row, so this stays the same "plain
 // array of standings" shape passthrough() already returns — nothing nested.
 function mapStandingsGrouped(raw, kind) {
-  const groups = Array.isArray(raw) ? raw : (raw?.groups || []);
+  // Confirmed by direct inspection (Team Pages task): football/basketball
+  // wrap their groups under `.groups`, but NFL's /standings response wraps
+  // them under `.data` instead — a genuine provider inconsistency between
+  // sports, not a guess. Checking both keys is what actually fixed NFL
+  // standings returning zero rows despite a real 200 response with real
+  // team data inside it.
+  const groups = Array.isArray(raw) ? raw : (raw?.groups || raw?.data || []);
   const out = [];
   groups.forEach(g => {
     const groupName = g.name || g.leagueName || null;
@@ -870,6 +882,16 @@ async function getFullSchedule({ league, season, maxPages = 6 } = {}) {
   return result;
 }
 
+// Standings (and, by extension, getTeams() for basketball/soccer below,
+// which derives from this) change only after a completed match — nowhere
+// near live-poll frequency — so this is cached at the same 5-minute scale
+// as the full-schedule fetch (item 21 of the Team Pages task: "cache team
+// data... do not poll roster/team data every 20 seconds"). Previously
+// uncached entirely; every Team Page load would otherwise have re-spent a
+// request even for a competition just fetched seconds earlier.
+const STANDINGS_CACHE_MS = 5 * 60 * 1000;
+const standingsCache = new Map(); // `${league}:${season}` -> { at, standings }
+
 async function getStandings({ league, season } = {}) {
   const cfg = LEAGUE_CONFIG[league];
   if (!cfg) return [];
@@ -880,20 +902,36 @@ async function getStandings({ league, season } = {}) {
     throw err;
   }
 
+  const cacheKey = `${league}:${effectiveSeason}`;
+  const cached = standingsCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < STANDINGS_CACHE_MS) return cached.standings;
+
+  let standings;
   if (cfg.paramStyle === 'id') {
     const data = await request(cfg.sportSlug, '/standings', { leagueId: cfg.leagueId, season: effectiveSeason });
-    return mapStandingsGrouped(data, cfg.sportSlug === 'soccer' ? 'soccer' : 'basketball');
+    standings = mapStandingsGrouped(data, cfg.sportSlug === 'soccer' ? 'soccer' : 'basketball');
+  } else {
+    // NFL: standings uses leagueType + year, not leagueId/season.
+    const data = await request(cfg.sportSlug, '/standings', { leagueType: cfg.leagueName, year: effectiveSeason });
+    standings = mapStandingsGrouped(data, 'nfl');
   }
-  // NFL: standings uses leagueType + year, not leagueId/season.
-  const data = await request(cfg.sportSlug, '/standings', { leagueType: cfg.leagueName, year: effectiveSeason });
-  return mapStandingsGrouped(data, 'nfl');
+  standingsCache.set(cacheKey, { at: Date.now(), standings });
+  return standings;
 }
+
+// NFL's /teams call is cached at the same scale as standings (basketball/
+// soccer already inherit caching for free by going through getStandings()
+// below — this only needed adding for NFL's own direct call).
+const NFL_TEAMS_CACHE_MS = 5 * 60 * 1000;
+const nflTeamsCache = new Map(); // league -> { at, teams }
 
 async function getTeams({ league, season } = {}) {
   const cfg = LEAGUE_CONFIG[league];
   if (!cfg) return [];
 
   if (cfg.paramStyle === 'name') {
+    const cached = nflTeamsCache.get(league);
+    if (cached && Date.now() - cached.at < NFL_TEAMS_CACHE_MS) return cached.teams;
     // NFL's /teams genuinely supports a league filter.
     const data = await request(cfg.sportSlug, '/teams', { league: cfg.leagueName });
     // The live response also carries two conference placeholder rows named
@@ -901,9 +939,11 @@ async function getTeams({ league, season } = {}) {
     // name === displayName === abbreviation === the conference name, unlike
     // every actual club) — not a team, so it's dropped here rather than
     // shown as one in the roster.
-    return rows(data)
+    const teams = rows(data)
       .filter(r => !['AFC', 'NFC'].includes(r.name))
       .map(r => mapTeam(r, league));
+    nflTeamsCache.set(league, { at: Date.now(), teams });
+    return teams;
   }
 
   // basketball/soccer: /teams has no league filter at all (verified against

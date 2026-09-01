@@ -23,3 +23,10 @@
   from = "/game/*"
   to = "/index.html"
   status = 200
+
+# Team Page routes are client-side too (/team/{league}/{teamId}). Same
+# reasoning as /story/* and /game/* above.
+[[redirects]]
+  from = "/team/*"
+  to = "/index.html"
+  status = 200

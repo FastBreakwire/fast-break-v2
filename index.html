@@ -10,17 +10,36 @@
 <style>
 
   :root{
-    --bg:            #161616;
-    --bg-deep:       #1D1D1D;
-    --surface:       #1B1B1B;
-    --surface-2:     #212121;
+    /* ---- GLOBAL CARD SYSTEM (premium/editorial redesign) -------------------
+       One centralized set every card-like component now draws from — game
+       cards, story cards, Team Page cards, Game Detail surfaces, and the
+       homepage's secondary sections (tx-wire, bench cards, newsletter/PWA
+       bands) all reference these same few tokens, so they move together.
+       Surfaces are now LIGHTER than the page (a real elevation relationship
+       — the old --black cards were literally darker than --bg, which read
+       as a cutout/hole rather than a raised card); the border that remains
+       is an ultra-low-opacity WHITE wash rather than a solid mid-gray hex.
+       This is a deliberate fix, not cosmetic tuning: a solid gray line next
+       to this page's warm-black gradient was reading as gold/brown, a
+       complaint raised consistently — low-alpha white avoids any color
+       cast regardless of what's behind it. */
+    --bg:                  #111216;
+    --bg-deep:             #17181d;
+    --surface:             #17191F;
+    --surface-2:           #1B1D24;
+    --surface-card:        #17191F;
+    --surface-card-hover:  #1B1D24;
+    --border-subtle:       rgba(255,255,255,.07);
+    --border-subtle-hover: rgba(255,255,255,.14);
+    --radius-card:         12px;
+    --card-shadow:         0 10px 24px -18px rgba(0,0,0,.6);
     --black:         #0E0E0E;
     /* neutral text ramp — warm beige removed */
     --ink:           #F2F2F2;
     --ink-soft:      #A8ACB2;
     --ink-faint:     #74787E;
-    --line:          #262626;
-    --line-strong:   #3A3A3A;
+    --line:          rgba(255,255,255,.07);
+    --line-strong:   rgba(255,255,255,.14);
 
     /* ---- LIVE SIGNAL -------------------------------------------------------
        RED is reserved for one meaning only: LIVE / CURRENT / ON AIR.
@@ -34,7 +53,12 @@
     --live-veil:     rgba(226,59,59,.075);
 
     --accent-ink:    #F2F2F2;
-    --accent-line:   #4A4A4A;
+    /* Was a solid mid-gray (#4A4A4A) — now the same restrained violet used
+       for --indigo-line, so every hover state that reads this token (icon
+       buttons, side/news cards, the newsletter input, back-to-top, search
+       close) picks up the "violet = interactive" language in one place,
+       per the global card system's own rule that violet is the accent. */
+    --accent-line:   rgba(155,144,214,.32);
 
     /* ---- ORIENTATION ACCENT (indigo / dark violet) -------------------------
        Where the reader IS: active sport, active league, breadcrumb arrows,
@@ -63,9 +87,14 @@
     --teal-tint:     rgba(127,195,188,.12);
     --neutral-tint:  rgba(255,255,255,.065);
 
-    --r-lg: 28px;
-    --r-md: 20px;
-    --r-sm: 14px;
+    /* Restrained modern radius (item 4 of the card-system task: 10-14px,
+       not exaggerated pill-like rounding). Every current use of these three
+       tokens is a card-like container (confirmed by inspection before this
+       change), so tightening them here is a single, safe, global fix rather
+       than a per-component edit. */
+    --r-lg: 14px;
+    --r-md: 12px;
+    --r-sm: 10px;
     --r-pill: 999px;
 
     --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
@@ -81,7 +110,10 @@
 
     --cool-muted: #9299A6;
     --cool-faint: #6B7280;
-    --cool-line:  #2A2A2A;
+    /* Was a solid mid-gray (#2A2A2A) — same low-alpha white wash as --line,
+       so every thin separator (schedule rows, stat rows, card footers)
+       matches the new global card system instead of its own gray. */
+    --cool-line:  var(--border-subtle);
 
     --ease: cubic-bezier(.22,.61,.36,1);
   }
@@ -97,7 +129,7 @@
       radial-gradient(1180px 640px at 50% -8%,  rgba(255,255,255,.042), transparent 66%),
       radial-gradient(820px  560px at 96% 10%,  rgba(226,59,59,.026),   transparent 68%),
       radial-gradient(980px  760px at 2%  52%,  rgba(255,255,255,.020), transparent 70%),
-      linear-gradient(180deg, #191919 0%, #151515 38%, #121212 100%);
+      linear-gradient(180deg, #15161b 0%, #121319 38%, #0f1014 100%);
     background-attachment:fixed;
     color:var(--ink);
     font-family:var(--sans);
@@ -340,27 +372,29 @@
   .score-row:focus-visible{ outline:2px solid var(--indigo); outline-offset:2px; border-radius:12px; }
   .game-card{
     flex:none; width:188px;
-    background:var(--black); border:1px solid var(--cool-line); border-radius:12px;
+    background:var(--surface-card); border:1px solid var(--border-subtle); border-radius:var(--radius-card);
     padding:13px 14px; display:flex; flex-direction:column; gap:9px;
-    transition:border-color .3s var(--ease), transform .18s var(--ease), box-shadow .18s var(--ease);
+    box-shadow:var(--card-shadow);
+    transition:background .18s var(--ease), border-color .18s var(--ease), transform .18s var(--ease), box-shadow .18s var(--ease);
     text-decoration:none; cursor:pointer;
   }
-  .game-card:hover{ border-color:#404040; transform:translateY(-2px); }
+  .game-card:hover{ background:var(--surface-card-hover); border-color:var(--border-subtle-hover); transform:translateY(-2px); }
   /* A restrained, indigo "this opens something" cue — deliberately separate
      from the red LIVE treatment below so the two never mix: a live card's
-     hover/focus stays red, a non-live card's stays indigo. */
+     hover/focus stays red, a non-live card's stays indigo. Violet is the one
+     accent color a hover ever introduces — no scaling, no neon. */
   .game-card:not(.is-live):hover{
     border-color:var(--indigo-line);
-    box-shadow:0 10px 24px -18px rgba(155,144,214,.4);
+    box-shadow:0 10px 22px -16px rgba(155,144,214,.38);
   }
   .game-card:focus-visible{
     outline:2px solid var(--indigo); outline-offset:2px; transform:translateY(-2px);
   }
-  /* Live game: a red edge and a low bloom. The card body stays black — red
-     marks the state, it never becomes the surface. */
+  /* Live game: a red edge and a low bloom. The card surface stays neutral —
+     red marks the state, it never becomes the surface fill. */
   .game-card.is-live{
     border-color:var(--live-edge);
-    box-shadow:0 10px 28px -18px rgba(226,59,59,.55);
+    box-shadow:0 10px 26px -16px rgba(226,59,59,.5);
   }
   .game-card.is-live:hover{ border-color:rgba(226,59,59,.5); }
   .game-status-row{ display:flex; align-items:center; justify-content:space-between; font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; font-variant-numeric:tabular-nums; }
@@ -572,10 +606,10 @@
 
   /* --- header: compact, score-dominant --- */
   .gd-header{
-    background:var(--black); border:1px solid var(--line); border-radius:var(--r-lg);
-    padding:var(--sp-4) var(--sp-5); margin-bottom:var(--sp-5);
+    background:var(--surface-card); border:1px solid var(--border-subtle); border-radius:var(--r-lg);
+    padding:var(--sp-4) var(--sp-5); margin-bottom:var(--sp-5); box-shadow:var(--card-shadow);
   }
-  .gd-header.is-live{ border-color:var(--live-edge); box-shadow:0 14px 36px -22px rgba(226,59,59,.5); }
+  .gd-header.is-live{ border-color:var(--live-edge); box-shadow:0 14px 32px -20px rgba(226,59,59,.5); }
   .gd-comp{
     text-align:center; font-family:var(--label); font-size:10.5px; font-weight:700;
     letter-spacing:.1em; text-transform:uppercase; color:var(--cool-faint); margin-bottom:4px;
@@ -592,6 +626,9 @@
     display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:var(--sp-4);
   }
   .gd-team{ display:flex; flex-direction:column; align-items:center; gap:10px; min-width:0; }
+  a.gd-team{ cursor:pointer; border-radius:12px; padding:4px; margin:-4px; transition:background .18s var(--ease); }
+  a.gd-team:hover{ background:var(--indigo-veil); }
+  a.gd-team:focus-visible{ outline:2px solid var(--indigo); outline-offset:2px; }
   /* Standalone crest — no box, no border, no background. Just the real logo
      (or, absent one, its plain fallback text — still no container drawn
      around it, per the "no logo-in-box" requirement). */
@@ -733,6 +770,153 @@
     .gd-action{ font-size:11.5px; }
   }
 
+  /* ============ TEAM PAGE — VISUAL CONCEPT TEST ============
+     A modern-app direction, away from the "many bordered boxes" dashboard
+     look: minimal borders, open sections separated by dividers/whitespace
+     instead of card outlines, a tab-based Overview/Matches/Standings/Squad/
+     News structure, and a slightly lighter charcoal surface tone used
+     sparingly for genuinely elevated elements (hero, active standings row)
+     rather than wrapping every section in its own box.
+
+     Now built entirely on the GLOBAL card tokens (--surface-card,
+     --border-subtle, --radius-card) added for the card-system redesign —
+     the page-scoped --tp-* tokens from the earlier concept test are gone,
+     per item 9 of that task: this must look like the same Fast Break
+     components used everywhere else, not a special Team Page style. Still
+     built entirely on existing data (buildGameCard()/buildScheduleRow()/
+     buildStoryCard()/the real standings rows already fetched) — only the
+     presentation is new. */
+  .team-page{ padding:var(--sp-4) 0 var(--sp-8); }
+
+  /* --- compact hero: no border, a soft surface wash instead of a box --- */
+  .tp-hero{
+    background:var(--surface-card); border-radius:var(--r-lg);
+    padding:var(--sp-4) var(--sp-4) 20px; margin-bottom:var(--sp-4);
+    display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center;
+  }
+  /* Standalone crest — no box, no border, same technique as Game Detail's
+     team badges, just larger (90-120px desktop / 70-90px mobile per spec). */
+  .tp-logo{
+    width:clamp(70px, 8vw, 112px); height:clamp(70px, 8vw, 112px);
+    display:flex; align-items:center; justify-content:center; margin-bottom:2px;
+    font-family:var(--label); font-size:22px; font-weight:700; color:var(--cool-muted);
+  }
+  .tp-logo img{ width:100%; height:100%; object-fit:contain; display:block; }
+  .tp-name{
+    font-family:var(--display); font-weight:600; font-size:clamp(21px,2.6vw,28px);
+    letter-spacing:-.01em; color:var(--ink); line-height:1.1;
+  }
+  .tp-comp{
+    font-family:var(--label); font-size:10.5px; font-weight:700; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--cool-faint);
+  }
+  .tp-record{
+    font-family:var(--label); font-size:13.5px; color:var(--ink-soft); margin-top:4px;
+  }
+  .tp-record b{ color:var(--indigo); font-weight:700; font-variant-numeric:tabular-nums; }
+  .tp-record .tp-pts{ color:var(--ink-faint); margin-left:8px; }
+  .tp-record .tp-pts b{ color:var(--ink); }
+
+  /* --- tab navigation: thin underline + violet glow, no pill boxes --- */
+  .tp-tabs{
+    display:flex; gap:26px; border-bottom:1px solid var(--border-subtle);
+    margin-bottom:var(--sp-5); overflow-x:auto; scrollbar-width:none;
+  }
+  .tp-tabs::-webkit-scrollbar{ display:none; }
+  .tp-tab{
+    font-family:var(--label); font-size:12.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--cool-muted); background:none; border:none; cursor:pointer; white-space:nowrap;
+    padding:9px 1px 11px; position:relative; transition:color .18s var(--ease);
+  }
+  .tp-tab:hover{ color:var(--ink-soft); }
+  .tp-tab:focus-visible{ outline:2px solid var(--indigo); outline-offset:2px; border-radius:4px; }
+  .tp-tab.is-active{ color:var(--indigo); }
+  .tp-tab.is-active::after{
+    content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px; border-radius:2px;
+    background:var(--indigo); box-shadow:0 0 8px rgba(155,144,214,.55);
+  }
+  .tp-panel[hidden]{ display:none; }
+
+  /* --- open sections: a label + thin divider, not a bordered box --- */
+  .tp-section{ margin-bottom:var(--sp-5); }
+  .tp-section-title{
+    font-family:var(--label); font-size:11px; font-weight:700; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--ink-faint); margin-bottom:12px;
+    padding-bottom:8px; border-bottom:1px solid var(--border-subtle);
+  }
+
+  /* --- next match: the strongest section, a soft surface (not a border) --- */
+  .tp-next-wrap{ display:flex; justify-content:center; background:var(--surface-card); border-radius:var(--r-lg); padding:var(--sp-4); }
+  .tp-next-wrap .game-card{ width:100%; max-width:240px; background:none; }
+
+  /* --- form: occupies only the space it needs, inline with its label --- */
+  .tp-form-row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .tp-form-row .tp-section-title{ margin-bottom:0; padding-bottom:0; border-bottom:none; white-space:nowrap; }
+  .tp-form{ display:flex; gap:6px; flex-wrap:wrap; }
+  .tp-form-item{
+    width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center;
+    font-family:var(--label); font-size:11.5px; font-weight:700;
+  }
+  .tp-form-item.is-w{ background:var(--indigo-veil); color:var(--indigo); }
+  .tp-form-item.is-d{ background:var(--neutral-tint); color:var(--ink-soft); }
+  .tp-form-item.is-l{ background:var(--live-veil); color:var(--live-bright); }
+
+  /* --- horizontal game-card rails: literally the Game Rail's own
+     .score-row container and buildGameCard(), same scroll mechanics --- */
+  .tp-rail-wrap .score-row{ padding-bottom:2px; }
+  .tp-rail-wrap.is-large .game-card{ width:200px; }
+
+  /* --- horizontal news rail (Overview teaser) + full grid (News tab) —
+     both populated with the same buildStoryCard() DOM node the homepage
+     uses, never a second article component. --- */
+  .tp-news-rail{
+    display:flex; gap:var(--sp-4); overflow-x:auto; scrollbar-width:none; scroll-behavior:smooth; padding-bottom:4px;
+  }
+  .tp-news-rail::-webkit-scrollbar{ display:none; }
+  .tp-news-rail .news-card{ flex:none; width:250px; }
+  .tp-news-full{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:var(--sp-5); }
+
+  /* --- standings: an editorial table, not a bordered card. Horizontal
+     rules only, compact rows, the selected team gets a soft violet wash. --- */
+  .tp-st-group{
+    font-family:var(--label); font-size:11px; font-weight:700; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--cool-faint); margin-bottom:10px;
+  }
+  .tp-standings{ display:flex; flex-direction:column; }
+  .tp-st-row{
+    display:grid; grid-template-columns:var(--tp-st-cols); align-items:center; gap:8px;
+    padding:9px 8px; border-bottom:1px solid var(--border-subtle);
+    font-family:var(--label); font-size:12.5px; color:var(--ink-soft);
+    transition:background .15s var(--ease); border-radius:8px;
+  }
+  .tp-st-row:not(.tp-st-head):hover{ background:var(--surface-card); }
+  .tp-st-row.is-selected{ background:var(--indigo-veil); }
+  .tp-st-row.is-selected .tp-st-team-name{ color:var(--indigo); font-weight:700; }
+  .tp-st-head{
+    color:var(--cool-faint); font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+    border-bottom:1px solid var(--border-subtle);
+  }
+  .tp-st-pos{ text-align:center; font-variant-numeric:tabular-nums; color:var(--ink-faint); }
+  .tp-st-head .tp-st-pos{ color:var(--cool-faint); }
+  .tp-st-team{ display:flex; align-items:center; gap:9px; min-width:0; }
+  .tp-st-team-name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tp-st-row span:not(.tp-st-team){ text-align:center; font-variant-numeric:tabular-nums; }
+
+  /* --- squad --- */
+  .tp-squad-empty{
+    font-family:var(--label); font-size:13.5px; color:var(--ink-faint); text-align:center;
+    padding:var(--sp-7) var(--sp-4); max-width:44ch; margin:0 auto;
+  }
+  .tp-squad-empty b{ display:block; font-family:var(--display); font-size:16px; font-weight:600; color:var(--ink-soft); margin-bottom:8px; }
+
+  .tp-empty{ font-family:var(--label); font-size:13px; color:var(--cool-faint); padding:14px 0; text-align:center; }
+
+  @media (max-width:640px){
+    .tp-hero{ padding:var(--sp-4) var(--sp-3) 16px; }
+    .tp-tabs{ gap:18px; }
+    .tp-form-row{ row-gap:6px; }
+  }
+
   /* ============ TICKER ============ */
 
   /* ============ EDITION STRIP ============ */
@@ -767,14 +951,14 @@
      one it falls back to a large text block rather than an empty frame. */
   .big-story{
     display:block; position:relative; overflow:hidden;
-    border:1px solid var(--line-strong); border-radius:var(--r-lg);
-    background:var(--surface); margin-bottom:var(--sp-6);
-    box-shadow:0 26px 64px -44px rgba(0,0,0,.95);
-    transition:border-color .3s var(--ease), transform .3s var(--ease), box-shadow .3s var(--ease);
+    border:1px solid var(--border-subtle); border-radius:var(--r-lg);
+    background:var(--surface-card); margin-bottom:var(--sp-6);
+    box-shadow:var(--card-shadow);
+    transition:background .18s var(--ease), border-color .3s var(--ease), transform .3s var(--ease), box-shadow .3s var(--ease);
   }
   .big-story:hover{
-    border-color:var(--accent-line); transform:translateY(-3px);
-    box-shadow:0 34px 76px -42px rgba(0,0,0,1);
+    background:var(--surface-card-hover); border-color:var(--accent-line); transform:translateY(-3px);
+    box-shadow:0 18px 40px -24px rgba(0,0,0,.7);
   }
   .big-story-body{ padding:var(--sp-6); }
   .big-story .status-row{ margin-bottom:16px; }
@@ -790,34 +974,41 @@
   /* The one badge that is intentionally the brightest thing in a status row. */
   .status.featured{ background:var(--ink); color:var(--black); box-shadow:none; letter-spacing:.12em; }
 
-  /* The old treatment bled the image full-width behind a gradient, which both
-     cropped the graphic and dropped a scrim over its baked-in headline. The
-     asset now sits in its own panel, complete and unobscured. */
-  .big-story.has-image{ background:var(--surface); }
-  .big-story.has-image .img-wrap{
-    background:var(--black); border-bottom:1px solid var(--line);
-    display:flex; align-items:center; justify-content:center; padding:var(--sp-4);
-  }
+  .big-story.has-image{ background:var(--surface-card); }
+  /* The image IS the left/top edge of the card — not a box placed inside
+     it. .img-wrap carries no padding, no background, no border; it's a
+     plain layout position, and overflow:hidden here is only a defensive
+     clip, not a visual frame. The <img> itself fills that position
+     completely (object-fit:cover, width/height:100%, zero gap to the
+     card's own outer edge) and carries its OWN corner radius — matching
+     whichever corners of the card it actually touches at the current
+     breakpoint (top corners while stacked on mobile, left corners once the
+     layout goes side-by-side on desktop, explicitly no radius on the sides
+     that border the article-content area) — rather than relying only on
+     the card's overflow:hidden to imply rounding. */
+  .big-story.has-image .img-wrap{ overflow:hidden; height:320px; }
   .big-story.has-image .img-wrap img{
-    width:100%; height:auto; max-height:420px;
-    object-fit:contain; display:block;
+    width:100%; height:100%; object-fit:cover; display:block;
+    border-radius:var(--r-lg) var(--r-lg) 0 0; /* stacked (mobile): image is the top edge */
   }
   @media (min-width:820px){
     .big-story.has-image{ display:grid; grid-template-columns:minmax(0,46%) minmax(0,54%); align-items:stretch; }
-    .big-story.has-image .img-wrap{ border-bottom:none; border-right:1px solid var(--line); max-height:none; }
-    .big-story.has-image .img-wrap img{ max-height:400px; }
+    .big-story.has-image .img-wrap{ height:auto; } /* grid's align-items:stretch takes over */
+    .big-story.has-image .img-wrap img{
+      border-radius:var(--r-lg) 0 0 var(--r-lg); /* side-by-side (desktop): image is the left edge, no radius on the right */
+    }
     .big-story.has-image .big-story-body{ display:flex; flex-direction:column; justify-content:center; }
   }
   @media (max-width:720px){
     .big-story-body{ padding:var(--sp-5); }
-    .big-story.has-image .img-wrap img{ max-height:300px; }
+    .big-story.has-image .img-wrap{ height:240px; }
   }
   .side-card{
-    background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:var(--sp-5);
-    flex:1; display:flex; flex-direction:column;
-    transition:border-color .3s var(--ease), transform .3s var(--ease), box-shadow .3s var(--ease);
+    background:var(--surface-card); border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:var(--sp-5);
+    flex:1; display:flex; flex-direction:column; box-shadow:var(--card-shadow);
+    transition:background .18s var(--ease), border-color .25s var(--ease), transform .25s var(--ease), box-shadow .25s var(--ease);
   }
-  .side-card:hover{ border-color:var(--accent-line); transform:translateY(-3px); }
+  .side-card:hover{ background:var(--surface-card-hover); border-color:var(--accent-line); transform:translateY(-2px); }
   .side-card .eyebrow{ margin-bottom:10px; }
   .side-card h3{ font-family:var(--display); font-weight:600; font-size:18px; line-height:1.22; margin-bottom:10px; }
   .side-card p{ color:var(--ink-soft); font-size:13px; line-height:1.55; margin-bottom:auto; padding-bottom:14px; }
@@ -850,23 +1041,27 @@
   @media (max-width:640px){ .grid-editorial{ grid-template-columns:1fr; } }
 
   .news-card{
-    background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); overflow:hidden;
-    display:flex; flex-direction:column;
-    transition:transform .35s var(--ease), box-shadow .35s var(--ease), border-color .35s var(--ease);
+    background:var(--surface-card); border:1px solid var(--border-subtle); border-radius:var(--r-md); overflow:hidden;
+    display:flex; flex-direction:column; box-shadow:var(--card-shadow);
+    transition:transform .25s var(--ease), background .18s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
   }
   .news-card:hover{
-    transform:translateY(-3px); border-color:var(--accent-line);
-    box-shadow:0 18px 40px -26px rgba(0,0,0,.9);
+    transform:translateY(-2px); background:var(--surface-card-hover); border-color:var(--accent-line);
+    box-shadow:0 14px 28px -20px rgba(0,0,0,.65);
   }
-  /* a card with art becomes [thumb | content]; height is driven by the text */
+  /* a card with art becomes [thumb | content]; height is driven by the text.
+     The image is part of the card's own outer edge — no inner frame: no
+     padding, no background, no border on .img-wrap, so nothing sits between
+     the image and the card boundary. .news-card's own overflow:hidden +
+     border-radius (unchanged) does the corner-clipping, so the image reads
+     as owning the card's left corners rather than sitting in a box inside
+     them. Cropping (object-fit:cover) replaces the old "never crop, letterbox
+     instead" behavior deliberately — filling the area edge-to-edge is the
+     explicit goal here, not preserving the full uncropped frame. */
   .news-card.has-thumb{ display:grid; grid-template-columns:92px minmax(0,1fr); align-items:stretch; }
-  .news-card .img-wrap{
-    overflow:hidden; background:var(--black); border-right:1px solid var(--line);
-    display:flex; align-items:center; justify-content:center; padding:10px;
-  }
+  .news-card .img-wrap{ overflow:hidden; }
   .news-card .img-wrap img{
-    width:100%; height:auto; max-height:100%;
-    object-fit:contain;                       /* never crop the artwork */
+    width:100%; height:100%; object-fit:cover; display:block;
     transition:transform .7s var(--ease);
   }
   .news-card:hover .img-wrap img{ transform:scale(1.03); }
@@ -917,7 +1112,7 @@
     background:var(--surface); border:1px solid var(--line); border-radius:var(--r-sm); padding:var(--sp-4);
     display:flex; flex-direction:column; gap:8px; transition:border-color .3s var(--ease), transform .3s var(--ease);
   }
-  .bench-card:hover{ border-color:var(--line-strong); transform:translateY(-2px); }
+  .bench-card:hover{ border-color:var(--accent-line); background:var(--surface-card-hover); transform:translateY(-2px); }
   .bench-name{ font-family:var(--display); font-weight:600; font-size:15.5px; line-height:1.2; }
   .bench-team{ font-size:11px; color:var(--ink-faint); }
   .bench-note{ font-size:12px; color:var(--ink-soft); line-height:1.45; margin-top:2px; }
@@ -1487,14 +1682,21 @@
     font-family:var(--sans); font-size:clamp(16.5px,1.6vw,19px); line-height:1.55;
     font-weight:500; color:var(--ink-soft); margin-bottom:var(--sp-5); max-width:58ch;
   }
-  .article-hero{
-    border-radius:var(--r-md); overflow:hidden; margin:0 0 var(--sp-5);
-    background:var(--black); border:1px solid var(--line);
-  }
-  .article-hero{ display:flex; align-items:center; justify-content:center; }
+  /* Standalone editorial hero — no surrounding card. The old version wrapped
+     the image in its own bordered, black-filled box (a container the image
+     sat inside, letterboxed by object-fit:contain against that fill); now
+     there is no wrapper box at all, and the image carries its own
+     border-radius directly, so it reads as the object itself rather than
+     something placed inside another object. object-fit:contain is kept
+     (not switched to cover) deliberately — these are full editorial
+     graphics that can carry baked-in text, unlike a small thumbnail crop,
+     so the complete image is preserved; any leftover space at an unusual
+     aspect ratio is just the page's own background showing through, not a
+     visible framing box. */
+  .article-hero{ margin:0 0 var(--sp-5); }
   .article-hero img{
     width:100%; height:auto; max-height:min(72vh, 620px);
-    object-fit:contain; display:block;      /* complete graphic, no crop */
+    object-fit:contain; display:block; border-radius:var(--r-md);
   }
   .article-hero-cap{
     font-family:var(--label); font-size:10px; letter-spacing:.07em; text-transform:uppercase;
@@ -1799,6 +2001,12 @@
          full schedule, or by a direct /game/{league}/{id} URL. Fetches
          /api/match, never a second game model. -->
     <div id="gameView" class="wrap game-detail-page" hidden></div>
+
+    <!-- TEAM PAGE — one real team, rendered by renderTeamPage(). Reached
+         from the Mega Menu's team list or a direct /team/{league}/{teamId}
+         URL. Reuses /api/teams, /api/standings and /api/schedule — no
+         second team/game model, no second match-card system. -->
+    <div id="teamView" class="wrap team-page" hidden></div>
 
     </div><!-- /.shell-body -->
   </div><!-- /.shell -->
@@ -2486,16 +2694,25 @@
       onerror="this.parentElement.textContent='${label}'"></span>`;
   }
 
-  function teamLinks(teams, leagueId){
+  // `demo` (the static TEAMS_CFG fallback, used only when the real API is
+  // unavailable) carries no real Highlightly team id — linking to
+  // /team/{league}/{id} for one of those rows would open a page with
+  // nothing real behind it, so those rows keep the existing "select this
+  // league" behavior instead of a team-page link; only a REAL fetched
+  // roster gets the real link, since only it has a real id to link to.
+  function teamLinks(teams, leagueId, demo){
     // displayName is the full club name everywhere (NFL's own "name" is the
     // short club name, e.g. "Chiefs" vs "Kansas City Chiefs" — see models.js);
     // falling back to name keeps the static TEAMS_CFG rows, which only ever
     // carry a full name, working the same way.
-    return teams.map(t =>
-      `<button class="mega-link team-row" role="menuitem" data-league="${leagueId}">
+    return teams.map(t => {
+      const href = demo ? homeUrl() : teamUrl(leagueId, t.id);
+      const teamAttr = demo ? '' : ` data-team-id="${t.id}"`;
+      return `<a class="mega-link team-row" role="menuitem" href="${href}" data-league="${leagueId}"${teamAttr}>
          ${tmChip(t.logo, t.shortName)}
          <span class="ml-label">${t.displayName || t.name}</span>
-       </button>`).join('');
+       </a>`;
+    }).join('');
   }
 
   // What sits under the categories in a column. Driven by the team cache, not
@@ -2507,7 +2724,7 @@
   function teamsSectionHtml(entry){
     const cached = teamsCache[entry.id];
     if (cached && Array.isArray(cached.teams) && cached.teams.length) {
-      return `<p class="mega-sub">Teams</p><div class="mega-links">${teamLinks(cached.teams, entry.id)}</div>`;
+      return `<p class="mega-sub">Teams</p><div class="mega-links">${teamLinks(cached.teams, entry.id, cached.demo)}</div>`;
     }
     if (cached && cached.loading) {
       return `<p class="mega-sub">Teams</p><p class="mega-note">Loading teams…</p>`;
@@ -2565,7 +2782,29 @@
     megaMenu.querySelectorAll('[data-league]').forEach(el => {
       const id = el.dataset.league;
       if (!LEAGUES[id]) { el.classList.add('is-pending'); el.setAttribute('aria-disabled', 'true'); return; }
-      el.addEventListener('click', () => { selectLeague(id); closeMega(); });
+      // A real team row (data-team-id present — see teamLinks()) opens the
+      // Team Page. Everything else (the mega-title button, or a demo
+      // fallback team row with no real id) keeps the existing "select this
+      // league" behavior. Only the demo row needs preventDefault of its own
+      // — it's now a real <a href> too (for a11y/consistency) but has
+      // nowhere real to navigate to.
+      if (el.dataset.teamId) {
+        el.addEventListener('click', e => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+          e.preventDefault();
+          navigate(teamUrl(id, el.dataset.teamId));
+          closeMega();
+        });
+      } else {
+        el.addEventListener('click', e => {
+          if (el.tagName === 'A') {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+            e.preventDefault();
+          }
+          selectLeague(id);
+          closeMega();
+        });
+      }
     });
   }
 
@@ -2927,6 +3166,7 @@
   // need to be re-attached.
   wireGameCardClicks('scoreRailBody');
   wireGameCardClicks('scheduleView');
+  wireGameCardClicks('teamView');
 
   // Single owner of the rail refresh loop — never more than one timer
   // pending. Every entry point (a competition switch, or the loop itself)
@@ -3575,22 +3815,49 @@
       ? `<div class="gd-score-mid"><span class="gd-score">${g.awayScore ?? '–'}</span><span class="gd-score-sep">–</span><span class="gd-score">${g.homeScore ?? '–'}</span></div>`
       : `<div class="gd-time-mid">${formatKickoffDateShort(g.startTime, g.league)}<br>${formatKickoffTime(g.startTime, g.league)}</div>`;
 
+    // Team identity in the header links to the Team Page when a real
+    // Highlightly team id is present (item 18 of the Team Pages task) — a
+    // real <a href>, same reasoning as every other clickable identity in
+    // this codebase (hover preview, middle-click, copy-link all work). Falls
+    // back to a plain div in the (essentially never, for a real match)
+    // case a team id is missing, rather than linking to a broken page.
+    const awayTeamBlock = g.awayTeamId
+      ? `<a class="gd-team is-away" href="${teamUrl(g.league, g.awayTeamId)}" data-team-id="${g.awayTeamId}" data-league="${g.league}">`
+      : `<div class="gd-team is-away">`;
+    const homeTeamBlock = g.homeTeamId
+      ? `<a class="gd-team is-home" href="${teamUrl(g.league, g.homeTeamId)}" data-team-id="${g.homeTeamId}" data-league="${g.league}">`
+      : `<div class="gd-team is-home">`;
+
     return `<div class="gd-header${g.status === 'live' ? ' is-live' : ''}">
       <div class="gd-comp">${comp}</div>
       ${statusLine}
       <div class="gd-scoreboard">
-        <div class="gd-team is-away">
+        ${awayTeamBlock}
           ${teamBadgeLarge(g.awayTeamLogo, g.awayTeam)}
           <span class="gd-team-name">${g.awayTeamName || g.awayTeam}</span>
-        </div>
+        ${g.awayTeamId ? '</a>' : '</div>'}
         ${mid}
-        <div class="gd-team is-home">
+        ${homeTeamBlock}
           ${teamBadgeLarge(g.homeTeamLogo, g.homeTeam)}
           <span class="gd-team-name">${g.homeTeamName || g.homeTeam}</span>
-        </div>
+        ${g.homeTeamId ? '</a>' : '</div>'}
       </div>
       ${g.broadcast ? `<div class="gd-comp" style="margin-top:14px;margin-bottom:0;">${g.broadcast}</div>` : ''}
     </div>`;
+  }
+
+  // Re-wired on every Game Detail render (innerHTML is fully replaced each
+  // time, same as wireGameDetailBack/wireStoryLinks) rather than a single
+  // delegated listener, since .gd-team isn't inside a stable persistent
+  // container the way the rail/schedule cards are.
+  function wireGameHeaderTeamLinks(){
+    document.querySelectorAll('#gameView .gd-team[data-team-id]').forEach(el => {
+      el.addEventListener('click', e => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        e.preventDefault();
+        navigate(teamUrl(el.dataset.league, el.dataset.teamId));
+      });
+    });
   }
 
   // Basketball/NFL quarter-by-quarter score breakdown — only the columns
@@ -3946,8 +4213,479 @@
     document.title = `${g.awayTeamName || g.awayTeam} @ ${g.homeTeamName || g.homeTeam} — Fast Break`;
     gameView.innerHTML = buildGameDetailPage(g);
     wireGameDetailBack(league);
+    wireGameHeaderTeamLinks();
 
     scheduleGameDetailRefresh(league, id, g.status === 'live');
+  }
+
+  // ===========================================================================
+  // TEAM PAGE — one real team, by league + Highlightly team id. Built
+  // entirely from existing data sources: /api/teams (identity), /api/standings
+  // (position/record), and /api/schedule?full=1 (next match, recent results,
+  // schedule) — the exact same fetchTeamsForLeague()/fetchFullSchedule() the
+  // Mega Menu and Full Schedule already use. Every match shown here renders
+  // through the EXISTING buildGameCard()/buildScheduleRow() — no second
+  // match-card system, no second game model.
+  // ===========================================================================
+
+  // Standings change only after a completed match, nowhere near live-poll
+  // frequency — cached client-side at the same 5-minute scale the backend
+  // now also caches at (item 21: "do not poll roster/team data every 20s").
+  const teamStandingsCache = {};
+  const STANDINGS_CACHE_MS_CLIENT = 5 * 60 * 1000;
+  async function fetchStandings(league){
+    const cached = teamStandingsCache[league];
+    if (cached && Date.now() - cached.at < STANDINGS_CACHE_MS_CLIENT) return cached.standings;
+    let standings = [];
+    try {
+      const res = await fetch(`${FB_API_BASE}/standings?league=${league}`, { headers: { 'Accept': 'application/json' } });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.data)) standings = data.data;
+      }
+    } catch (e) { /* no API layer running — surfaces as an empty Current Position section */ }
+    teamStandingsCache[league] = { standings, at: Date.now() };
+    return standings;
+  }
+
+  // A game from the selected team's own point of view — which side it was,
+  // its own score vs the opponent's, and the opponent's identity. Every
+  // Team Page section that needs "this team vs whoever" reads through this
+  // one helper instead of repeating the home/away branch everywhere.
+  function teamGamePerspective(g, teamId){
+    const isHome = g.homeTeamId === teamId;
+    return {
+      isHome,
+      teamScore: isHome ? g.homeScore : g.awayScore,
+      oppScore: isHome ? g.awayScore : g.homeScore,
+      oppName: isHome ? (g.awayTeamName || g.awayTeam) : (g.homeTeamName || g.homeTeam),
+      oppLogo: isHome ? g.awayTeamLogo : g.homeTeamLogo
+    };
+  }
+  function teamResultLetter(g, teamId){
+    if (g.status !== 'final') return null;
+    const p = teamGamePerspective(g, teamId);
+    if (p.teamScore == null || p.oppScore == null) return null;
+    if (p.teamScore > p.oppScore) return 'W';
+    if (p.teamScore < p.oppScore) return 'L';
+    return 'D';
+  }
+
+  // Basketball standings carry a team on multiple rows (once per grouping
+  // level — confirmed real during an earlier task: conference AND division
+  // AND an "Overall Standings" table). The conference/division-scoped row
+  // is more informative than the flat "Overall" one, so it's preferred when
+  // both exist — never a fabricated merge of the two.
+  function pickStandingRow(standings, teamId){
+    const matches = standings.filter(s => s.teamId === teamId);
+    if (!matches.length) return null;
+    return matches.find(r => r.conference) || matches.find(r => r.division) || matches[0];
+  }
+
+  // Real Fast Break stories carry a `league` field but no team field — the
+  // "better existing field" item 14 asks to prefer doesn't exist at the
+  // team level, so this falls back to matching the team's own real full
+  // name against the headline/summary/body text (never an abbreviation —
+  // too short to match reliably), scoped to the same league first so a
+  // short name can't cross-match a different competition's story.
+  function teamNewsFor(league, team){
+    if (!team) return [];
+    const name = (team.displayName || team.name || '').toLowerCase();
+    if (name.length < 4) return [];
+    return STORIES
+      .filter(s => s.league === league)
+      .filter(s => `${s.headline} ${s.summary} ${(s.body || []).join(' ')}`.toLowerCase().includes(name))
+      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+      .slice(0, 6);
+  }
+
+  function buildTeamHeader(team, standingRow, league){
+    const comp = leagueNames[league] || league.toUpperCase();
+    const bits = [];
+    if (standingRow) {
+      if (standingRow.wins != null) bits.push(`<b>${standingRow.wins}</b>W`);
+      if (standingRow.draws != null) bits.push(`<b>${standingRow.draws}</b>D`);
+      if (standingRow.losses != null) bits.push(`<b>${standingRow.losses}</b>L`);
+    }
+    const pts = standingRow && standingRow.points != null ? `<span class="tp-pts"><b>${standingRow.points}</b> PTS</span>` : '';
+    const record = bits.length ? `<div class="tp-record">${bits.join(' · ')}${pts}</div>` : '';
+    const label = team.shortName || team.name || '';
+    const crest = team.logo
+      ? `<img src="${team.logo}" alt="" loading="lazy" onerror="this.remove()">`
+      : label;
+    return `<div class="tp-hero">
+      <div class="tp-logo">${crest}</div>
+      <div class="tp-name">${team.displayName || team.name}</div>
+      <div class="tp-comp">${comp}</div>
+      ${record}
+    </div>`;
+  }
+
+  // ---- tab navigation (client-side only — /team/{league}/{teamId} stays
+  // the one real route; a tab is UI state, not a sub-page, so switching
+  // tabs never re-fetches or re-routes) ----
+  const TEAM_TABS = [
+    ['overview', 'Overview'], ['matches', 'Matches'], ['standings', 'Standings'],
+    ['squad', 'Squad'], ['news', 'News']
+  ];
+  let teamActiveTab = 'overview';
+  function buildTeamTabs(){
+    return `<div class="tp-tabs" role="tablist">
+      ${TEAM_TABS.map(([id, label]) => `<button type="button" class="tp-tab${teamActiveTab === id ? ' is-active' : ''}"
+          role="tab" aria-selected="${teamActiveTab === id}" data-tab="${id}">${label}</button>`).join('')}
+    </div>`;
+  }
+  function wireTeamTabs(){
+    document.querySelectorAll('#teamView .tp-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        teamActiveTab = btn.dataset.tab;
+        document.querySelectorAll('#teamView .tp-tab').forEach(b => {
+          const active = b === btn;
+          b.classList.toggle('is-active', active);
+          b.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        document.querySelectorAll('#teamView .tp-panel').forEach(p => { p.hidden = p.dataset.panel !== teamActiveTab; });
+      });
+    });
+  }
+
+  // Compact inline strip — sits beside its own label rather than centered
+  // under a full-width section, so five small badges never read as "lost"
+  // in a large empty area.
+  function buildTeamFormSection(recentResults, teamId){
+    if (!recentResults.length) return '';
+    // recentResults is newest-first (see renderTeamPage) — reversed here so
+    // the strip reads oldest-to-newest, left to right.
+    const items = recentResults.slice().reverse().map(g => {
+      const letter = teamResultLetter(g, teamId);
+      if (!letter) return '';
+      const cls = letter === 'W' ? 'is-w' : letter === 'L' ? 'is-l' : 'is-d';
+      return `<span class="tp-form-item ${cls}">${letter}</span>`;
+    }).join('');
+    if (!items) return '';
+    return `<div class="tp-section">
+      <div class="tp-form-row">
+        <div class="tp-section-title">Form</div>
+        <div class="tp-form">${items}</div>
+      </div>
+    </div>`;
+  }
+
+  // The strongest section below the hero — a soft surface wash (not a hard
+  // border) around the one reused buildGameCard().
+  function buildTeamNextMatchSection(nextMatch){
+    const body = nextMatch
+      ? `<div class="tp-next-wrap">${buildGameCard(nextMatch)}</div>`
+      : `<div class="tp-empty">No upcoming match scheduled.</div>`;
+    return `<div class="tp-section">
+      <div class="tp-section-title">Next Match</div>
+      ${body}
+    </div>`;
+  }
+
+  // Recent Results / Upcoming both render as a horizontal rail of the exact
+  // same buildGameCard() the Game Rail uses — the .score-row container is
+  // the Game Rail's own scroll mechanics, reused verbatim (hidden scrollbar,
+  // smooth scroll), never a second horizontal-scroll implementation.
+  // `large` widens the cards slightly for the dedicated Matches tab.
+  function buildGameCardRail(games, emptyText, large){
+    if (!games.length) return `<div class="tp-empty">${emptyText}</div>`;
+    return `<div class="tp-rail-wrap${large ? ' is-large' : ''}"><div class="score-row" tabindex="0" aria-label="Games, scroll horizontally">${games.map(buildGameCard).join('')}</div></div>`;
+  }
+
+  function buildTeamRecentResultsSection(recentResults, large){
+    return `<div class="tp-section">
+      <div class="tp-section-title">Recent Results</div>
+      ${buildGameCardRail(recentResults, 'No completed games yet.', large)}
+    </div>`;
+  }
+
+  function buildTeamScheduleSection(upcoming, large){
+    return `<div class="tp-section">
+      <div class="tp-section-title">Upcoming</div>
+      ${buildGameCardRail(upcoming, 'No upcoming games scheduled.', large)}
+    </div>`;
+  }
+
+  // The one real two-value comparison available at the TEAM level (as
+  // opposed to Match Detail's per-match stats): season goals/points for vs
+  // against, straight from the standings row already fetched — reuses the
+  // exact .gd-stat-bar component built for Match Detail, never a second
+  // stats visual system. Lives at the bottom of the Standings tab (season
+  // performance context), since the tab list for this concept has no
+  // separate Stats tab of its own.
+  function buildTeamStatsSection(standingRow, sport){
+    if (!standingRow || standingRow.scoreFor == null || standingRow.scoreAgainst == null) return '';
+    const unit = sport === 'football' ? 'Goals' : 'Points';
+    const gf = standingRow.scoreFor, ga = standingRow.scoreAgainst;
+    const sum = gf + ga;
+    const pct = sum > 0 ? Math.round((gf / sum) * 100) : null;
+    const bar = pct === null ? '' : `<div class="gd-stat-bar"><div class="gd-stat-bar-fill" style="width:${pct}%"></div></div>`;
+    const gd = gf - ga;
+    const gdLabel = gd > 0 ? `+${gd}` : `${gd}`;
+    return `<div class="tp-section">
+      <div class="tp-section-title">Team Stats</div>
+      <div class="gd-stats">
+        <div class="gd-stat-teams"><span>${unit} For</span><span>${unit} Against</span></div>
+        <div class="gd-stat-row">
+          <div class="gd-stat-values"><span class="gd-stat-val">${gf}</span><span class="gd-stat-val">${ga}</span></div>
+          ${bar}
+          <div class="gd-stat-label">Differential ${gdLabel}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ---- Standings tab: a real, compact competition table ----
+  // Scoped to the selected team's own conference/division when the sport
+  // has one (basketball/NFL), else the whole league table (football). Rows
+  // are deduped by teamId — NFL's /standings response has been confirmed to
+  // repeat the same conference under one label across multiple identical
+  // tables (a real provider quirk, documented where getStandings() is
+  // defined); deduping keeps one honest row per team rather than either
+  // showing the duplicate rows or silently guessing which copy is "right".
+  function buildStandingsSection(standings, teamId, sport, teamsList){
+    if (!standings.length) return `<div class="tp-empty">Standings not available.</div>`;
+    const mine = pickStandingRow(standings, teamId);
+    const groupKey = mine ? (mine.conference || mine.division || mine.group) : null;
+    let rows = groupKey ? standings.filter(s => (s.conference || s.division || s.group) === groupKey) : standings.slice();
+    const seen = new Set();
+    rows = rows.filter(r => { if (!r.teamId || seen.has(r.teamId)) return false; seen.add(r.teamId); return true; });
+    rows.sort((a, b) => (a.position ?? 999) - (b.position ?? 999));
+    if (!rows.length) return `<div class="tp-empty">Standings not available.</div>`;
+
+    const hasDraws = rows.some(r => r.draws != null);
+    const hasPts = rows.some(r => r.points != null);
+    const cols = ['30px', '1fr', '32px', '32px'];
+    if (hasDraws) cols.push('32px');
+    cols.push('32px');
+    if (hasPts) cols.push('40px');
+
+    // Same real gap already fixed for the hero: /api/teams (used for
+    // shortName) and /api/standings (used here) don't always carry a logo
+    // for the same team — backfill from the already-fetched team list
+    // rather than calling a server-only helper (shortLabel() lives in
+    // server/highlightlyProvider.js, never shipped to the browser).
+    const teamLookup = new Map((teamsList || []).map(t => [String(t.id), t]));
+    const head = `<div class="tp-st-row tp-st-head">
+      <span class="tp-st-pos">Pos</span><span class="tp-st-team">Team</span><span>P</span><span>W</span>
+      ${hasDraws ? '<span>D</span>' : ''}<span>L</span>${hasPts ? '<span>PTS</span>' : ''}
+    </div>`;
+    const body = rows.map(r => {
+      const meta = teamLookup.get(r.teamId);
+      const logo = r.teamLogo || (meta && meta.logo) || null;
+      const label = (meta && meta.shortName) || (r.teamName || '').slice(0, 3).toUpperCase();
+      return `<div class="tp-st-row${r.teamId === teamId ? ' is-selected' : ''}">
+        <span class="tp-st-pos">${r.position ?? '–'}</span>
+        <span class="tp-st-team">${teamBadge(logo, label)}<span class="tp-st-team-name">${r.teamName}</span></span>
+        <span>${r.played ?? '–'}</span>
+        <span>${r.wins ?? '–'}</span>
+        ${hasDraws ? `<span>${r.draws ?? '–'}</span>` : ''}
+        <span>${r.losses ?? '–'}</span>
+        ${hasPts ? `<span>${r.points ?? '–'}</span>` : ''}
+      </div>`;
+    }).join('');
+
+    return `${groupKey ? `<div class="tp-st-group">${groupKey}</div>` : ''}
+      <div class="tp-standings" style="--tp-st-cols:${cols.join(' ')}">${head}${body}</div>`;
+  }
+
+  // ---- Squad tab: confirmed unavailable for every sport, not skipped
+  // without checking (item 9-13 of the Team Pages task). Real findings,
+  // each checked directly against the live API:
+  //   basketball: no /players endpoint exists at all.
+  //   football:   /football/players has no team filter and its LIST rows
+  //               carry no team field at all (only id/name/logo — logo was
+  //               null even for Bukayo Saka). The single-player DETAIL
+  //               endpoint (/players/{id}) DOES carry a real team + position,
+  //               but only one player at a time, with no way to discover
+  //               which ids belong to a given team without already knowing
+  //               them — not a request-efficient or reliable path to a roster.
+  //   NFL:        identical shape/limitation to football — a 114k-player
+  //               global list, no team field or filter at list level, real
+  //               team+jersey+position only on the per-player detail call.
+  // A clean, honest, single state — the tab still fits the page visually,
+  // but nothing here is fabricated.
+  function buildSquadSection(){
+    return `<div class="tp-squad-empty">
+      <b>Squad data unavailable</b>
+      The provider doesn't reliably associate individual players with a team for this sport — no roster is shown rather than an unreliable or fabricated one.
+    </div>`;
+  }
+
+  // Real editorial article cards — buildStoryCard() is the SAME DOM-node
+  // function the homepage's Latest section uses (image, category, headline,
+  // source/date), never a second article component. It builds DOM nodes
+  // rather than a string, so the markup here only reserves empty
+  // containers; wireTeamNews() (called right after teamView.innerHTML is
+  // set) appends the real cards, mirroring exactly how renderStories()
+  // already populates the homepage's own grid. The Overview teaser and the
+  // News tab's full grid share the same underlying list, just two
+  // containers and two card counts.
+  function buildTeamNewsTeaser(league, team){
+    const news = teamNewsFor(league, team);
+    if (!news.length) return '';
+    return `<div class="tp-section">
+      <div class="tp-section-title">Team News</div>
+      <div class="tp-news-rail" id="tpNewsRailTeaser"></div>
+    </div>`;
+  }
+  function buildTeamNewsFull(league, team){
+    const news = teamNewsFor(league, team);
+    if (!news.length) return `<div class="tp-empty">No team news right now.</div>`;
+    return `<div class="tp-news-full" id="tpNewsGridFull"></div>`;
+  }
+  function wireTeamNews(league, team){
+    const news = teamNewsFor(league, team);
+    const teaser = document.getElementById('tpNewsRailTeaser');
+    if (teaser) news.forEach(s => teaser.appendChild(buildStoryCard(s)));
+    const full = document.getElementById('tpNewsGridFull');
+    if (full) news.forEach(s => full.appendChild(buildStoryCard(s)));
+  }
+
+  function wireTeamBack(league){
+    const btn = document.getElementById('tpBackBtn');
+    if (btn) btn.addEventListener('click', e => { e.preventDefault(); navigate(homeUrl()); });
+  }
+  function buildTeamNotFoundState(league){
+    return `<button type="button" class="gd-back" id="tpBackBtn">← Back to ${leagueNames[league] || league.toUpperCase()}</button>
+      <div class="gd-state">
+        <h2>Team not found</h2>
+        <p>This team isn't available.</p>
+      </div>`;
+  }
+
+  // Single-owner poll, same live-only 20s cadence as the rail/Game Detail/
+  // schedule — reuses fetchMatchDetail() (Game Detail's own fetch), never a
+  // second live-data path. Only runs while the team's next match is
+  // actually live; stops the moment it isn't, or the moment the page is
+  // navigated away from.
+  let teamLiveTimer = null;
+  function scheduleTeamLiveWatch(league, gameId){
+    clearTimeout(teamLiveTimer);
+    teamLiveTimer = null;
+    teamLiveTimer = setTimeout(async () => {
+      if (document.hidden) { scheduleTeamLiveWatch(league, gameId); return; }
+      if (teamView.hidden) return; // navigated away — stop
+      const result = await fetchMatchDetail(league, gameId);
+      if (teamView.hidden) return; // navigated away mid-fetch
+      if (result.ok && result.game) {
+        const wrap = document.querySelector('.tp-next-wrap');
+        if (wrap) wrap.innerHTML = buildGameCard(result.game);
+        if (result.game.status === 'live') scheduleTeamLiveWatch(league, gameId);
+      }
+    }, 20000);
+  }
+
+  let teamRequestId = 0;
+  async function renderTeamPage(league, teamId){
+    const myRequestId = ++teamRequestId;
+    clearTimeout(teamLiveTimer);
+    teamLiveTimer = null;
+    teamView.innerHTML = `<div class="gd-state">Loading team…</div>`;
+    document.title = 'Team — Fast Break';
+
+    const [teamsResult, standings, scheduleResult] = await Promise.all([
+      fetchTeamsForLeague(league),
+      fetchStandings(league),
+      fetchFullSchedule(league)
+    ]);
+    if (myRequestId !== teamRequestId) return; // superseded — discard
+
+    const games = scheduleResult.games || [];
+    let team = (teamsResult.teams || []).find(t => String(t.id) === String(teamId));
+    const anyGame = games.find(g => g.homeTeamId === teamId || g.awayTeamId === teamId);
+    if (!team) {
+      // Not in the team list (e.g. a demo-fallback league, or a roster call
+      // that failed) — the real name/logo are still on every game this team
+      // played, so derive identity from there instead of failing outright.
+      if (anyGame) {
+        const p = teamGamePerspective(anyGame, teamId);
+        team = {
+          id: teamId,
+          name: p.isHome ? anyGame.homeTeam : anyGame.awayTeam,
+          displayName: p.isHome ? (anyGame.homeTeamName || anyGame.homeTeam) : (anyGame.awayTeamName || anyGame.awayTeam),
+          shortName: p.isHome ? anyGame.homeTeam : anyGame.awayTeam,
+          logo: p.isHome ? anyGame.homeTeamLogo : anyGame.awayTeamLogo
+        };
+      }
+    } else if (!team.logo && anyGame) {
+      // Confirmed real gap (Team Pages task, WNBA): basketball's /api/teams
+      // is standings-derived, and the standings response itself doesn't
+      // always carry a team logo (Dallas Wings came back teamLogo: null)
+      // even though the SAME team's real logo is reliably present on every
+      // match it plays. Backfill from schedule data rather than showing the
+      // plain-text fallback when a real image is available elsewhere.
+      const p = teamGamePerspective(anyGame, teamId);
+      const scheduleLogo = p.isHome ? anyGame.homeTeamLogo : anyGame.awayTeamLogo;
+      if (scheduleLogo) team = { ...team, logo: scheduleLogo };
+    }
+    if (!team) {
+      teamView.innerHTML = buildTeamNotFoundState(league);
+      wireTeamBack(league);
+      document.title = 'Team not found — Fast Break';
+      return;
+    }
+
+    const standingRow = pickStandingRow(standings, teamId);
+    const now = Date.now();
+    const teamGames = games.filter(g => g.homeTeamId === teamId || g.awayTeamId === teamId);
+    const liveGame = teamGames.find(g => g.status === 'live');
+    const nextMatch = liveGame || teamGames.find(g =>
+      g.status === 'scheduled' && Number.isFinite(Date.parse(g.startTime || 0)) && Date.parse(g.startTime) >= now);
+    const recentResults = teamGames
+      .filter(g => g.status === 'final')
+      .sort((a, b) => Date.parse(b.startTime || 0) - Date.parse(a.startTime || 0))
+      .slice(0, 5);
+    const upcoming = teamGames
+      .filter(g => g !== nextMatch && g.status !== 'final' && g.status !== 'cancelled' &&
+        Number.isFinite(Date.parse(g.startTime || 0)) && Date.parse(g.startTime) >= now)
+      .sort((a, b) => Date.parse(a.startTime || 0) - Date.parse(b.startTime || 0))
+      .slice(0, 8);
+
+    const leagueCfg = leagueById(league) || competitionById(league);
+    const sport = leagueCfg ? leagueCfg.sport : null;
+
+    document.title = `${team.displayName || team.name} — Fast Break`;
+    teamActiveTab = 'overview'; // always lands on Overview for a fresh page load
+    // Overview keeps a compact digest (items 6, capped rails); Matches gets
+    // the same Recent Results/Upcoming data again but the full counts and
+    // larger cards (item 15) — same functions, same fetched arrays, just a
+    // second container, since a client-side tab switch never re-fetches.
+    teamView.innerHTML = `
+      <button type="button" class="gd-back" id="tpBackBtn">← Back to ${leagueNames[league] || league.toUpperCase()}</button>
+      ${buildTeamHeader(team, standingRow, league)}
+      ${buildTeamTabs()}
+      <div class="tp-panel" data-panel="overview">
+        ${buildTeamNextMatchSection(nextMatch)}
+        ${buildTeamFormSection(recentResults, teamId)}
+        ${buildTeamRecentResultsSection(recentResults.slice(0, 3))}
+        ${buildTeamScheduleSection(upcoming.slice(0, 3))}
+        ${buildTeamNewsTeaser(league, team)}
+      </div>
+      <div class="tp-panel" data-panel="matches" hidden>
+        ${buildTeamRecentResultsSection(recentResults, true)}
+        ${buildTeamScheduleSection(upcoming, true)}
+      </div>
+      <div class="tp-panel" data-panel="standings" hidden>
+        <div class="tp-section">
+          ${buildStandingsSection(standings, teamId, sport, teamsResult.teams)}
+        </div>
+        ${buildTeamStatsSection(standingRow, sport)}
+      </div>
+      <div class="tp-panel" data-panel="squad" hidden>
+        ${buildSquadSection()}
+      </div>
+      <div class="tp-panel" data-panel="news" hidden>
+        ${buildTeamNewsFull(league, team)}
+      </div>
+    `;
+    wireTeamBack(league);
+    wireStoryLinks(teamView);
+    wireTeamTabs();
+    wireTeamNews(league, team);
+
+    if (liveGame) scheduleTeamLiveWatch(league, liveGame.id);
   }
 
   // ===========================================================================
@@ -3991,6 +4729,8 @@
     if (scheduleIdx !== -1) return path.slice(0, scheduleIdx);
     const gameIdx = path.indexOf('/game/');
     if (gameIdx !== -1) return path.slice(0, gameIdx);
+    const teamIdx = path.indexOf('/team/');
+    if (teamIdx !== -1) return path.slice(0, teamIdx);
     return path.replace(/\/[^/]*$/, '');
   })();
 
@@ -4022,11 +4762,20 @@
     const m = path.match(/\/game\/([^/]+)\/([^/?#]+)/);
     return m ? { league: decodeURIComponent(m[1]), id: decodeURIComponent(m[2]) } : null;
   };
+  // Team route carries both league and the real Highlightly team id, same
+  // reasoning as the game route above — the id alone doesn't say which
+  // sport/league host to query, and a direct URL must be self-sufficient.
+  const teamUrl = (league, id) => (BASE || '') + '/team/' + league + '/' + encodeURIComponent(id);
+  const teamRouteFromPath = path => {
+    const m = path.match(/\/team\/([^/]+)\/([^/?#]+)/);
+    return m ? { league: decodeURIComponent(m[1]), id: decodeURIComponent(m[2]) } : null;
+  };
 
   const homeView     = document.getElementById('homeView');
   const articleView  = document.getElementById('articleView');
   const scheduleView = document.getElementById('scheduleView');
   const gameView      = document.getElementById('gameView');
+  const teamView      = document.getElementById('teamView');
   const readProgress = document.getElementById('readProgress');
 
   function navigate(url, opts){
@@ -4045,7 +4794,10 @@
     const gameRoute = !story ? gameRouteFromPath(location.pathname) : null;
     const gameRouteValid = gameRoute &&
       [...LEAGUES_CFG, ...COMPETITIONS_CFG].some(l => l.id === gameRoute.league);
-    const scheduleLeagueId = (!story && !gameRouteValid) ? scheduleLeagueFromPath(location.pathname) : null;
+    const teamRoute = (!story && !gameRouteValid) ? teamRouteFromPath(location.pathname) : null;
+    const teamRouteValid = teamRoute &&
+      [...LEAGUES_CFG, ...COMPETITIONS_CFG].some(l => l.id === teamRoute.league);
+    const scheduleLeagueId = (!story && !gameRouteValid && !teamRouteValid) ? scheduleLeagueFromPath(location.pathname) : null;
     // LEAGUES_CFG alone would wrongly 404 a direct link to a competition's
     // schedule (ucl/uel live in COMPETITIONS_CFG, not LEAGUES_CFG) — the
     // schedule route validates against every id the backend can actually
@@ -4067,6 +4819,7 @@
       articleView.hidden = false;
       scheduleView.hidden = true;
       gameView.hidden = true;
+      teamView.hidden = true;
       document.title = story.headline + ' — Fast Break';
       if (!opts.keepScroll) window.scrollTo({ top: 0, behavior: 'auto' });
       updateProgress();
@@ -4090,7 +4843,30 @@
       articleView.innerHTML = '';
       scheduleView.hidden = true;
       gameView.hidden = false;
+      teamView.hidden = true;
       if (typeof renderGameDetail === 'function') renderGameDetail(gameRoute.league, gameRoute.id);
+      if (!opts.keepScroll) window.scrollTo({ top: 0, behavior: 'auto' });
+      return;
+    }
+
+    if (teamRouteValid) {
+      // Same league-sync, same reasoning: the app's active competition
+      // follows the page, but the fetch itself always uses teamRoute.league
+      // straight from the URL — the sole authority for a directly-opened
+      // team's competition, never activeLeague.
+      if (teamRoute.league !== activeLeague && LEAGUES[teamRoute.league]) {
+        activeLeague = teamRoute.league;
+        renderStories();
+        if (typeof renderScoreRail === 'function') renderScoreRail();
+      }
+      markActiveSport();
+      homeView.hidden = true;
+      articleView.hidden = true;
+      articleView.innerHTML = '';
+      scheduleView.hidden = true;
+      gameView.hidden = true;
+      teamView.hidden = false;
+      if (typeof renderTeamPage === 'function') renderTeamPage(teamRoute.league, teamRoute.id);
       if (!opts.keepScroll) window.scrollTo({ top: 0, behavior: 'auto' });
       return;
     }
@@ -4110,21 +4886,24 @@
       articleView.innerHTML = '';
       scheduleView.hidden = false;
       gameView.hidden = true;
+      teamView.hidden = true;
       document.title = `${leagueNames[scheduleLeagueId] || scheduleLeagueId.toUpperCase()} Schedule — Fast Break`;
       if (typeof renderSchedulePage === 'function') renderSchedulePage(scheduleLeagueId);
       if (!opts.keepScroll) window.scrollTo({ top: 0, behavior: 'auto' });
       return;
     }
 
-    // Unknown /story/, /schedule/ or /game/ path: fall back to the homepage
-    // rather than a blank page.
-    if (id || scheduleLeagueId || gameRoute) history.replaceState({}, '', homeUrl());
+    // Unknown /story/, /schedule/, /game/ or /team/ path: fall back to the
+    // homepage rather than a blank page.
+    if (id || scheduleLeagueId || gameRoute || teamRoute) history.replaceState({}, '', homeUrl());
     articleView.hidden = true;
     articleView.innerHTML = '';
     scheduleView.hidden = true;
     scheduleView.innerHTML = '';
     gameView.hidden = true;
     gameView.innerHTML = '';
+    teamView.hidden = true;
+    teamView.innerHTML = '';
     homeView.hidden = false;
     readProgress.style.width = '0%';
     document.title = 'Fast Break';
