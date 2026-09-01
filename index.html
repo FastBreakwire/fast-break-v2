@@ -525,6 +525,21 @@
     .schedule-row{ gap:8px; }
   }
 
+  /* The round-nav buttons can carry real, sometimes-long text on narrow
+     viewports — "‹ Matchweek 2" is much longer than the plain "‹ Previous"
+     the week-nav buttons show, and "1st Qualifying Round" (a real UCL/UEL
+     round name) longer still. The label moves to its own full-width line
+     and each button gets a hard max-width + ellipsis so neither can ever
+     push past the viewport, regardless of how long the real round name is. */
+  @media (max-width:480px){
+    .schedule-nav{ flex-wrap:wrap; row-gap:8px; }
+    .schedule-nav-label{ flex:1 1 100%; order:-1; min-width:0; margin-bottom:2px; }
+    .schedule-nav-btn{
+      flex:1 1 0; min-width:0; max-width:47%;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+  }
+
   /* ============ GAME DETAIL PAGE ============
      One real Highlightly match. Reuses the existing editorial language
      (--display for the headline weight, --label for meta, PERIOD_LABELS/
@@ -3099,12 +3114,28 @@
   })();
 
   // ===========================================================================
-  // FULL SCHEDULE PAGE — one competition's complete available window, a
-  // week at a time. Same normalized game objects and same /api/schedule
-  // fetch as the rail (fetchSchedule() above) — the only new thing here is
-  // the presentation and the week-slicing, never a second data model.
+  // FULL SCHEDULE PAGE — one competition's complete available window: past,
+  // current, and future, freely navigable in both directions (never bounded
+  // by "today" — see server/highlightlyProvider.js's getFullSchedule() for
+  // the pagination/ordering this is built on). Same normalized game object
+  // as the rail and Game Detail (buildScheduleRow/gameUrl unchanged) —
+  // never a second data model.
+  //
+  // Football gets its own native MATCHWEEK/MATCHDAY navigation, driven by
+  // the real `round` field confirmed present on every football competition
+  // (see FOOTBALL_ROUND_LABEL below and getFullSchedule()'s own comment for
+  // exactly how this was verified, not assumed). Basketball/NFL have no
+  // equivalent real field (confirmed: basketball's week/stage are always
+  // null; NFL's round is a season-phase constant, not a per-week value) and
+  // keep the existing calendar-week navigation, just no longer floored at
+  // "today" — offsets can go negative into real historical weeks too.
   // ===========================================================================
-  const FULL_SCHEDULE_DAYS = 240; // "all currently available future games" — bounded only by what the provider itself returns (see server/highlightlyProvider.js)
+
+  // Centralized per-competition round terminology — the one place this is
+  // ever spelled out, per item 6 of the task this shipped in.
+  const FOOTBALL_ROUND_LABEL = {
+    epl: 'Matchweek', laliga: 'Matchday', bundesliga: 'Matchday', ucl: 'Matchday', uel: 'Matchday'
+  };
 
   // {y,mo,d,h,mi,s} for `ms` as observed in `timeZone` — same technique (and
   // verified against the same DST cases) as startOfDayInZone() in
@@ -3161,14 +3192,88 @@
     </a>`;
   }
 
+  // Fetched ONCE per competition (the complete available range — see
+  // getFullSchedule()), then every round/week navigation slices this same
+  // in-memory array. Cached client-side at the same TTL as the backend
+  // (FULL_SCHEDULE_CACHE_MS, already defined above for the rail's own
+  // full-schedule-scale requests) so repeat visits to the same competition
+  // within a session don't re-spend the request budget.
+  const fullScheduleCache = {};
+  async function fetchFullSchedule(league){
+    const cached = fullScheduleCache[league];
+    if (cached && Date.now() - cached.at < FULL_SCHEDULE_CACHE_MS) return cached;
+    let result = { games: [], demo: false, totalCount: 0, fetchedCount: 0 };
+    try {
+      const res = await fetch(`${FB_API_BASE}/schedule?league=${league}&full=1`, { headers: { 'Accept': 'application/json' } });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.games)) {
+          result = {
+            games: data.games, demo: data.source !== 'highlightly',
+            totalCount: data.totalCount ?? data.games.length,
+            fetchedCount: data.fetchedCount ?? data.games.length
+          };
+        }
+      }
+    } catch (e) { /* no API layer running — surfaces as an empty schedule, never fake fixtures */ }
+    fullScheduleCache[league] = { ...result, at: Date.now() };
+    return fullScheduleCache[league];
+  }
+
+  // "Regular Season - 3" / "League Stage - 6" -> 3 / 6. Every real round
+  // string confirmed during this task shares this trailing-number shape.
+  function parseRoundNumber(roundStr){
+    const m = String(roundStr || '').match(/(\d+)\s*$/);
+    return m ? Number(m[1]) : null;
+  }
+
+  // Groups games by their REAL round string (never by calendar date — a
+  // postponed match keeps whatever round the provider assigned it, exactly
+  // per item 18 of the task this shipped in), sorted by the round's own
+  // number rather than by date (a round's games can span a date range, and
+  // a postponed match's date is not a reliable sort key for which round it
+  // belongs in — the round number is).
+  function computeRounds(games){
+    const map = new Map();
+    games.forEach(g => {
+      if (!g.round) return;
+      if (!map.has(g.round)) map.set(g.round, { round: g.round, num: parseRoundNumber(g.round), games: [] });
+      map.get(g.round).games.push(g);
+    });
+    const list = [...map.values()];
+    list.forEach(r => {
+      const dates = r.games.map(x => Date.parse(x.startTime || 0)).filter(Number.isFinite);
+      r.minDate = dates.length ? Math.min(...dates) : Infinity;
+    });
+    list.sort((a, b) => (a.num ?? 0) - (b.num ?? 0));
+    return list;
+  }
+
+  // "Current" round: whichever one has a live game right now; otherwise the
+  // next upcoming one; otherwise (an entirely past archive) the most recent.
+  // This is only ever the INITIAL position — the user can freely move away
+  // from it in either direction (item 1).
+  function findCurrentRoundIndex(rounds){
+    const now = Date.now();
+    const liveIdx = rounds.findIndex(r => r.games.some(g => g.status === 'live'));
+    if (liveIdx !== -1) return liveIdx;
+    const upcomingIdx = rounds.findIndex(r => r.minDate >= now);
+    if (upcomingIdx !== -1) return upcomingIdx;
+    return Math.max(0, rounds.length - 1);
+  }
+
   let scheduleRequestId = 0;
   let scheduleAllGames = [];
   let scheduleWeekOffset = 0;
   let scheduleLeague = null;
+  let scheduleTotalCount = 0;
+  let scheduleTruncated = false;   // true only for an archive too large to fetch in full (see getFullSchedule()'s own comment — NBA is the one real case)
+  let scheduleRounds = [];         // football only, computed once per load
+  let scheduleRoundIndex = 0;
+  let scheduleIsRoundMode = false; // true only when the fetched data actually carried real round values
 
   async function renderSchedulePage(league){
     scheduleLeague = league;
-    scheduleWeekOffset = 0;
     const myRequestId = ++scheduleRequestId;
     const view = document.getElementById('scheduleView');
     if (!view) return;
@@ -3176,10 +3281,33 @@
       <p class="schedule-empty">Loading schedule…</p>`;
     wireScheduleBack();
 
-    const result = await fetchSchedule(league, FULL_SCHEDULE_DAYS);
+    const result = await fetchFullSchedule(league);
     if (myRequestId !== scheduleRequestId) return; // superseded — a different competition's page was requested since
     scheduleAllGames = result.games;
-    renderScheduleWeek();
+    scheduleTotalCount = result.totalCount;
+    scheduleTruncated = result.totalCount > result.fetchedCount;
+
+    const rounds = computeRounds(scheduleAllGames);
+    scheduleIsRoundMode = rounds.length > 0;
+
+    if (scheduleIsRoundMode) {
+      scheduleRounds = rounds;
+      scheduleRoundIndex = findCurrentRoundIndex(rounds);
+      renderScheduleRound();
+    } else {
+      // Non-football: land on the week containing a live game if one
+      // exists right now, otherwise the week containing today — same
+      // "current position, freely navigable" idea as the round view above.
+      const liveGame = scheduleAllGames.find(g => g.status === 'live');
+      if (liveGame && Number.isFinite(Date.parse(liveGame.startTime))) {
+        const liveWeekStart = tzStartOfDay(Date.parse(liveGame.startTime), tzFor(league));
+        const todayWeekStart = weekRangeMs(league, 0).start;
+        scheduleWeekOffset = Math.round((liveWeekStart - todayWeekStart) / (7 * 86400000));
+      } else {
+        scheduleWeekOffset = 0;
+      }
+      renderScheduleWeek();
+    }
   }
 
   function wireScheduleBack(){
@@ -3187,6 +3315,79 @@
     if (btn) btn.addEventListener('click', e => { e.preventDefault(); navigate(homeUrl()); });
   }
 
+  // The truncation note only ever appears for the one real case large
+  // enough to trigger it (see getFullSchedule()'s comment) — never shown
+  // when the fetch is already complete.
+  function scheduleTruncationNote(){
+    return scheduleTruncated
+      ? ` of ${scheduleTotalCount} in the provider's archive (showing the most recent)`
+      : '';
+  }
+
+  function buildScheduleDateGroups(games, league){
+    const tz = tzFor(league);
+    const byDay = {};
+    const order = [];
+    games.forEach(g => {
+      const key = new Date(g.startTime).toLocaleDateString('en-US', { timeZone: tz });
+      if (!byDay[key]) { byDay[key] = []; order.push(key); }
+      byDay[key].push(g);
+    });
+    return order.map(key => `<div class="schedule-date-group">
+        <div class="schedule-date-heading">${formatKickoffDateLong(byDay[key][0].startTime, league)}</div>
+        ${byDay[key].map(buildScheduleRow).join('')}
+      </div>`).join('');
+  }
+
+  // ---- FOOTBALL: Matchweek/Matchday navigation ----
+  function renderScheduleRound(){
+    const league = scheduleLeague;
+    const view = document.getElementById('scheduleView');
+    if (!view || !league) return;
+    const rounds = scheduleRounds;
+    const label = FOOTBALL_ROUND_LABEL[league] || 'Matchday';
+    const r = rounds[scheduleRoundIndex];
+    const roundGames = r ? r.games.slice().sort((a, b) => Date.parse(a.startTime || 0) - Date.parse(b.startTime || 0)) : [];
+
+    const body = roundGames.length
+      ? buildScheduleDateGroups(roundGames, league)
+      : `<p class="schedule-empty">No games in this ${label.toLowerCase()}.</p>`;
+
+    const canGoBack = scheduleRoundIndex > 0;
+    const canGoForward = scheduleRoundIndex < rounds.length - 1;
+    const prevR = canGoBack ? rounds[scheduleRoundIndex - 1] : null;
+    const nextR = canGoForward ? rounds[scheduleRoundIndex + 1] : null;
+    // Numbered rounds ("League Stage - 6") show as "Matchday 6"; a real but
+    // unnumbered round (UCL/UEL qualifying rounds, playoffs — confirmed real
+    // during this task, e.g. "1st Qualifying Round") shows its own actual
+    // name instead of a bare, number-less "Matchday" label.
+    const roundLabel = round => round.num != null ? `${label} ${round.num}` : round.round;
+
+    view.innerHTML = `
+      <button type="button" class="schedule-back" id="scheduleBackBtn">← Back to ${leagueNames[league] || league.toUpperCase()}</button>
+      <div class="schedule-head">
+        <div class="schedule-title-group">
+          <h1 class="schedule-title">${leagueNames[league] || league.toUpperCase()} Schedule</h1>
+          <span class="schedule-sub">${scheduleAllGames.length} game${scheduleAllGames.length === 1 ? '' : 's'} across ${rounds.length} ${label.toLowerCase()}${rounds.length === 1 ? '' : 's'}${scheduleTruncationNote()}</span>
+        </div>
+      </div>
+      <div class="schedule-nav">
+        <button type="button" class="schedule-nav-btn" id="scheduleNavPrev" ${canGoBack ? '' : 'disabled'}>‹ ${prevR ? roundLabel(prevR) : 'Previous'}</button>
+        <span class="schedule-nav-label">${r ? roundLabel(r).toUpperCase() : ''}</span>
+        <button type="button" class="schedule-nav-btn" id="scheduleNavNext" ${canGoForward ? '' : 'disabled'}>${nextR ? roundLabel(nextR) : 'Next'} ›</button>
+      </div>
+      ${body}
+    `;
+
+    wireScheduleBack();
+    const prev = document.getElementById('scheduleNavPrev');
+    const next = document.getElementById('scheduleNavNext');
+    if (prev) prev.addEventListener('click', () => { if (scheduleRoundIndex > 0) { scheduleRoundIndex--; renderScheduleRound(); window.scrollTo({ top: 0, behavior: 'auto' }); } });
+    if (next) next.addEventListener('click', () => { if (scheduleRoundIndex < rounds.length - 1) { scheduleRoundIndex++; renderScheduleRound(); window.scrollTo({ top: 0, behavior: 'auto' }); } });
+    scheduleLiveWatch();
+  }
+
+  // ---- NBA / WNBA / NFL: calendar-week navigation, past AND future ----
   function renderScheduleWeek(){
     const league = scheduleLeague;
     const view = document.getElementById('scheduleView');
@@ -3198,37 +3399,28 @@
       .filter(g => { const t = Date.parse(g.startTime || 0); return Number.isFinite(t) && t >= start && t < end; })
       .sort((a, b) => Date.parse(a.startTime || 0) - Date.parse(b.startTime || 0));
 
-    const maxKnown = scheduleAllGames.reduce((max, g) => {
-      const t = Date.parse(g.startTime || 0);
-      return Number.isFinite(t) && t > max ? t : max;
-    }, 0);
-    const canGoBack = scheduleWeekOffset > 0;
-    const canGoForward = scheduleAllGames.length > 0 && end <= maxKnown;
+    // Bounds are the ACTUAL fetched data's own date range — never "today"
+    // (item 1's explicit requirement). A competition with zero games
+    // correctly disables both directions (min/max stay Infinity/-Infinity).
+    const allTimes = scheduleAllGames.map(g => Date.parse(g.startTime || 0)).filter(Number.isFinite);
+    const minTime = allTimes.length ? Math.min(...allTimes) : Infinity;
+    const maxTime = allTimes.length ? Math.max(...allTimes) : -Infinity;
+    const canGoBack = minTime < start;
+    const canGoForward = maxTime >= end;
 
     const weekLabel = `${new Date(start).toLocaleDateString('en-US', { timeZone: tz, month: 'short', day: 'numeric' })}`
       + ` – ${new Date(end - 86400000).toLocaleDateString('en-US', { timeZone: tz, month: 'short', day: 'numeric' })}`;
 
-    const byDay = {};
-    const order = [];
-    weekGames.forEach(g => {
-      const key = new Date(g.startTime).toLocaleDateString('en-US', { timeZone: tz });
-      if (!byDay[key]) { byDay[key] = []; order.push(key); }
-      byDay[key].push(g);
-    });
-
     const body = weekGames.length
-      ? order.map(key => `<div class="schedule-date-group">
-          <div class="schedule-date-heading">${formatKickoffDateLong(byDay[key][0].startTime, league)}</div>
-          ${byDay[key].map(buildScheduleRow).join('')}
-        </div>`).join('')
-      : `<p class="schedule-empty">No games in this week.</p>`;
+      ? buildScheduleDateGroups(weekGames, league)
+      : `<p class="schedule-empty">No games this week.</p>`;
 
     view.innerHTML = `
       <button type="button" class="schedule-back" id="scheduleBackBtn">← Back to ${leagueNames[league] || league.toUpperCase()}</button>
       <div class="schedule-head">
         <div class="schedule-title-group">
           <h1 class="schedule-title">${leagueNames[league] || league.toUpperCase()} Schedule</h1>
-          <span class="schedule-sub">${scheduleAllGames.length} game${scheduleAllGames.length === 1 ? '' : 's'} currently available</span>
+          <span class="schedule-sub">${scheduleAllGames.length} game${scheduleAllGames.length === 1 ? '' : 's'} available${scheduleTruncationNote()}</span>
         </div>
       </div>
       <div class="schedule-nav">
@@ -3242,8 +3434,57 @@
     wireScheduleBack();
     const prev = document.getElementById('scheduleNavPrev');
     const next = document.getElementById('scheduleNavNext');
-    if (prev) prev.addEventListener('click', () => { if (scheduleWeekOffset > 0) { scheduleWeekOffset--; renderScheduleWeek(); window.scrollTo({ top: 0, behavior: 'auto' }); } });
-    if (next) next.addEventListener('click', () => { scheduleWeekOffset++; renderScheduleWeek(); window.scrollTo({ top: 0, behavior: 'auto' }); });
+    if (prev) prev.addEventListener('click', () => { if (canGoBack) { scheduleWeekOffset--; renderScheduleWeek(); window.scrollTo({ top: 0, behavior: 'auto' }); } });
+    if (next) next.addEventListener('click', () => { if (canGoForward) { scheduleWeekOffset++; renderScheduleWeek(); window.scrollTo({ top: 0, behavior: 'auto' }); } });
+    scheduleLiveWatch();
+  }
+
+  // ---- live polling for whatever is currently on screen ----
+  // Single-owner timer, same live-only 20s cadence already established by
+  // the rail and Game Detail — never a third, independently-paced polling
+  // system. Only watches games that are BOTH status:'live' AND actually
+  // rendered in the current round/week view; a game that finishes drops out
+  // naturally on the next tick (re-derived from the freshly patched data,
+  // not a stale closure). Reuses fetchMatchDetail() (Game Detail's own
+  // fetch) — never a second live-data path.
+  let scheduleLiveTimer = null;
+  function scheduleLiveWatch(){
+    clearTimeout(scheduleLiveTimer);
+    scheduleLiveTimer = null;
+    const liveIds = scheduleAllGames
+      .filter(g => g.status === 'live')
+      .map(g => g.id)
+      .filter(id => document.querySelector(`.schedule-row[data-game-id="${id}"]`));
+    if (!liveIds.length) return;
+    scheduleLiveTimer = setTimeout(async () => {
+      if (document.hidden) { scheduleLiveWatch(); return; }
+      if (scheduleView.hidden) return; // navigated away — stop
+      for (const id of liveIds) {
+        const result = await fetchMatchDetail(scheduleLeague, id);
+        if (scheduleView.hidden) return; // navigated away mid-fetch
+        if (result.ok && result.game) patchScheduleRow(result.game);
+      }
+      scheduleLiveWatch();
+    }, 20000);
+  }
+
+  // Updates one row in place (score/status) without re-rendering the whole
+  // page — reuses buildScheduleRow() itself so there is exactly one row
+  // template, never a second "live patch" markup. Also updates the
+  // in-memory game objects so a subsequent round/week navigation reflects
+  // the fresh state instead of the stale fetch.
+  function patchScheduleRow(g){
+    [scheduleAllGames, ...scheduleRounds.map(r => r.games)].forEach(arr => {
+      const idx = arr.findIndex(x => x.id === g.id);
+      if (idx !== -1) arr[idx] = g;
+    });
+    const row = document.querySelector(`.schedule-row[data-game-id="${g.id}"]`);
+    if (!row) return;
+    const temp = document.createElement('div');
+    temp.innerHTML = buildScheduleRow(g);
+    const fresh = temp.firstElementChild;
+    row.className = fresh.className;
+    row.innerHTML = fresh.innerHTML;
   }
 
   // ===========================================================================

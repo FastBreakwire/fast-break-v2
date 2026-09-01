@@ -80,6 +80,16 @@ const STATUSES = ['scheduled', 'live', 'final', 'postponed', 'cancelled'];
  * @property {Array|null}  events         football goal/card/sub events, only present
  *                                        on a single-match detail fetch, never on a
  *                                        list — null otherwise, never fabricated
+ * @property {string|null} round          the provider's own competition-round string,
+ *                                        e.g. "Regular Season - 3" (football leagues),
+ *                                        "League Stage - 4" (UCL/UEL) — confirmed real
+ *                                        and present on the LIST endpoint too, not just
+ *                                        single-match detail. Basketball and NFL do not
+ *                                        expose an equivalent per-round field (confirmed:
+ *                                        basketball's week/stage are always null; NFL's
+ *                                        own `round` is a season-phase constant like
+ *                                        "regular-season", not a per-week number) — both
+ *                                        simply carry round: null, never a guessed value.
  */
 function normalizeGame(g) {
   const sport = g.sport || SPORT_BY_LEAGUE[g.league] || null;
@@ -106,7 +116,8 @@ function normalizeGame(g) {
     homeTeamLogo: g.homeTeamLogo ?? null,
     awayTeamLogo: g.awayTeamLogo ?? null,
     periods: g.periods ?? null,
-    events: g.events ?? null
+    events: g.events ?? null,
+    round: g.round ?? null
   };
 }
 

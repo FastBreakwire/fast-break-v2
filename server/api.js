@@ -73,6 +73,25 @@ async function handleSchedule(params) {
   if (league && !LEAGUE_IDS.includes(league)) {
     return { status: 400, body: { error: 'unsupported league', supported: LEAGUE_IDS } };
   }
+
+  if (!provider.isEnabled()) {
+    return { status: 200, body: { games: [], source: 'demo' } };
+  }
+
+  // full=1 asks for the COMPLETE available range (past + current + future)
+  // for one competition — the Full Schedule page's past/matchweek
+  // navigation needs this; the compact rail never passes it and keeps using
+  // the forward-only window below unchanged.
+  if (params.get('full') === '1') {
+    try {
+      const { games, totalCount, fetchedCount } = await provider.getFullSchedule({ league });
+      return { status: 200, body: { games, source: provider.name, totalCount, fetchedCount } };
+    } catch (err) {
+      console.error('[api/schedule?full=1]', err.code || err.message);
+      return { status: 200, body: { games: [], source: 'demo', providerError: err.code || 'PROVIDER_ERROR' } };
+    }
+  }
+
   const daysParam = Number(params.get('days'));
   // The full-schedule view legitimately asks for a season-scale window
   // (up to ~280 days); the compact rail always asks for GAME_RAIL_DAYS.
@@ -83,9 +102,6 @@ async function handleSchedule(params) {
   // the compact rail's normal 14-day request stays at the cheap default.
   const maxPages = days > 31 ? 6 : 3;
 
-  if (!provider.isEnabled()) {
-    return { status: 200, body: { games: [], source: 'demo' } };
-  }
   try {
     const games = await provider.getUpcomingGames({ league, days, maxPages });
     return { status: 200, body: { games, source: provider.name } };

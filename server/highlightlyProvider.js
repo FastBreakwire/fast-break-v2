@@ -399,7 +399,18 @@ function mapGame(raw, leagueId, cfg) {
     homeTeamLogo: home.logo || null,
     awayTeamLogo: away.logo || null,
     periods: extractPeriods(raw, cfg.sportSlug),
-    events: Array.isArray(raw.events) ? raw.events.map(mapEvent) : null
+    events: Array.isArray(raw.events) ? raw.events.map(mapEvent) : null,
+    // Real, present on both the list and detail endpoints for every football
+    // competition (confirmed directly: "Regular Season - N" for the domestic
+    // leagues, "League Stage - N" for UCL/UEL's reformed group phase — same
+    // trailing-number shape both times). Basketball has no equivalent field
+    // at all (week/stage confirmed always null); NFL's raw.round IS present
+    // but is a season-phase constant ("regular-season"), not a per-week
+    // value, so it would not actually let a user navigate by week — passing
+    // it through here would silently mislead the frontend's "does this
+    // league have usable round data" check, so it's deliberately left null
+    // for anything other than football rather than forwarded.
+    round: cfg.sport === 'football' ? (raw.round ?? null) : null
   });
 }
 
@@ -780,6 +791,85 @@ async function getMatchDetail({ league, id } = {}) {
   return detail;
 }
 
+// ---------------------------------------------------------------------------
+// FULL SCHEDULE — past + current + future for ONE competition+season, unlike
+// getUpcomingGames() (a forward-looking window from "now" the rail/original
+// schedule page uses). Built on the exact same /matches endpoint, the exact
+// same mapGame() normalizer, and the exact same dedup-by-id fix already used
+// elsewhere in this file — no second data model.
+//
+// ORDERING — confirmed directly during this task by inspecting per-page date
+// ranges (not assumed): /matches without a date filter returns pages sorted
+// by date DESCENDING (the newest/furthest-future page first, each following
+// page strictly older). This means the FUTURE end of a competition's fixture
+// list is always reachable within the first page or two, while the PAST end
+// (the season's start) can require many pages for a competition with a lot
+// of scheduled fixtures. Rather than an early-exit tied to "today" (which
+// only ever wants a forward window, and is what getUpcomingGames() already
+// does), this simply pages up to the provider's own reported totalCount (or
+// `maxPages`, whichever is smaller) — the goal here is the full range, not a
+// window relative to now.
+//
+// REQUEST BUDGET — real totals checked directly for every competition this
+// task covers (30 Aug/1 Sep 2026): EPL 190, La Liga 180, Bundesliga 126, UCL
+// 198, UEL 188, NFL 89, WNBA 344 — every one of those fits inside 6 pages
+// (limit=100 each), so maxPages=6 gives FULL coverage for all of them. NBA's
+// season total (1380 — an entire season including playoffs, not just the
+// regular season) does not: 6 pages only covers the most recent ~600 of
+// them. This is a deliberate, reported tradeoff (see the frontend's own
+// note when it detects a truncated fetch) rather than spending 14 requests
+// on every single load of a large archive — "avoid unnecessary requests"
+// wins over completeness for the one competition big enough for the two to
+// conflict.
+const FULL_SCHEDULE_HISTORY_CACHE_MS = 5 * 60 * 1000;
+const fullScheduleCache = new Map(); // `${league}:${season}` -> { at, games, totalCount, fetchedCount }
+
+async function getFullSchedule({ league, season, maxPages = 6 } = {}) {
+  const cfg = LEAGUE_CONFIG[league];
+  if (!cfg) return { games: [], totalCount: 0, fetchedCount: 0 };
+
+  const effectiveSeason = season ?? CURRENT_SEASON[league];
+  const cacheKey = `${league}:${effectiveSeason}`;
+  const cached = fullScheduleCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < FULL_SCHEDULE_HISTORY_CACHE_MS) return cached;
+
+  const baseParams = cfg.paramStyle === 'id'
+    ? { leagueId: cfg.leagueId, season: effectiveSeason }
+    : { league: cfg.leagueName, season: effectiveSeason };
+
+  let raw = [];
+  let totalCount = Infinity;
+  for (let page = 0; page < maxPages && raw.length < totalCount; page++) {
+    const data = await request(cfg.sportSlug, '/matches', { ...baseParams, limit: 100, offset: page * 100 });
+    const batch = rows(data);
+    if (!batch.length) break;
+    raw = raw.concat(batch);
+    totalCount = data && data.pagination ? data.pagination.totalCount : raw.length;
+  }
+
+  // Same real, confirmed pagination-overlap issue as getUpcomingGames()
+  // (a Europa League fetch during an earlier task showed 44 of 144 rows
+  // duplicated across pages) — deduped by id before mapping.
+  const seenIds = new Set();
+  const deduped = raw.filter(m => {
+    if (seenIds.has(m.id)) return false;
+    seenIds.add(m.id);
+    return true;
+  });
+
+  const games = deduped
+    .map(r => mapGame(r, league, cfg))
+    .filter(g => g.status !== 'cancelled')
+    // Chronological, oldest first — the natural reading order for a full
+    // history/future exploration view, the opposite of the provider's own
+    // newest-first page order.
+    .sort((a, b) => Date.parse(a.startTime || 0) - Date.parse(b.startTime || 0));
+
+  const result = { games, totalCount: Number.isFinite(totalCount) ? totalCount : games.length, fetchedCount: raw.length, at: Date.now() };
+  fullScheduleCache.set(cacheKey, result);
+  return result;
+}
+
 async function getStandings({ league, season } = {}) {
   const cfg = LEAGUE_CONFIG[league];
   if (!cfg) return [];
@@ -857,6 +947,7 @@ module.exports = {
   getGames,
   getUpcomingGames,
   getMatchDetail,
+  getFullSchedule,
   getStandings,
   getTeams,
   getPlayers,
