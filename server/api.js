@@ -155,12 +155,29 @@ function passthrough(method) {
   };
 }
 
+// Competition logos for the sport-nav mega menu — takes no per-request
+// params (it returns every competition's crest at once), so it doesn't fit
+// the passthrough() shape above (that always forwards league/team/season).
+async function handleCompetitionLogos() {
+  if (!provider.isEnabled()) {
+    return { status: 200, body: { data: {}, source: 'demo' } };
+  }
+  try {
+    const data = await provider.getCompetitionLogos();
+    return { status: 200, body: { data, source: provider.name } };
+  } catch (err) {
+    console.error('[api/competitionLogos]', err.code || err.message);
+    return { status: 200, body: { data: {}, source: 'demo', providerError: err.code || 'PROVIDER_ERROR' } };
+  }
+}
+
 const ROUTES = {
   '/api/games': handleGames,
   '/api/schedule': handleSchedule,
   '/api/match': handleMatch,
   '/api/standings': passthrough('getStandings'),
   '/api/teams': passthrough('getTeams'),
+  '/api/competitionLogos': handleCompetitionLogos,
   '/api/players': passthrough('getPlayers'),
   '/api/health': async () => ({
     status: 200,

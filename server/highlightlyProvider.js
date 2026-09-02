@@ -965,6 +965,44 @@ async function getTeams({ league, season } = {}) {
   return teams;
 }
 
+// ---------------------------------------------------------------------------
+// COMPETITION LOGOS — the sport-nav mega menu shows a real Highlightly crest
+// per competition (never a team logo, never a placeholder). Built on
+// GET /{sport}/leagues/{id} — confirmed live against the Sport API PRO
+// OpenAPI spec (2 Sep 2026) to exist ONLY for the basketball and football
+// verticals; american-football (NFL) has no /leagues endpoint at all, so it
+// is skipped here and the frontend keeps NFL's existing static logo. A
+// competition's crest essentially never changes, so this is cached far
+// longer (24h) than anything else in this file.
+// ---------------------------------------------------------------------------
+const LOGO_CACHE_MS = 24 * 60 * 60 * 1000;
+const logoCache = new Map(); // league -> { at, logo }
+
+async function getCompetitionLogo(league) {
+  const cfg = LEAGUE_CONFIG[league];
+  if (!cfg || cfg.paramStyle !== 'id') return null; // NFL: no /leagues endpoint
+  const cached = logoCache.get(league);
+  if (cached && Date.now() - cached.at < LOGO_CACHE_MS) return cached.logo;
+  try {
+    const data = await request(cfg.sportSlug, `/leagues/${cfg.leagueId}`);
+    const logo = rows(data)[0]?.logo || null;
+    logoCache.set(league, { at: Date.now(), logo });
+    return logo;
+  } catch (err) {
+    console.error('[getCompetitionLogo]', league, err.code || err.message);
+    return null;
+  }
+}
+
+// One combined call for every competition at once (each independently
+// cached above), so the frontend spends exactly one request to light up
+// every mega-menu panel instead of one request per competition per open.
+async function getCompetitionLogos() {
+  const leagues = Object.keys(LEAGUE_CONFIG).filter(l => LEAGUE_CONFIG[l].paramStyle === 'id');
+  const pairs = await Promise.all(leagues.map(async l => [l, await getCompetitionLogo(l)]));
+  return Object.fromEntries(pairs);
+}
+
 async function getPlayers({ league, teamId, name } = {}) {
   const cfg = LEAGUE_CONFIG[league];
   if (!cfg) return [];
@@ -990,6 +1028,7 @@ module.exports = {
   getFullSchedule,
   getStandings,
   getTeams,
+  getCompetitionLogos,
   getPlayers,
   SUPPORTED_LEAGUES: LEAGUE_IDS,
   // exported for tests/inspection only — not part of the provider contract

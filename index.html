@@ -2191,6 +2191,35 @@
     return teamsCache[id];
   }
 
+  // ---------------------------------------------------------------------------
+  // COMPETITION LOGOS — one real Highlightly crest per competition (via
+  // /api/competitionLogos -> server/highlightlyProvider.js's
+  // getCompetitionLogos(), GET /{sport}/leagues/{id}). Unlike team rosters
+  // above, this is fetched ONCE, eagerly, right away — not lazily on first
+  // mega-menu open — so the crest is already resolved and visible the
+  // instant a reader opens any panel, not popping in after the fact. One
+  // combined request covers every competition, so opening every sport's menu
+  // afterwards costs zero additional network calls.
+  // ---------------------------------------------------------------------------
+  let competitionLogos = {}; // league/competition id -> real logo URL, once loaded
+
+  async function fetchCompetitionLogos(){
+    try {
+      const res = await fetch(`${FB_API_BASE}/competitionLogos`, { headers:{ 'Accept':'application/json' } });
+      if (res.ok) {
+        const body = await res.json();
+        if (body.data && typeof body.data === 'object') competitionLogos = body.data;
+      }
+    } catch (e) { /* no API layer running, or a network error — panels keep the lettermark fallback */ }
+    // A reader who opened a panel before this fetch landed still sees the
+    // real crest appear once it does — same repaint-in-place pattern
+    // renderMega() already uses below for team rosters.
+    if (openNodeId) {
+      const node = navNodes.find(n => n.id === openNodeId);
+      if (node) renderMega(node);
+    }
+  }
+
   // Renders a logo, or a lettermark when no verified asset exists. The onerror
   // hook also catches a CDN miss so a broken image never shows.
   function logoMark(src, label, cls){
@@ -2740,9 +2769,16 @@
   // One column per child, identical for a national league and a cup — both
   // resolve their team section the same way (see teamsSectionHtml).
   function childColumn(entry){
+    // Real Highlightly crest once fetchCompetitionLogos() has resolved;
+    // falls back to this entry's existing static config logo (e.g. NFL,
+    // which has no provider /leagues endpoint — see getCompetitionLogos()),
+    // and finally to logoMark()'s own lettermark if neither is available yet.
+    const logo = competitionLogos[entry.id] || entry.logo || null;
+    const fallbackLabel = (entry.id || '').toUpperCase().slice(0, 4);
     return `
       <div class="mega-col">
         <div class="mega-head">
+          <span class="st-icon" aria-hidden="true">${logoMark(logo, fallbackLabel)}</span>
           <button class="mega-title${entry.id === activeLeague ? ' is-active' : ''}"
                   data-league="${entry.id}">${entry.name}</button>
         </div>
@@ -2924,6 +2960,12 @@
   // against on :8080 at all. Nothing else changes: same-origin setups are
   // untouched, and the key stays server-side either way.
   const FB_API_BASE = (location.port === '8080') ? 'http://localhost:3000/api' : '/api';
+
+  // Kick off the one combined competition-logos fetch now that FB_API_BASE
+  // (just above) exists — fetchCompetitionLogos() is defined much earlier,
+  // alongside fetchTeamsForLeague(), but that earlier spot is before
+  // FB_API_BASE is declared, so the call itself has to live here instead.
+  fetchCompetitionLogos();
 
   // display names come from the one config source, not a second hardcoded map
   // Includes COMPETITIONS_CFG (ucl/uel) alongside domestic leagues.
