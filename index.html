@@ -2885,13 +2885,23 @@
   // never the image bytes themselves.
   const WNBA_LOGO_DUPLICATES_NBA = 'https://highlightly.net/basketball/images/leagues/11847.png';
 
-  // NBA's real Highlightly crest is a small badge-shaped mark that reads
-  // poorly at this compact 26px size — a presentation choice, not a data
-  // problem. Unlike WNBA above this isn't conditional on any particular
-  // URL: the real logo is still fetched and still sits in
-  // competitionLogos.nba/the API response untouched, this just always
-  // prefers the clean "NBA" lettermark over rendering it here.
-  const PREFER_LETTERMARK_OVER_LOGO = new Set(['nba']);
+  // NBA's real Highlightly crest is genuinely a bad source for this slot —
+  // fetched and inspected directly: the actual PNG is 65x143px, a tall,
+  // mostly-empty canvas around a small centered mark, not a badge shaped
+  // anywhere close to square. Forcing that into a 26px square (the same
+  // fixed box every competition icon uses) reads as a thin, squashed
+  // sliver. Previously this was "fixed" by suppressing it entirely (the
+  // lettermark), but with no image at all next to a title that already
+  // reads "NBA", the header ends up visually saying "NBA NBA" — worse, not
+  // better. LEAGUES_CFG.nba.logo (data/sports.js) is the existing, already-
+  // in-the-project fix: a real, official 500x500 square NBA mark (ESPN's
+  // CDN), the same asset this row used as its logo before the competition-
+  // logo feature was ever built. NBA is the only entry that skips the
+  // Highlightly-first chain below — every other competition is untouched.
+  // competitionLogos.nba itself is still fetched and still real (API/fetch
+  // logic unchanged); this only changes which of the two real assets NBA's
+  // header renders.
+  const NBA_LOGO_ID = 'nba';
 
   // UCL/UEL's real crests are dark line-art on a transparent background —
   // legible on a light page, nearly invisible against this dark header. The
@@ -2906,14 +2916,15 @@
     // falls back to this entry's existing static config logo (e.g. NFL,
     // which has no provider /leagues endpoint — see getCompetitionLogos()),
     // and finally to logoMark()'s own lettermark if neither is available
-    // yet. Two deliberate exceptions bypass that chain entirely, straight to
-    // the lettermark: PREFER_LETTERMARK_OVER_LOGO (NBA — see above) and a
-    // WNBA logo matching the known NBA duplicate (see
-    // WNBA_LOGO_DUPLICATES_NBA above).
+    // yet. Two deliberate exceptions bypass that normal priority: NBA
+    // always prefers its static entry.logo over competitionLogos.nba (see
+    // NBA_LOGO_ID above), and a WNBA logo matching the known NBA duplicate
+    // (see WNBA_LOGO_DUPLICATES_NBA above) is treated as no-logo.
     const rawLogo = competitionLogos[entry.id];
-    const forceLettermark = PREFER_LETTERMARK_OVER_LOGO.has(entry.id) ||
-      (entry.id === 'wnba' && rawLogo === WNBA_LOGO_DUPLICATES_NBA);
-    const logo = forceLettermark ? null : (rawLogo || entry.logo || null);
+    const wnbaIsNbaDuplicate = entry.id === 'wnba' && rawLogo === WNBA_LOGO_DUPLICATES_NBA;
+    const logo = entry.id === NBA_LOGO_ID
+      ? (entry.logo || null)
+      : (wnbaIsNbaDuplicate ? null : (rawLogo || entry.logo || null));
     const fallbackLabel = (entry.id || '').toUpperCase().slice(0, 4);
     const iconCls = MONOCHROME_LOGO_IDS.has(entry.id) ? 'st-icon-mono' : '';
     return `

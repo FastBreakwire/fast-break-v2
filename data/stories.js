@@ -108,7 +108,6 @@ window.FB_STORIES = [
   },
   {
     id: 'nba-curry-extension-window-2026-08-29',
-    featured: true,
     sport: 'basketball', league: 'nba', category: 'contract', status: 'report',
     headline: 'Curry becomes eligible for a two-year, $136.7m Warriors extension',
     dek: 'The window opened on Saturday. As of Sunday nothing has been signed.',
@@ -312,10 +311,27 @@ window.FB_STORIES = [
     image: 'assets/mj.jpg', video: null,
     priority: 'low'
   },
+  {
+    id: 'nba-tacko-fall-76ers-2026-09-01',
+    featured: true,
+    sport: 'basketball', league: 'nba', category: 'signing', status: 'confirmed',
+    headline: 'Tacko Fall returns to the NBA on an Exhibit 10 deal with the 76ers',
+    dek: 'The 7-foot-6 center is back after four years playing in China and New Zealand.',
+    summary: 'Philadelphia sign Fall to a training-camp deal; an Exhibit 10 contract does not guarantee a roster spot.',
+    body: [
+      'The Philadelphia 76ers have signed 7-foot-6 center Tacko Fall to an Exhibit 10 contract, bringing him back to the NBA after four years away.',
+      'Fall’s last NBA appearance came with the Cleveland Cavaliers in the 2021-22 season. Since then he has played in China and New Zealand, averaging 11.2 points, 7.2 rebounds and 2.1 blocks in 18.1 minutes per game overseas.',
+      'An Exhibit 10 contract does not guarantee Fall a spot on Philadelphia’s final roster. It allows the Sixers to bring him to training camp in Camden, New Jersey, later this month and evaluate whether his form overseas translates back to the NBA. Fall drew renewed attention this year with a 20-point, 21-rebound, five-block showing at the 2026 NBA All-Star Celebrity Game.'
+    ],
+    source: 'ESPN',
+    sourceUrl: 'https://www.espn.com/nba/story/_/id/49795456/76ers-sign-7-foot-6-center-tacko-fall-others-camp-deal',
+    publishedAt: '2026-09-01', updatedAt: null,
+    image: 'assets/taco.jpg', video: null,
+    priority: 'normal'
+  },
   /* ---------------------------------------------------------------- WNBA */
   {
     id: 'wnba-bonner-dream-2026-08-27',
-    featured: true,
     sport: 'basketball', league: 'wnba', category: 'signing', status: 'confirmed',
     headline: 'Atlanta Dream sign DeWanna Bonner for the rest of the season',
     dek: 'The 17-year veteran joins a playoff-bound Atlanta side on a prorated maximum deal, days after a buyout with Phoenix freed her to chase one more title.',
@@ -426,10 +442,27 @@ window.FB_STORIES = [
     image: 'assets/clark-fever-hero.jpg', video: null,
     priority: 'low'
   },
+  {
+    id: 'wnba-reese-record-2026-08-30',
+    featured: true,
+    sport: 'basketball', league: 'wnba', category: 'results', status: 'confirmed',
+    headline: 'Angel Reese sets the WNBA record with her 29th double-double as the Dream beat the Lynx',
+    dek: 'Reese passed Alyssa Thomas’s mark of 28, set in 2023, in Atlanta’s 89-81 win over Minnesota.',
+    summary: 'Reese posted 15 points and 11 rebounds for her record 29th double-double of the season.',
+    body: [
+      'Angel Reese set a new WNBA record for double-doubles in a single season, posting her 29th of the year as the Atlanta Dream beat the Minnesota Lynx 89-81.',
+      'Reese finished the game with 15 points and 11 rebounds, passing the previous record of 28 double-doubles set by Alyssa Thomas in 2023. She had tied the mark days earlier against the Portland Fire.',
+      'It is the latest record of the season for Reese, who has also set marks for rebounds in a single game and in a season.'
+    ],
+    source: 'ESPN',
+    sourceUrl: 'https://www.espn.com/wnba/story/_/id/49776582/angel-reese-breaks-wnba-record-29th-double-double',
+    publishedAt: '2026-08-30', updatedAt: null,
+    image: 'assets/reese record.jpg', video: null,
+    priority: 'high'
+  },
   /* ----------------------------------------------------------------- NFL */
   {
     id: 'nfl-seahawks-sale-2026-08-26',
-    featured: true,
     sport: 'americanfootball', league: 'nfl', category: 'league', status: 'confirmed',
     headline: 'NFL owners unanimously approve record $9.612bn Seahawks sale to the Khosla family',
     dek: 'The first ownership change in Seattle in nearly 30 years, and the largest transaction in league history.',
@@ -539,6 +572,41 @@ window.FB_STORIES = [
     image: 'assets/1nfl.jpg', video: null,
     priority: 'normal'
   },
+  {
+    id: 'nfl-pearce-suspension-2026-09-01',
+    sport: 'americanfootball', league: 'nfl', category: 'league', status: 'confirmed',
+    headline: 'Falcons edge rusher James Pearce Jr. suspended eight games',
+    dek: 'The ruling, for a violation of the personal conduct policy, lands a week before Atlanta’s opener.',
+    summary: 'Pearce joins fellow second-year pass rusher Jalon Walker, already out with a torn ACL, on the sideline.',
+    body: [
+      'The NFL has suspended Atlanta Falcons edge rusher James Pearce Jr. for the first eight games of the season, ruling that he violated the league’s personal conduct policy.',
+      'The suspension lands a week before Atlanta’s season opener and deepens a pass-rush problem for the Falcons, who led the NFC in sacks a year ago. Fellow second-year pass rusher Jalon Walker is already out for an extended period with a torn ACL.',
+      'Pearce is eligible to return once Atlanta’s Week 8 game has been played.'
+    ],
+    source: 'Sports Illustrated',
+    sourceUrl: 'https://sports.yahoo.com/articles/ranking-5-biggest-nfl-storylines-130027020.html',
+    publishedAt: '2026-09-01', updatedAt: null,
+    image: null, video: null,
+    priority: 'normal'
+  },
+  {
+    id: 'nfl-beckham-giants-roster-2026-08-30',
+    featured: true,
+    sport: 'americanfootball', league: 'nfl', category: 'roster', status: 'confirmed',
+    headline: 'Odell Beckham Jr. makes the Giants’ 53-man roster, completing his return',
+    dek: 'Seven years after he left, and after stops with four other teams and a Super Bowl with the Rams, Beckham earned the spot back in camp.',
+    summary: 'The 33-year-old, who missed all of 2025, caught 7 of 13 targets for 76 yards across three preseason games to make the cut.',
+    body: [
+      'Odell Beckham Jr. has made the New York Giants’ 53-man roster, completing a return to the team seven years after he left. Beckham, 33, missed the entire 2025 season and had spent the years since his Giants departure with four other franchises, winning a Super Bowl along the way with the Los Angeles Rams.',
+      'He earned the spot in training camp, catching 7 of 13 targets for 76 yards without a touchdown across three preseason games. The Giants have announced Beckham will wear No. 13 again, the number he wore in his original run with the team.',
+      'The move reunites Beckham with head coach John Harbaugh, who took over the Giants this year after leaving Baltimore; the two worked together during Beckham’s stint with the Ravens in 2023. Beckham joins Malik Nabers, rookie Malachi Fields, Darnell Mooney and Darius Slayton in New York’s receiver room heading into a Week 1 matchup with the Cowboys.'
+    ],
+    source: 'NFL.com',
+    sourceUrl: 'https://www.nfl.com/news/odell-beckham-jr--giants-53-man-roster-new-york-comeback',
+    publishedAt: '2026-08-30', updatedAt: null,
+    image: 'assets/Odell Beckham Jr. schafft den Giants-Kader.png', video: null,
+    priority: 'high'
+  },
   /* -------------------------------------------------------- PREMIER LEAGUE */
   {
     id: 'epl-delap-forest-2026-08-27',
@@ -633,24 +701,25 @@ window.FB_STORIES = [
   },
   {
     id: 'epl-window-deadline-2026-08-28',
-    sport: 'football', league: 'epl', category: 'transfer', status: 'scheduled',
-    headline: 'Premier League window shuts at 11pm on 1 September',
-    dek: 'Three days left in a window that opened on 15 June.',
-    summary: 'Clubs have until Tuesday night UK time to complete their business.',
+    sport: 'football', league: 'epl', category: 'transfer', status: 'confirmed',
+    headline: 'Premier League window closes with City’s record £458m spend and Antony to Man United',
+    dek: 'The summer window that opened 15 June shut at 22:00 GMT on Tuesday, with deals still landing in the final minutes.',
+    summary: 'Manchester City set a Premier League single-window spending record; Manchester United complete an £81.3m deal for Antony.',
     body: [
-      'The Premier League summer transfer window closes at 11pm UK time on Tuesday 1 September. It opened on 15 June, an unusually long run shaped around the summer World Cup.',
-      'Business is still moving as it closes. Chelsea have agreed terms with Aston Villa for Emiliano Martinez, Tottenham have taken Omar Marmoush on loan from Manchester City with an obligation to buy, and Nottingham Forest have completed a club-record deal for Liam Delap. Anything not filed by 11pm waits until January.'
+      'The Premier League summer transfer window closed at 22:00 GMT on Tuesday 1 September, ending a run that opened on 15 June.',
+      'Manchester City’s deadline-day business — capped by the £125m signing of Enzo Fernández — took their spending in the window to £458 million, a Premier League record for a single window, surpassing Liverpool’s £415m last summer. City also signed Iliman Ndiaye from Everton and sent Jack Grealish back to Everton on loan.',
+      'Manchester United completed the signing of Ajax winger Antony for a fee of around £81.3 million. Elsewhere on deadline day, Malick Fofana joined Sunderland, Folarin Balogun moved to Everton, and Liverpool brought in Brazil midfielder Arthur on loan from Juventus.',
+      'Anything not filed by the deadline now waits until the window reopens in January.'
     ],
-    source: 'ESPN',
-    sourceUrl: 'https://www.espn.com/soccer/story/_/id/48944912/premier-league-efl-summer-transfer-window-2026-dates-does-open-deadline-day',
-    publishedAt: '2026-08-28', updatedAt: null,
+    source: 'Sky Sports',
+    sourceUrl: 'https://www.skysports.com/football/news/11719/13579708/transfer-deadline-day-deals-summer-2026-confirmed-moves-across-premier-league-championship-efl-europe-and-more',
+    publishedAt: '2026-08-28', updatedAt: '2026-09-01',
     image: null, video: null,
-    priority: 'low'
+    priority: 'normal'
   },
 
   {
     id: 'epl-barcola-liverpool-2026-08-29',
-    featured: true,
     sport: 'football', league: 'epl', category: 'transfer', status: 'report',
     headline: 'Liverpool agree terms with PSG for Bradley Barcola',
     dek: 'A guaranteed €116m rising to €140m, reported by David Ornstein. The deal is not yet completed.',
@@ -669,21 +738,21 @@ window.FB_STORIES = [
   },
   {
     id: 'epl-enzo-city-2026-08-29',
-    sport: 'football', league: 'epl', category: 'transfer', status: 'report',
-    headline: 'Enzo Fernández agrees personal terms with Manchester City',
-    dek: 'A verbal agreement on the player’s side. City have not yet made a bid, and the fee is Chelsea’s call.',
-    summary: 'Fabrizio Romano reports terms agreed. Chelsea are expected to ask for around £130m with three days of the window left.',
+    sport: 'football', league: 'epl', category: 'transfer', status: 'confirmed',
+    headline: 'Enzo Fernández completes Manchester City move in £125m British-record deal',
+    dek: 'The transfer went through in the closing minutes of the window, matching what Liverpool paid for Alexander Isak a year ago.',
+    summary: 'City sign the Chelsea midfielder for a joint-British-record £125m on a five-year deal, done in the final minutes of deadline day.',
     body: [
-      'Enzo Fernández has a verbal agreement with Manchester City on personal terms, according to Fabrizio Romano. The transfer itself is some way from done.',
-      'City have not submitted an official bid and concrete club-to-club negotiations have not taken place. Contact is expected shortly, but the decision on price sits with Chelsea, who are understood to want more than the £120 million originally attached to the midfielder and are likely to ask for around £130 million.',
-      'The push is coming from City manager Enzo Maresca, who coached Fernández at Stamford Bridge and wants to work with the 25-year-old Argentina international again.',
-      'Fernández’s position at Chelsea has weakened since the season began — manager Xabi Alonso left him out of the matchday squad for the Carabao Cup win over Luton Town. With the window closing on Tuesday 1 September, there is very little time for a deal of this size to be built from scratch.'
+      'Manchester City have completed the signing of Enzo Fernández from Chelsea for a fee of £125 million, equalling the British transfer record, with the Argentina international signing a five-year deal.',
+      'The move went through in the closing minutes of the summer window, which shut at 22:00 GMT on Tuesday 1 September. The £125m fee matches what Liverpool paid Newcastle for Alexander Isak on deadline day a year earlier.',
+      'The signing takes City’s spending in a single transfer window to a Premier League record £458 million, surpassing Liverpool’s £415m outlay from last summer.',
+      'Fernández previously joined Chelsea from Benfica in 2023 for a then-British-record £107m, making him the first player to be the subject of two transfers worth more than £100m.'
     ],
-    source: 'Yahoo Sports',
-    sourceUrl: 'https://sports.yahoo.com/articles/enzo-fernandez-agrees-terms-man-062512514.html',
-    publishedAt: '2026-08-29', updatedAt: null,
-    image: 'assets/enzo.jpg', video: null,
-    priority: 'normal'
+    source: 'ESPN',
+    sourceUrl: 'https://www.espn.com/soccer/story/_/id/49794375/man-city-agree-record-equalling-125m-deal-chelsea-enzo-fernandez-sources',
+    publishedAt: '2026-08-29', updatedAt: '2026-09-01',
+    image: 'assets/enzo fernadez transfer.jpg', video: null,
+    priority: 'high'
   },
   {
     id: 'epl-gakpo-city-talks-2026-08-29',
@@ -721,10 +790,61 @@ window.FB_STORIES = [
     image: 'assets/jesus.jpg', video: null,
     priority: 'normal'
   },
+  {
+    id: 'epl-bruno-hattrick-ipswich-2026-08-30',
+    sport: 'football', league: 'epl', category: 'match', status: 'confirmed',
+    headline: 'Bruno Fernandes hat-trick fires Manchester United past Ipswich 5-2',
+    dek: 'His first Premier League hat-trick in five years turned a first-half deficit into a rout at Old Trafford.',
+    summary: 'Fernandes scored three and set up a fourth as United came from behind to beat newly-promoted Ipswich.',
+    body: [
+      'Bruno Fernandes scored his first Premier League hat-trick in five years as Manchester United came from behind to beat Ipswich Town 5-2 at Old Trafford.',
+      'Ipswich led through Leif Davis in the 29th minute before Fernandes equalised in the 40th. An own goal from Jacob Greaves put United ahead in the 56th, and Fernandes added a penalty five minutes later before completing his hat-trick from close range.',
+      'Bryan Mbeumo added a fifth after a Fernandes assist, with Chuba Akpom’s stoppage-time goal a consolation for Ipswich.'
+    ],
+    source: 'Sky Sports',
+    sourceUrl: 'https://www.skysports.com/football/news/11661/13571902/man-utd-5-2-ipswich-bruno-fernandes-scores-hat-trick-to-help-united-come-from-behind-to-win-at-old-trafford',
+    publishedAt: '2026-08-30', updatedAt: null,
+    image: 'assets/brunorec.jpg', video: null,
+    priority: 'normal'
+  },
+  {
+    id: 'epl-mudryk-tottenham-loan-2026-09-02',
+    featured: true,
+    sport: 'football', league: 'epl', category: 'transfer', status: 'confirmed',
+    headline: 'Mykhailo Mudryk joins Tottenham on loan from Chelsea',
+    dek: 'The winger returns to competitive football after a doping ban, with a reported £75m non-mandatory buy option.',
+    summary: 'Mudryk has not played a competitive match since November 2024. Spurs boss Roberto De Zerbi worked with him at Shakhtar Donetsk.',
+    body: [
+      'Mykhailo Mudryk has joined Tottenham Hotspur on loan from Chelsea for the 2026-27 season.',
+      'The Ukraine winger has not featured in an official match since November 2024, after testing positive for a banned substance. His doping ban was lifted earlier this summer and he rejoined Chelsea training almost immediately.',
+      'The loan reportedly includes a non-mandatory option for Tottenham to sign Mudryk permanently for around £75 million. Spurs manager Roberto De Zerbi worked with the winger at Shakhtar Donetsk in 2021-22, a relationship understood to have been central to the move.'
+    ],
+    source: 'FootballTransfers',
+    sourceUrl: 'https://www.footballtransfers.com/en/transfer-news/uk-premier-league/2026/09/chelsea-transfer-news-mykhailo-mudryk-tottenham-hotspur-loan-deal-agreed-fabrizio-romano',
+    publishedAt: '2026-09-02', updatedAt: null,
+    image: 'assets/mudryk.jpg', video: null,
+    priority: 'normal'
+  },
+  {
+    id: 'epl-woltemade-juventus-loan-2026-09-01',
+    sport: 'football', league: 'epl', category: 'transfer', status: 'confirmed',
+    headline: 'Newcastle send Nick Woltemade to Juventus on a season-long loan',
+    dek: 'The striker, a club-record £69m signing from Stuttgart last summer, wants more regular football.',
+    summary: 'Juventus pay Newcastle a £3.5m loan fee, with no option or obligation to make the move permanent.',
+    body: [
+      'Newcastle United have sent striker Nick Woltemade to Juventus on a season-long loan, in a deal completed on deadline day.',
+      'Juventus will pay Newcastle £3.5 million for the loan, which carries no option or obligation to make the move permanent, plus up to €500,000 in performance-related bonuses over the 2026-27 campaign.',
+      'Woltemade joined Newcastle from VfB Stuttgart for a club-record £69 million last summer and made 53 appearances, scoring 11 goals and adding six assists. He is looking for more regular playing time as he tries to impress new Germany head coach Jürgen Klopp.'
+    ],
+    source: 'Yahoo Sports',
+    sourceUrl: 'https://sports.yahoo.com/articles/nick-woltemade-agrees-join-juventus-122100317.html',
+    publishedAt: '2026-09-01', updatedAt: null,
+    image: 'assets/woltemade.jpg', video: null,
+    priority: 'low'
+  },
   /* --------------------------------------------------------------- LA LIGA */
   {
     id: 'laliga-madrid-sociedad-2026-08-26',
-    featured: true,
     sport: 'football', league: 'laliga', category: 'match', status: 'confirmed',
     headline: 'Mbappé hat-trick marks Mourinho’s Bernabéu return as Real Madrid win 4-1',
     dek: 'Thirteen years after his first spell ended, Mourinho was back in the home dugout — and Real Madrid pulled clear after the break.',
@@ -797,6 +917,41 @@ window.FB_STORIES = [
     image: 'assets/endrick.jpg', video: null,
     priority: 'low'
   },
+  {
+    id: 'laliga-jesus-barcelona-2026-09-01',
+    featured: true,
+    sport: 'football', league: 'laliga', category: 'transfer', status: 'confirmed',
+    headline: 'Barcelona sign Gabriel Jesus from Arsenal on deadline day',
+    dek: 'The Brazilian striker had been training away from Arsenal’s first team since late August.',
+    summary: 'The move was completed as the summer window closed on Tuesday.',
+    body: [
+      'Barcelona have signed striker Gabriel Jesus from Arsenal, completing the move on transfer deadline day.',
+      'Jesus had been training away from Arsenal’s first team for the final weeks of the window, with manager Mikel Arteta citing a surplus of attacking options. Napoli, Everton and Ipswich had also been credited with interest before Barcelona completed the deal.',
+      'The Brazilian joined Arsenal from Manchester City in 2022.'
+    ],
+    source: 'Al Jazeera',
+    sourceUrl: 'https://www.aljazeera.com/sports/2026/8/31/transfer-deadline-day-2026-football-summer-signing-window-barcola-gakpo-alvarez',
+    publishedAt: '2026-09-01', updatedAt: null,
+    image: null, video: null,
+    priority: 'normal'
+  },
+  {
+    id: 'laliga-cucurella-real-madrid-2026-09-01',
+    sport: 'football', league: 'laliga', category: 'transfer', status: 'confirmed',
+    headline: 'Real Madrid complete £52m deadline-day deal for Marc Cucurella',
+    dek: 'The left-back leaves Chelsea for Spain as Madrid also complete a €125m move for Yan Diomande.',
+    summary: 'Cucurella becomes one of two big deadline-day arrivals for Real Madrid, alongside Ivory Coast winger Diomande.',
+    body: [
+      'Real Madrid have signed left-back Marc Cucurella from Chelsea for a fee of around £52 million, completed on transfer deadline day.',
+      'The move was one of two major deadline-day signings for Madrid, who also completed a €125 million deal for Ivory Coast winger Yan Diomande.',
+      'Cucurella joined Chelsea from Brighton in 2022 and had established himself as a regular starter in the Premier League.'
+    ],
+    source: 'GiveMeSport',
+    sourceUrl: 'https://www.givemesport.com/real-madrid-transfers-2026-27/',
+    publishedAt: '2026-09-01', updatedAt: null,
+    image: null, video: null,
+    priority: 'low'
+  },
   /* ------------------------------------------------------------ BUNDESLIGA */
   {
     id: 'bundesliga-elversberg-leverkusen-2026-08-29',
@@ -855,5 +1010,68 @@ window.FB_STORIES = [
     publishedAt: '2026-08-27', updatedAt: null,
     image: null, video: null,
     priority: 'low'
+  },
+  {
+    id: 'bundesliga-diaby-leverkusen-2026-09-01',
+    sport: 'football', league: 'bundesliga', category: 'transfer', status: 'confirmed',
+    headline: 'Moussa Diaby returns to Bayer Leverkusen on deadline day',
+    dek: 'The winger rejoins the club he left for Aston Villa in 2023.',
+    summary: 'Leverkusen also added Ivorian right-back Guéla Doué from Strasbourg on a five-year deal.',
+    body: [
+      'Moussa Diaby is back at Bayer Leverkusen, completing a return to the club on the final day of the summer transfer window.',
+      'The winger left Leverkusen for Aston Villa in 2023. Terms of the deal bringing him back have not been disclosed.',
+      'Leverkusen were busy elsewhere on deadline day too, announcing the signing of Ivorian right-back Guéla Doué from French side Strasbourg on a five-year deal through to 2031.'
+    ],
+    source: 'Bavarian Football Works',
+    sourceUrl: 'https://www.bavarianfootballworks.com/bayern-munich-transfer-news-rumors/250692/deadline-day-transfer-updates-you-should-know-3',
+    publishedAt: '2026-09-01', updatedAt: null,
+    image: null, video: null,
+    priority: 'normal'
+  },
+
+  /* ----------------------------------------------------- CHAMPIONS LEAGUE */
+  {
+    id: 'ucl-league-phase-draw-2026-08-28',
+    featured: true,
+    sport: 'football', league: 'ucl', category: 'league', status: 'confirmed',
+    headline: 'Champions League draw sends Arsenal to Real Madrid and Bayern Munich',
+    dek: 'UEFA held the 2026-27 League Phase draw in Monaco, pairing every team with eight opponents.',
+    summary: 'Arsenal drew Real Madrid, Bayern Munich, Borussia Dortmund, Real Betis, Lille, Napoli, Sabah and Slavia Prague.',
+    body: [
+      'UEFA held the draw for the League Phase of the 2026-27 Champions League in Monaco, with each of the 36 clubs learning their eight opponents for the group-style stage.',
+      'Arsenal were drawn against Real Madrid, Bayern Munich, Borussia Dortmund, Real Betis, Lille, Napoli, Sabah and Slavia Prague, hosting Real Madrid, Dortmund, Lille and Sabah at the Emirates and travelling to Munich, Seville, Naples and Prague.',
+      'Elsewhere in the draw, Manchester City and Paris Saint-Germain — the last two Champions League winners — were paired together, and holders PSG were also drawn against Barcelona.',
+      'Each team plays eight League Phase matches, four at home and four away, before the competition moves into its knockout rounds.'
+    ],
+    source: 'ESPN',
+    sourceUrl: 'https://www.espn.com/soccer/story/_/id/49743130/uefa-champions-league-draw-2026-27-psg-arsenal-barcelona-real-madrid',
+    publishedAt: '2026-08-28', updatedAt: null,
+    image: 'assets/realarsbay.jpg', video: null,
+    priority: 'normal'
+  },
+
+  /* -------------------------------------------------------- EUROPA LEAGUE */
+  // Only the confirmed, verified format/schedule facts are used here — team-
+  // by-team pairings for the 2026-27 draw could not be independently
+  // confirmed against a live 2026-27 source at the time of writing (search
+  // results kept surfacing prior-season fixture data for specific clubs), so
+  // none are reported as this season's matchups.
+  {
+    id: 'uel-league-phase-draw-2026-08-28',
+    featured: true,
+    sport: 'football', league: 'uel', category: 'league', status: 'confirmed',
+    headline: 'Europa League League Phase draw held in Monaco',
+    dek: 'Thirty-six clubs learned their opponents for a 144-match league stage running into January.',
+    summary: 'Each club plays eight League Phase matches, two against a side from each of four pots, before the knockout rounds.',
+    body: [
+      'UEFA held the League Phase draw for the 2026-27 Europa League at the Grimaldi Forum in Monaco on Friday 28 August.',
+      'Thirty-six clubs were split into four pots of nine, seeded by club coefficient, and each was drawn against two opponents from every pot — one at home, one away — for a 144-match league stage. Teams cannot face a club from their own association, and can meet at most two sides from the same country.',
+      'League Phase matchdays run from 16-17 September 2026 through 28 January 2027, after which the competition moves into its knockout stage. The final is scheduled for Stadion Frankfurt in Frankfurt, Germany, on 26 May 2027.'
+    ],
+    source: 'UEFA.com',
+    sourceUrl: 'https://www.uefa.com/uefaeuropaleague/news/02a8-216e9cafba52-f039617d7982-1000--2026-27-europa-league-league-phase-draw-contenders-learn/',
+    publishedAt: '2026-08-28', updatedAt: null,
+    image: null, video: null,
+    priority: 'normal'
   }
 ];
