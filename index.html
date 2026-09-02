@@ -242,7 +242,13 @@
   /* ============ HEADER / NAV ============ */
   header.site{
     position:sticky; top:0; z-index:50;
-    background:rgba(20,20,20,.88); backdrop-filter:blur(10px);
+    /* Was rgba(20,20,20,.88) + backdrop-filter:blur(10px) — the blur forced
+       a re-sample/re-blur of whatever scrolled underneath on every frame
+       this stayed pinned (compositor cost proportional to scroll activity,
+       doubled by .sport-nav stacking the same thing directly below it).
+       A solid, near-identical dark fill reads the same without any of
+       that per-frame repaint cost. */
+    background:rgb(20,20,20);
     border-bottom:1px solid var(--line);
   }
   /* three columns: [menu + links] [logo] [controls] — keeps the logo centred */
@@ -1296,7 +1302,10 @@
 
   .sport-nav{
     position:sticky; top:0; z-index:40;
-    background:rgba(18,18,18,.92); backdrop-filter:blur(10px);
+    /* Was rgba(18,18,18,.92) + backdrop-filter:blur(10px) — see header.site's
+       comment above; this was the second of the two stacked blurred sticky
+       layers. Same fix: solid fill, no per-frame re-blur while scrolling. */
+    background:rgb(18,18,18);
     border-bottom:1px solid var(--line);
   }
   /* The animated sport mark lives inside its own tab and is clipped to it.
@@ -2637,7 +2646,15 @@
       : 'news-card reveal' + (s.image ? ' has-thumb' : ' no-image');
 
     const statusCls = STORY_STATUS_CLASS[s.status] || '';
-    const img = s.image ? `<div class="img-wrap"><img src="${assetUrl(s.image)}" alt=""></div>` : '';
+    // Big Story is the one prominent, near-the-top image per league section —
+    // full-size source, loaded eagerly, exactly as before. Every ordinary
+    // News Card is the far more common case (see thumbAssetUrl above): a
+    // small pre-built thumbnail, deferred until it's actually about to
+    // scroll into view, with its real (thumbnail) pixel size declared up
+    // front so the card's layout never shifts once it loads.
+    const img = !s.image ? '' : opts.big
+      ? `<div class="img-wrap"><img src="${assetUrl(s.image)}" alt=""></div>`
+      : `<div class="img-wrap"><img src="${thumbAssetUrl(s.image)}" alt="" width="184" height="184" loading="lazy" decoding="async"></div>`;
     const featuredBadge = opts.big ? '<span class="status featured">Featured</span>' : '';
 
     card.innerHTML = `${img}
@@ -5070,6 +5087,18 @@
   // relative path would resolve to /story/assets/x.jpg, so anchor it to BASE.
   const assetUrl = u => (!u || /^[a-z]+:/i.test(u) || u.charAt(0) === '/')
     ? u : (BASE || '') + '/' + u.replace(/^\.?\//, '');
+  // Small-context editorial images (News Card / rail item / search result —
+  // every place a story photo renders at well under 100px) load a pre-built
+  // 184x184 WebP instead of the full-size original: no per-story field, no
+  // per-story exception — same source path, same naming rule, every time.
+  // Big Story / Article Hero intentionally keep calling assetUrl(s.image)
+  // directly and never this function; the full-size source is the right
+  // asset there (see the thumbnail generation note in assets/ for the exact
+  // ImageMagick command used, 184x184, center-cropped, quality 82). A story
+  // added without a matching "<name>-thumb.webp" file simply 404s on the
+  // thumbnail — falls back to nothing rendering there, not the full image.
+  const thumbAssetUrl = u => (!u || /^[a-z]+:/i.test(u) || u.charAt(0) === '/')
+    ? u : assetUrl(u.replace(/\.(jpe?g|png)$/i, '-thumb.webp'));
   const storyUrl   = id => (BASE || '') + '/story/' + id;
   const storyIdFromPath = path => {
     const m = path.match(/\/story\/([^/?#]+)/);
@@ -5295,7 +5324,7 @@
   function railItem(s, opts){
     opts = opts || {};
     const thumb = (opts.thumb && s.image)
-      ? `<span class="rail-thumb"><img src="${assetUrl(s.image)}" alt=""></span>` : '';
+      ? `<span class="rail-thumb"><img src="${thumbAssetUrl(s.image)}" alt="" width="184" height="184" loading="lazy" decoding="async"></span>` : '';
     const cls = 'rail-item' + (thumb ? ' has-thumb' : '');
     return `<a class="${cls}" href="${storyUrl(s.id)}" data-story-link="${s.id}">
         ${thumb}
@@ -5514,7 +5543,7 @@
       `<p class="search-count">${hits.length} ${hits.length === 1 ? 'story' : 'stories'}</p>` +
       hits.map(({ story: s }) => {
         const thumb = s.image
-          ? `<span class="sr-thumb"><img src="${assetUrl(s.image)}" alt=""></span>` : '';
+          ? `<span class="sr-thumb"><img src="${thumbAssetUrl(s.image)}" alt="" width="184" height="184" loading="lazy" decoding="async"></span>` : '';
         return `<a class="sr-item${thumb ? '' : ' no-thumb'}" role="option"
                    href="${storyUrl(s.id)}" data-story-link="${s.id}">
             ${thumb}
