@@ -2581,7 +2581,13 @@
 
   function filterLeague(league, opts){
     opts = opts || {};
-    if (!LEAGUES[league]) return;
+    // NAVIGABLE_LEAGUE_IDS (leagues + cups — declared below, near
+    // wireMegaLinks) is deliberately used here instead of LEAGUES: LEAGUES
+    // excludes cups (UCL/UEL have no editorial content), but that must never
+    // block selecting them as the active competition — it only means
+    // renderStories() below correctly shows zero stories for one, not that
+    // the whole selection silently no-ops.
+    if (!NAVIGABLE_LEAGUE_IDS.has(league)) return;
     activeLeague = league;
 
     // The Latest section is data-driven and covers every league. The long-form
@@ -2782,14 +2788,32 @@
     return `<p class="mega-sub">Teams</p><p class="mega-note">Loading teams…</p>`;
   }
 
+  // Highlightly's WNBA competition record (basketball leagueId 11847) does
+  // not carry its own crest — its "logo" field returns the exact same image
+  // as the NBA record (confirmed by direct byte comparison — identical MD5
+  // — not a transient glitch). Rendering it would silently show the wrong
+  // league's mark under "WNBA", so this one specific, known-duplicate URL is
+  // recognized and treated as no-logo. No extra request: this compares
+  // against the URL already present in the same competitionLogos payload,
+  // never the image bytes themselves.
+  const WNBA_LOGO_DUPLICATES_NBA = 'https://highlightly.net/basketball/images/leagues/11847.png';
+
   // One column per child, identical for a national league and a cup — both
   // resolve their team section the same way (see teamsSectionHtml).
   function childColumn(entry){
     // Real Highlightly crest once fetchCompetitionLogos() has resolved;
     // falls back to this entry's existing static config logo (e.g. NFL,
     // which has no provider /leagues endpoint — see getCompetitionLogos()),
-    // and finally to logoMark()'s own lettermark if neither is available yet.
-    const logo = competitionLogos[entry.id] || entry.logo || null;
+    // and finally to logoMark()'s own lettermark if neither is available
+    // yet. WNBA is a deliberate exception (see WNBA_LOGO_DUPLICATES_NBA
+    // above): when Highlightly's returned logo is that known NBA duplicate,
+    // it's skipped entirely — including the static ESPN fallback — landing
+    // straight on the plain "WNBA" lettermark instead of showing NBA's mark
+    // under WNBA's name.
+    const rawLogo = competitionLogos[entry.id];
+    const logo = (entry.id === 'wnba' && rawLogo === WNBA_LOGO_DUPLICATES_NBA)
+      ? null
+      : (rawLogo || entry.logo || null);
     const fallbackLabel = (entry.id || '').toUpperCase().slice(0, 4);
     return `
       <div class="mega-col">
@@ -2837,14 +2861,12 @@
   // here" and "loads there" can never disagree.
   const NAVIGABLE_LEAGUE_IDS = new Set([...LEAGUES_CFG, ...COMPETITIONS_CFG].map(l => l.id));
 
-  // Every control in the panel resolves to the same place: that competition's
-  // real, URL-addressable schedule page (existing /schedule/{league} route —
-  // see scheduleUrl()/route() below). Not the old "filter the home feed and
-  // stay on /" behavior: that left no URL trace of which competition was
-  // selected, so a refresh, a direct link, or Back/Forward could not
-  // reproduce it. /schedule/{league} already fetches strictly by the id in
-  // the URL (never the app's activeLeague), so switching competitions here
-  // can never bleed one competition's games into another's.
+  // Every control in the panel resolves to that competition's MAIN/NEWS view
+  // — the existing home/feed mechanism (selectLeague() -> navigate(homeUrl())
+  // + filterLeague(), see below), never the separate /schedule/{league}
+  // route. The Schedule is its own destination, reached only through the
+  // Schedule nav/page itself (e.g. the score rail's "full schedule" link) —
+  // a competition click here must NOT jump straight to its fixture list.
   function wireMegaLinks(){
     megaMenu.querySelectorAll('[data-league]').forEach(el => {
       const id = el.dataset.league;
@@ -2852,7 +2874,7 @@
       // A real team row (data-team-id present — see teamLinks()) opens the
       // Team Page. Everything else (the mega-title button, or a demo
       // fallback team row with no real id) opens that competition's
-      // schedule page. Only the demo row needs preventDefault of its own —
+      // main/news view. Only the demo row needs preventDefault of its own —
       // it's now a real <a href> too (for a11y/consistency) but has nowhere
       // real to navigate to.
       if (el.dataset.teamId) {
@@ -2868,7 +2890,7 @@
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
             e.preventDefault();
           }
-          navigate(scheduleUrl(id));
+          selectLeague(id);
           closeMega();
         });
       }
@@ -2889,6 +2911,14 @@
     clearTimeout(closeTimer);
     closeTimer = setTimeout(closeMega, 220);
   }
+
+  // A sport's primary/flagship competition, if it has one obvious single
+  // one — used only by the sport-tab click handler below. Deliberately
+  // omits football: Premier League, La Liga, Bundesliga, Champions League
+  // and Europa League are five equally-weighted competitions with no single
+  // default, so clicking the "Football" tab keeps opening the picker
+  // instead of guessing one.
+  const SPORT_TAB_DEFAULT_LEAGUE = { basketball: 'nba', americanfootball: 'nfl' };
 
   // --- the rail -------------------------------------------------------------
   navNodes.forEach(node => {
@@ -2916,11 +2946,26 @@
       });
       btn.addEventListener('mouseleave', () => { clearTimeout(hoverTimer); scheduleMegaClose(); });
     }
-    // Tap / click: open the menu. Tapping an already-open league tab switches
-    // straight to that league, so one tap is never a dead end.
-    // Tap / click toggles the sport's menu. A sport is a container, so it never
-    // selects a league itself — the reader picks one from the panel.
+    // Click behavior differs by device, not by sport:
+    //  - Hover-capable (desktop): mouseenter above already reveals this
+    //    sport's full picker (its other competitions, teams, ...)
+    //    independently of click, so for a sport with one obvious primary
+    //    competition (Basketball -> NBA, American Football -> NFL — see
+    //    SPORT_TAB_DEFAULT_LEAGUE) a click is a direct shortcut straight to
+    //    that competition's main/news view, exactly like clicking its own
+    //    entry in the open panel would. Navigating closes the panel (every
+    //    route() call does), which is correct here, not a bug — hover
+    //    remains how a desktop reader reaches WNBA or a specific football
+    //    competition instead.
+    //  - No hover (mobile/touch), or a sport with no single default
+    //    (Football — 5 competitions, no one obvious landing page): click's
+    //    only job is opening/closing the picker, unchanged from before. On
+    //    mobile this is the ONLY way to reach WNBA or a football
+    //    competition at all, so it must never be skipped in favor of an
+    //    auto-navigate the way the hover-capable branch above does.
     btn.addEventListener('click', () => {
+      const defaultLeague = SPORT_TAB_DEFAULT_LEAGUE[node.id];
+      if (canHover && defaultLeague) { selectLeague(defaultLeague); return; }
       if (openNodeId === node.id) closeMega(); else renderMega(node);
     });
     sportNavInner.appendChild(btn);
@@ -2940,8 +2985,11 @@
   });
 
   // Single entry point for switching league. Always lands on the home view.
+  // Gated on NAVIGABLE_LEAGUE_IDS (leagues + cups), not LEAGUES — a cup
+  // (UCL/UEL) is still a real, selectable competition, it just has no
+  // editorial content for filterLeague()'s own renderStories() to show.
   function selectLeague(leagueId){
-    if (!LEAGUES[leagueId]) return;
+    if (!NAVIGABLE_LEAGUE_IDS.has(leagueId)) return;
     clearTimeout(hoverTimer); clearTimeout(closeTimer);
     navigate(homeUrl());
     filterLeague(leagueId);
