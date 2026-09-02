@@ -142,7 +142,13 @@
     content:"";
     position:fixed; inset:0; z-index:2; pointer-events:none;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-repeat:repeat; opacity:.05; mix-blend-mode:overlay;
+    /* was mix-blend-mode:overlay — confirmed (live Chrome A/B test) as the
+       actual cause of the viewport-wide scroll jank: a blend mode on a
+       fixed, full-viewport layer can't be isolated onto its own compositor
+       layer the way plain position:fixed normally allows, so Chrome had to
+       re-blend this against whatever scrolled underneath on every frame.
+       Kept at :normal deliberately — this is the fix, not a fallback. */
+    background-repeat:repeat; opacity:.05; mix-blend-mode:normal;
   }
   /* Broadcast line texture. One 1px line every 3px at ~2% alpha — enough to
      stop large black areas reading as flat paper, invisible as a pattern. */
@@ -152,7 +158,9 @@
     background-image:repeating-linear-gradient(
       0deg, rgba(255,255,255,.035) 0px, rgba(255,255,255,.035) 1px,
       transparent 1px, transparent 3px);
-    opacity:.55; mix-blend-mode:soft-light;
+    /* was mix-blend-mode:soft-light — same fix as body::before above, the
+       second of the two stacked full-viewport blend layers. */
+    opacity:.55; mix-blend-mode:normal;
   }
   img{ display:block; max-width:100%; }
   a{ color:inherit; text-decoration:none; }
@@ -242,13 +250,12 @@
   /* ============ HEADER / NAV ============ */
   header.site{
     position:sticky; top:0; z-index:50;
-    /* Was rgba(20,20,20,.88) + backdrop-filter:blur(10px) — the blur forced
-       a re-sample/re-blur of whatever scrolled underneath on every frame
-       this stayed pinned (compositor cost proportional to scroll activity,
-       doubled by .sport-nav stacking the same thing directly below it).
-       A solid, near-identical dark fill reads the same without any of
-       that per-frame repaint cost. */
-    background:rgb(20,20,20);
+    /* backdrop-filter:blur was briefly suspected/removed as a scroll-jank
+       cause and swapped for a solid fill — a live Chrome A/B test then
+       traced the actual cause to mix-blend-mode on body::before/::after
+       (see those rules) instead. This blur was never the real cost, so the
+       original glass/frosted look is restored here unchanged. */
+    background:rgba(20,20,20,.88); backdrop-filter:blur(10px);
     border-bottom:1px solid var(--line);
   }
   /* three columns: [menu + links] [logo] [controls] — keeps the logo centred */
@@ -1302,10 +1309,9 @@
 
   .sport-nav{
     position:sticky; top:0; z-index:40;
-    /* Was rgba(18,18,18,.92) + backdrop-filter:blur(10px) — see header.site's
-       comment above; this was the second of the two stacked blurred sticky
-       layers. Same fix: solid fill, no per-frame re-blur while scrolling. */
-    background:rgb(18,18,18);
+    /* backdrop-filter:blur restored — see header.site's comment above,
+       same story for real: not the actual scroll-jank cause. */
+    background:rgba(18,18,18,.92); backdrop-filter:blur(10px);
     border-bottom:1px solid var(--line);
   }
   /* The animated sport mark lives inside its own tab and is clipped to it.
