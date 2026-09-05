@@ -13,3 +13,9 @@ Thumbs.db
 
 dist/
 .netlify/
+
+# Scout run reports — generated output, one pair of files per day. Not
+# checked in by default so daily runs don't bloat history; the code that
+# produces them (scout/) is tracked normally.
+scout/output/*.md
+scout/output/*.json
