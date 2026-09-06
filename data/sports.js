@@ -64,13 +64,26 @@
       organiser:"UEFA", country:null, logo:null, participantsFrom:"qualification" }
   ];
 
+  // COLLEGE FOOTBALL: a real competition Fast Break publishes results for, fed
+  // by the same structured game data as the NFL (the provider returns both
+  // under one american-football vertical, distinguished by its own league
+  // value). It is listed here so a college-football story resolves a proper
+  // name, is navigable, and renders in the Latest feed like any other league.
+  //
+  // Deliberately NO entry in TEAMS_CFG: FBS is 130+ programmes and Fast Break
+  // has no verified logo/roster set for them. An empty team list is an honest
+  // gap that renders as "no teams yet" — inventing a partial directory would
+  // be worse than showing none. `logo: null` for the same reason: ESPN's CDN
+  // has no verified league mark for NCAA football at the path scheme used
+  // above, so this renders a lettermark rather than a guessed URL.
   const LEAGUES_CFG = [
     { id:"nba",        sport:"basketball",      name:"NBA",             country:"US", logo:ESPN("nba","nba") },
     { id:"wnba",       sport:"basketball",      name:"WNBA",            country:"US", logo:ESPN("wnba","wnba") },
     { id:"epl",        sport:"football",        name:"Premier League",  country:"EN", logo:null },
     { id:"laliga",     sport:"football",        name:"La Liga",         country:"ES", logo:null },
     { id:"bundesliga", sport:"football",        name:"Bundesliga",      country:"DE", logo:null },
-    { id:"nfl",        sport:"americanfootball",name:"NFL",             country:"US", logo:ESPN("nfl","nfl") }
+    { id:"nfl",        sport:"americanfootball",name:"NFL",             country:"US", logo:ESPN("nfl","nfl") },
+    { id:"college-football", sport:"americanfootball", name:"College Football", country:"US", logo:null }
   ];
 
   // Teams. NBA/WNBA/NFL use ESPN's verified abbreviation-based logo path.
