@@ -27,11 +27,34 @@
  *     sourceUrl,   // verified link to the original. EDITORIAL ONLY — this is
  *                  // never rendered to the reader. The article shows the
  *                  // outlet name and the date, nothing else.
- *     publishedAt, // YYYY-MM-DD
- *     updatedAt,   // YYYY-MM-DD, ONLY when a real update time is known
+ *     publishedAt, // YYYY-MM-DD. Original publish date — never rewritten by
+ *                  // a later content update, even for a tracker/reference
+ *                  // article edited in place.
+ *     updatedAt,   // YYYY-MM-DD, ONLY when a real update time is known.
+ *                  // For a tracker/reference/overview article (see
+ *                  // articleMode below) that has genuinely been updated,
+ *                  // this drives homepage freshness ranking INSTEAD of
+ *                  // publishedAt — see index.html's effectiveHomepageDate.
+ *                  // Every other story ranks off publishedAt exactly as
+ *                  // before; omitting updatedAt is always safe.
  *     image,       // Fast Break-owned asset path, or null. Never hotlinked,
  *                  // never a stand-in.
- *     video,       // local MP4 path or null
+ *     video,       // null, OR a validated structured embed object built by
+ *                  // the Control Center's video-provider registry:
+ *                  // { provider: 'youtube'|'vimeo', id, title, sourceName,
+ *                  //   sourceUrl, official, embeddable, rightsStatus }.
+ *                  // index.html's renderVideo()/renderEmbedVideo() only
+ *                  // ever build an iframe from a format-revalidated
+ *                  // provider+id pair — never raw HTML stored here.
+ *     articleMode, // optional: breaking | news | performance | overview |
+ *                  // tracker | reference | explainer | feature. Purely
+ *                  // informational + drives homepage freshness (see
+ *                  // updatedAt above) — omit or leave null freely.
+ *     continuityKey, // optional: identifies a tracker/reference/overview
+ *                  // article as an ongoing series within one season (e.g.
+ *                  // 'bundesliga:tracker:man-of-the-match:2026-27') so a
+ *                  // later Scout run can offer an in-place UPDATE instead
+ *                  // of a duplicate. Never used to auto-publish anything.
  *     featured,    // NOT what selects the Big Story, and never a pin. The
  *                  // homepage ranks each league by freshness — a recency
  *                  // decay with priority as a weight — and gives the Big

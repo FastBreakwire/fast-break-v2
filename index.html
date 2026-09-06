@@ -372,6 +372,11 @@
     border-radius:var(--r-md); overflow:hidden; margin-bottom:var(--sp-5);
   }
   .fb-video video{ width:100%; height:auto; display:block; background:var(--black); }
+  /* Embed case (YouTube/Vimeo) only — responsive 16:9 box so an iframe never
+     overflows or causes layout shift on mobile. The self-hosted <video> tag
+     above is untouched and keeps its own natural aspect ratio. */
+  .fb-video-frame{ position:relative; width:100%; padding-top:56.25%; }
+  .fb-video-frame iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
   .fb-video-cap{
     font-family:var(--label); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
     color:var(--cool-faint); padding:8px 12px; border-top:1px solid var(--cool-line);
@@ -2505,12 +2510,26 @@
   const PRIORITY_WEIGHT = { high: 2.0, normal: 1.0, low: 0.55 };
 
   function ageInDays(iso, refMs){
-    return Math.max(0, (refMs - new Date(iso + 'T00:00:00').getTime()) / 86400000);
+    // publishedAt is a bare date ('2026-08-21'); updatedAt (when present) is
+    // a full ISO timestamp — both need to parse to the right instant.
+    const ms = String(iso).includes('T') ? new Date(iso).getTime() : new Date(iso + 'T00:00:00').getTime();
+    return Math.max(0, (refMs - ms) / 86400000);
+  }
+  // A tracker/reference/overview article can legitimately resurface after a
+  // real content update (e.g. a new matchday added to a season-long
+  // tracker) without pretending it's a brand-new publish — updatedAt drives
+  // freshness for those modes when it's actually set; every other story
+  // (and any tracker never updated since publish) ranks off publishedAt
+  // exactly as before. publishedAt itself is never rewritten by an update.
+  const CONTINUITY_MODES_FOR_FRESHNESS = new Set(['tracker', 'reference', 'overview']);
+  function effectiveHomepageDate(s){
+    if (s.updatedAt && CONTINUITY_MODES_FOR_FRESHNESS.has(s.articleMode)) return s.updatedAt;
+    return s.publishedAt;
   }
   function freshnessScore(s, refMs){
     const w = PRIORITY_WEIGHT[String(s.priority || 'normal').toLowerCase()];
     return (w === undefined ? 1 : w)
-         * Math.pow(0.5, ageInDays(s.publishedAt, refMs) / LATEST_HALF_LIFE_DAYS);
+         * Math.pow(0.5, ageInDays(effectiveHomepageDate(s), refMs) / LATEST_HALF_LIFE_DAYS);
   }
 
   // Ranking reads freshness, then falls back to the publish date and finally
@@ -5045,19 +5064,47 @@
   // ===========================================================================
   // FB VIDEO COMPONENT (reusable)
   // ---------------------------------------------------------------------------
-  // renderVideo({ src, poster, caption }) -> HTML string, or '' when no source.
+  // renderVideo(video, opts) -> HTML string, or '' when no source.
+  //   video: null | string (legacy self-hosted MP4 path) | structured
+  //     { provider, id, title, ... } object built by the Control Center's
+  //     video-provider registry (see data/stories.js's header doc).
+  //   opts.caption / opts.poster: optional, poster only meaningful for the
+  //     legacy string form.
   // Never renders an empty container. Used by the story view today, reusable
   // for homepage / OVERTIME / social later.
   // ===========================================================================
-  function renderVideo(video){
-    if (!video || !video.src) return '';
-    const poster = video.poster ? ` poster="${assetUrl(video.poster)}"` : '';
-    const cap = video.caption ? `<div class="fb-video-cap">${video.caption}</div>` : '';
-    return `<div class="fb-video">
-        <video controls playsinline preload="metadata"${poster}>
-          <source src="${assetUrl(video.src)}" type="video/mp4">
-        </video>${cap}
-      </div>`;
+  function renderVideo(video, opts){
+    opts = opts || {};
+    if (!video) return '';
+    if (typeof video === 'string') {
+      const poster = opts.poster ? ` poster="${assetUrl(opts.poster)}"` : '';
+      const cap = opts.caption ? `<div class="fb-video-cap">${opts.caption}</div>` : '';
+      return `<div class="fb-video">
+          <video controls playsinline preload="metadata"${poster}>
+            <source src="${assetUrl(video)}" type="video/mp4">
+          </video>${cap}
+        </div>`;
+    }
+    if (typeof video === 'object' && video.provider) return renderEmbedVideo(video, opts.caption);
+    return '';
+  }
+
+  // Only ever builds an iframe from a format-RE-validated provider+id pair —
+  // never from raw/returned HTML, even though the pair was already validated
+  // once server-side at generate/publish time. This is what keeps a
+  // hand-edited or malformed stories.js entry from ever producing an iframe
+  // with attacker-controlled src. X and any unrecognized provider render
+  // nothing inline (link-only, per the video's own sourceUrl elsewhere).
+  function renderEmbedVideo(video, caption){
+    const cap = caption ? `<div class="fb-video-cap">${caption}</div>` : '';
+    const title = video.title ? String(video.title).replace(/"/g, '&quot;') : '';
+    if (video.provider === 'youtube' && /^[A-Za-z0-9_-]{11}$/.test(video.id)) {
+      return `<div class="fb-video fb-video-embed"><div class="fb-video-frame"><iframe src="https://www.youtube.com/embed/${video.id}" title="${title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>${cap}</div>`;
+    }
+    if (video.provider === 'vimeo' && /^\d{6,12}$/.test(video.id)) {
+      return `<div class="fb-video fb-video-embed"><div class="fb-video-frame"><iframe src="https://player.vimeo.com/video/${video.id}" title="${title}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>${cap}</div>`;
+    }
+    return '';
   }
 
   // ===========================================================================
@@ -5363,7 +5410,7 @@
       .slice(0, 2);
     if (!withVideo.length) return '';
     const clips = withVideo.map(x =>
-      renderVideo({ src: x.video, caption: x.headline })).join('');
+      renderVideo(x.video, { caption: x.headline })).join('');
     return `<section class="rail-block">
         <h2 class="rail-head">Highlights</h2>${clips}
       </section>`;
@@ -5404,7 +5451,7 @@
           <h1>${s.headline}</h1>
           ${s.dek ? `<p class="article-lede">${s.dek}</p>` : ''}
           ${hero}
-          ${renderVideo(s.video ? { src: s.video } : null)}
+          ${renderVideo(s.video)}
           <div class="article-body-copy">${bodyHTML}</div>
           <div class="article-byline">${byline}</div>
         </article>
