@@ -741,16 +741,8 @@ async function getUpcomingGames({ league, days = 14, maxPages = 3 } = {}) {
 // Football & basketball: raw.statistics is an array of
 // { team:{id,name,...}, statistics:[{displayName,value}] }, one entry per
 // side — confirmed on a real finished EPL match (39 stat rows/side) and a
-// real finished WNBA match (21 stat rows/side). American football exposes
-// the same shape under `matchStatistics` instead (per the OpenAPI spec) —
-// this could not be verified against a real filled response during this
-// task (every current NFL match is still scheduled, so raw.matchStatistics
-// was observed only as null); the mapper below is defensive about that: any
-// row that doesn't match the expected shape is dropped rather than guessed,
-// so an unexpected NFL shape degrades to "no stats section" instead of
-// throwing or fabricating values.
-function mapMatchStatistics(raw, sportSlug) {
-  const src = sportSlug === 'american-football' ? raw.matchStatistics : raw.statistics;
+// real finished WNBA match (21 stat rows/side).
+function mapTeamKeyedStatistics(src) {
   if (!Array.isArray(src)) return null;
   const out = src
     .filter(t => t && t.team && Array.isArray(t.statistics))
@@ -763,6 +755,64 @@ function mapMatchStatistics(raw, sportSlug) {
     }))
     .filter(t => t.stats.length);
   return out.length ? out : null;
+}
+
+/**
+ * AMERICAN FOOTBALL — a genuinely different shape, corrected against a real
+ * finished NCAA match (id 568393, 22 stat rows per side).
+ *
+ * This file previously assumed american football matched the football/
+ * basketball shape above (an ARRAY of team-tagged entries, rows keyed by
+ * `displayName`). It does not, and the earlier note here said so honestly:
+ * the assumption had never been checked against a filled response, because
+ * every NFL fixture available at the time was still scheduled. The real
+ * shape is an OBJECT keyed by side, with rows keyed by `name`:
+ *
+ *   matchStatistics: {
+ *     homeTeam: { statistics: [ { name, value }, ... ] },
+ *     awayTeam: { statistics: [ { name, value }, ... ] }
+ *   }
+ *
+ * The consequence of the old assumption was silent: Array.isArray() failed,
+ * so every american-football match reported "no statistics" while the
+ * provider was returning 22 real rows per side.
+ *
+ * Team identity is NOT carried inside the statistics block (each side object
+ * holds only `statistics`), so it is taken from the match root's own
+ * homeTeam/awayTeam — which is also what makes the home/away assignment
+ * authoritative rather than positional. Output shape is deliberately
+ * identical to mapTeamKeyedStatistics above so nothing downstream has to
+ * know which sport it is looking at; `side` is additive.
+ *
+ * Values are passed through as-is: real rows carry both numbers (196) and
+ * strings ("25:42" for Possession), and coercing either would lose meaning.
+ */
+function mapAmericanFootballStatistics(raw) {
+  const src = raw && raw.matchStatistics;
+  if (!src || typeof src !== 'object' || Array.isArray(src)) return null;
+  const out = [
+    { side: 'home', key: 'homeTeam', team: raw.homeTeam },
+    { side: 'away', key: 'awayTeam', team: raw.awayTeam }
+  ]
+    .map(({ side, key, team }) => {
+      const rows = src[key] && Array.isArray(src[key].statistics) ? src[key].statistics : [];
+      return {
+        side,
+        teamId: team && team.id != null ? String(team.id) : null,
+        teamName: (team && (team.displayName || team.name)) || null,
+        stats: rows
+          .filter(s => s && s.name != null && s.value !== undefined && s.value !== null)
+          .map(s => ({ label: s.name, value: s.value }))
+      };
+    })
+    .filter(t => t.stats.length);
+  return out.length ? out : null;
+}
+
+function mapMatchStatistics(raw, sportSlug) {
+  return sportSlug === 'american-football'
+    ? mapAmericanFootballStatistics(raw)
+    : mapTeamKeyedStatistics(raw.statistics);
 }
 
 function mapMatchDetail(raw, leagueId, cfg) {
