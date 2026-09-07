@@ -1061,6 +1061,81 @@
 
   /* ============ CARD GRIDS ============ */
   .grid-editorial{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-5); }
+
+  /* ================= HOME LEAD (all sports front page) =================
+     Hero on the left, a narrow rail on the right holding the Featured Video
+     and Top News. Deliberately built from the existing card tokens
+     (--surface-card, --border-subtle, --radius-card) so it sits inside the
+     established system rather than introducing a second visual language.
+     Indigo stays the accent and red stays reserved for LIVE, per the token
+     block at the top of this file. */
+  .home-lead{ display:grid; grid-template-columns:minmax(0,2.05fr) minmax(0,1fr); gap:var(--sp-6); align-items:start; }
+  .home-lead-main{ min-width:0; }
+  /* The hero is the existing .big-story component — no second hero card
+     exists. Only its bottom margin is dropped here, since the grid owns the
+     spacing between the two columns. */
+  .home-lead-main .big-story{ margin-bottom:0; }
+  .home-lead-rail{ display:flex; flex-direction:column; gap:var(--sp-5); min-width:0; }
+
+  /* ---- Featured Video: compact by design, never competing with the hero ---- */
+  .featured-video{
+    border:1px solid var(--border-subtle); border-radius:var(--radius-card);
+    background:var(--surface-card); overflow:hidden;
+  }
+  .fv-frame{ position:relative; width:100%; aspect-ratio:16/9; background:#000; }
+  .fv-frame iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; display:block; }
+  .fv-body{ padding:14px var(--sp-4) var(--sp-4); }
+  .fv-eyebrow{
+    display:flex; align-items:center; gap:8px; margin-bottom:8px;
+    font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint);
+  }
+  .fv-eyebrow .fv-tag{ color:var(--indigo); }
+  .fv-body h3{
+    font-family:var(--display); font-weight:600; font-size:15.5px; line-height:1.3;
+    letter-spacing:-.01em; color:var(--ink); margin:0;
+  }
+  .fv-body a{ color:inherit; text-decoration:none; display:block; }
+  .fv-body a:hover h3{ color:var(--indigo); }
+  .fv-meta{ margin-top:8px; font-size:11px; color:var(--ink-faint); }
+
+  /* ---- Top News: information-dense, not a card grid ---- */
+  .top-news{
+    border:1px solid var(--border-subtle); border-radius:var(--radius-card);
+    background:var(--surface-card); padding:var(--sp-4) var(--sp-4) 6px;
+  }
+  .tn-head{
+    display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+    padding-bottom:10px; margin-bottom:4px; border-bottom:1px solid var(--border-subtle);
+  }
+  .tn-head h3{
+    font-family:var(--display); font-weight:600; font-size:12px;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--ink); margin:0;
+  }
+  .tn-head span{ font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); }
+  .tn-item{
+    display:block; text-decoration:none; color:inherit;
+    padding:11px 0; border-bottom:1px solid var(--border-subtle);
+  }
+  .tn-item:last-child{ border-bottom:0; }
+  .tn-league{
+    font-size:9.5px; letter-spacing:.13em; text-transform:uppercase;
+    color:var(--indigo-dim); display:block; margin-bottom:4px;
+  }
+  .tn-item h4{
+    font-family:var(--display); font-weight:500; font-size:13.5px; line-height:1.34;
+    letter-spacing:-.005em; color:var(--ink); margin:0;
+    transition:color .18s var(--ease);
+  }
+  .tn-item:hover h4{ color:var(--indigo); }
+  .tn-meta{ margin-top:5px; font-size:10.5px; color:var(--ink-faint); }
+
+  /* Mobile: one column, in reading order — hero, video, top news, then the
+     Latest section that already follows in the document. The video keeps its
+     16/9 ratio at full width, so it never renders too small to watch. */
+  @media (max-width: 960px){
+    .home-lead{ grid-template-columns:1fr; gap:var(--sp-5); }
+    .home-lead-main .big-story{ margin-bottom:0; }
+  }
   @media (max-width:920px){ .grid-editorial{ grid-template-columns:1fr 1fr; } }
   @media (max-width:640px){ .grid-editorial{ grid-template-columns:1fr; } }
 
@@ -1939,6 +2014,36 @@
 
   <main class="wrap">
 
+    <!-- ================= HOME LEAD (all sports) =================
+         Fast Break's cross-sport front page: one Hero, a compact Featured
+         Video, and a dense Top News list. Rendered ONLY when no single
+         competition is selected (homeScope === 'all'); picking a league from
+         the nav hides this whole block and restores the existing
+         league-scoped presentation below, unchanged.
+
+         Everything here is driven by PUBLISHED story data only. It never
+         queries a provider, never sees a draft, and the Featured Video uses
+         a video already attached to a story by the editorial workflow. -->
+    <section class="section" id="homeLead" hidden>
+      <div class="section-head reveal">
+        <div class="section-title-group">
+          <span class="q-marker">ALL SPORTS</span>
+          <h2 class="section-title">The Brief</h2>
+          <p class="section-desc">The stories driving the day, across every competition Fast Break covers.</p>
+        </div>
+        <span class="section-date" id="homeLeadCount"></span>
+      </div>
+      <div class="home-lead">
+        <div class="home-lead-main" id="leadHero"></div>
+        <aside class="home-lead-rail">
+          <!-- Rendered empty (and hidden) unless a published story carries a
+               video the public renderer can actually embed. -->
+          <section class="featured-video" id="featuredVideo" hidden></section>
+          <section class="top-news" id="topNews" hidden></section>
+        </aside>
+      </div>
+    </section>
+
     <!-- LATEST — rendered from the central STORIES data structure -->
     <section class="section" id="latest">
       <div class="section-head reveal">
@@ -2246,7 +2351,11 @@
     mark.addEventListener('click', e => {
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
       e.preventDefault();
+      // The logo means "back to Fast Break", so it returns to the
+      // cross-sport hub rather than whichever competition was last viewed.
+      homeScope = 'all';
       navigate(homeUrl());
+      if (typeof renderStories === 'function') renderStories();
     });
   });
 
@@ -2407,6 +2516,16 @@
 
   let activeLeague = 'nba';
 
+  /* Which feed the home view is showing.
+       'all'    -> the cross-sport front page (#homeLead + a mixed Latest)
+       <league> -> the existing league-scoped presentation, unchanged
+     Defaults to 'all' so `/` is Fast Break's news hub; picking any
+     competition from the nav switches to that league and hides the lead,
+     and returning home switches back. activeLeague is left alone by this,
+     so the score rail and every league-scoped section keep behaving exactly
+     as they did. */
+  let homeScope = 'all';
+
   // Leagues that currently have real editorial content on the page.
   // ---------------------------------------------------------------------------
   // CENTRAL STORY DATA — lives in data/stories.js, the file you edit to publish.
@@ -2552,19 +2671,167 @@
                   .sort((a, b) => compareStories(a, b, ref));
   }
 
+  /* ================= ALL-SPORTS HOME LEAD =================
+     Reuses the existing ranking wholesale — same freshnessScore, same
+     priority weights, same compareStories, same effectiveHomepageDate rule
+     (tracker/reference/overview may rank off updatedAt; normal news ranks
+     off publishedAt). The ONLY difference from rankedFor() is that no
+     league filter is applied, so every competition — College Football
+     included — competes on identical terms.
+
+     Nothing here fetches anything. It reads the same published STORIES data
+     the rest of the page already uses; no provider call, no draft, no
+     Highlightly. */
+  function rankedAll(refMs){
+    const ref = refMs === undefined ? Date.now() : refMs;
+    return STORIES.slice().sort((a, b) => compareStories(a, b, ref));
+  }
+
+  // Whether the PUBLIC renderer can actually play this video. Deliberately
+  // the same provider+id validation renderEmbedVideo() applies, so the
+  // module can never promise a player the renderer will refuse to build —
+  // that mismatch is exactly how an empty video frame appears.
+  function isPlayableVideo(v){
+    if (!v || typeof v !== 'object' || v.embeddable !== true) return false;
+    if (v.provider === 'youtube') return /^[A-Za-z0-9_-]{11}$/.test(String(v.id || ''));
+    if (v.provider === 'vimeo')   return /^\d{6,12}$/.test(String(v.id || ''));
+    return false;
+  }
+
+  // The best-ranked recent story that carries a usable video. Ranking order
+  // is already editorial, so "first playable in ranked order" needs no
+  // second scoring system.
+  function pickFeaturedVideoStory(ranked){
+    return ranked.find(s => isPlayableVideo(s.video)) || null;
+  }
+
+  function renderFeaturedVideo(story){
+    const el = document.getElementById('featuredVideo');
+    if (!el) return;
+    // No usable video anywhere -> the module is removed entirely rather than
+    // rendered as an empty shell.
+    if (!story) { el.hidden = true; el.innerHTML = ''; return; }
+    const v = story.video;
+    const src = v.provider === 'youtube'
+      ? `https://www.youtube.com/embed/${v.id}`
+      : `https://player.vimeo.com/video/${v.id}`;
+    const title = String(v.title || story.headline).replace(/"/g, '&quot;');
+    el.hidden = false;
+    el.innerHTML = `
+      <div class="fv-frame">
+        <iframe src="${src}" title="${title}" loading="lazy" allowfullscreen
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+      </div>
+      <div class="fv-body">
+        <div class="fv-eyebrow"><span class="fv-tag">Watch</span><span>${(leagueNames[story.league] || story.league).toUpperCase()}</span></div>
+        <a href="${storyUrl(story.id)}" data-story-link="${story.id}"><h3>${story.headline}</h3></a>
+        <div class="fv-meta">${v.sourceName || story.source} · ${formatStoryDate(story.publishedAt)}</div>
+      </div>`;
+    const link = el.querySelector('a[data-story-link]');
+    if (link) link.addEventListener('click', e => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      e.preventDefault();
+      navigate(storyUrl(story.id));
+    });
+  }
+
+  function renderTopNews(stories){
+    const el = document.getElementById('topNews');
+    if (!el) return;
+    if (!stories.length) { el.hidden = true; el.innerHTML = ''; return; }
+    el.hidden = false;
+    el.innerHTML = `
+      <div class="tn-head"><h3>Top News</h3><span>${stories.length}</span></div>
+      ${stories.map(s => `
+        <a class="tn-item" href="${storyUrl(s.id)}" data-story-link="${s.id}">
+          <span class="tn-league">${(leagueNames[s.league] || s.league).toUpperCase()}</span>
+          <h4>${s.headline}</h4>
+          <div class="tn-meta">${s.source} · ${formatStoryDate(s.publishedAt)}</div>
+        </a>`).join('')}`;
+    el.querySelectorAll('a[data-story-link]').forEach(a => {
+      a.addEventListener('click', e => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        e.preventDefault();
+        navigate(storyUrl(a.dataset.storyLink));
+      });
+    });
+  }
+
+  const TOP_NEWS_COUNT = 6;
+
+  /**
+   * Renders the all-sports lead and returns the ids it consumed, so the
+   * Latest section below can skip them instead of repeating the same story
+   * twice on one screen.
+   */
+  function renderHomeLead(){
+    const sec = document.getElementById('homeLead');
+    if (!sec) return new Set();
+    if (homeScope !== 'all') {
+      // Tear the lead down rather than just hiding it: a hidden container
+      // still holds a live third-party <iframe>, and leaving a YouTube
+      // player loaded on a page that never shows it is both wasteful and
+      // more third-party surface than the reader asked for.
+      sec.hidden = true;
+      const heroEl = document.getElementById('leadHero');
+      if (heroEl) heroEl.innerHTML = '';
+      renderFeaturedVideo(null);
+      renderTopNews([]);
+      return new Set();
+    }
+
+    const ranked = rankedAll();
+    sec.hidden = !ranked.length;
+    const countEl = document.getElementById('homeLeadCount');
+    if (countEl) countEl.textContent = ranked.length === 1 ? '1 story' : `${ranked.length} stories`;
+    const heroEl = document.getElementById('leadHero');
+    if (heroEl) heroEl.innerHTML = '';
+    if (!ranked.length) { renderFeaturedVideo(null); renderTopNews([]); return new Set(); }
+
+    // Hero = the strongest current story by the existing ranking, not simply
+    // the newest publish.
+    const hero = ranked[0];
+    if (heroEl) heroEl.appendChild(buildStoryCard(hero, { big: true }));
+
+    // The featured video's own story is allowed to be the hero if that is
+    // genuinely the best story — but it is preferred from the rest first, so
+    // the two modules normally surface different stories.
+    const rest = ranked.slice(1);
+    const featured = pickFeaturedVideoStory(rest) || (isPlayableVideo(hero.video) ? hero : null);
+    renderFeaturedVideo(featured);
+
+    const used = new Set([hero.id]);
+    if (featured) used.add(featured.id);
+    const top = rest.filter(s => !used.has(s.id)).slice(0, TOP_NEWS_COUNT);
+    renderTopNews(top);
+    top.forEach(s => used.add(s.id));
+    return used;
+  }
+
   function renderStories(){
     const grid = document.getElementById('latestGrid');
     if (!grid) return;
     const marker = document.getElementById('latestMarker');
     const count  = document.getElementById('latestCount');
     const big    = document.getElementById('bigStory');
-    const isBasketball = BASKETBALL_LEAGUES.includes(activeLeague);
+    const allSports = homeScope === 'all';
+    // The Q sections are a basketball-only device and are league-scoped, so
+    // they stay off on the cross-sport hub.
+    const isBasketball = !allSports && BASKETBALL_LEAGUES.includes(activeLeague);
 
-    // League isolation: the ranking only ever sees this league's stories, so a
-    // new NBA story can never displace an NFL one.
-    const ranked = rankedFor(activeLeague);
+    // Render the all-sports lead first; it reports which stories it used so
+    // Latest can skip them rather than repeating the hero and the top-news
+    // items immediately underneath themselves.
+    const consumed = renderHomeLead();
 
-    if (marker) marker.textContent = (leagueNames[activeLeague] || activeLeague).toUpperCase();
+    // League isolation still applies whenever a competition is selected: the
+    // ranking only ever sees that league's stories, so a new NBA story can
+    // never displace an NFL one. On the hub, every league competes together.
+    const ranked = allSports
+      ? rankedAll().filter(s => !consumed.has(s.id))
+      : rankedFor(activeLeague);
+
+    if (marker) marker.textContent = allSports ? 'ALL SPORTS' : (leagueNames[activeLeague] || activeLeague).toUpperCase();
 
     grid.innerHTML = '';
     if (big) big.innerHTML = '';
@@ -2581,9 +2848,15 @@
     // The Big Story is whatever currently ranks first — chosen, not pinned. It
     // renders with its image if it has one and cleanly without if it does not;
     // having artwork never promotes a story into the slot.
-    const lead = active[0];
-    if (big) big.appendChild(buildStoryCard(lead, { big: true }));
-    active.slice(1).forEach(s => grid.appendChild(buildStoryCard(s)));
+    if (allSports) {
+      // The hero above already is the lead — a second Big Story here would
+      // read as two competing leads on one screen.
+      active.forEach(s => grid.appendChild(buildStoryCard(s)));
+    } else {
+      const lead = active[0];
+      if (big) big.appendChild(buildStoryCard(lead, { big: true }));
+      active.slice(1).forEach(s => grid.appendChild(buildStoryCard(s)));
+    }
 
     if (count) count.textContent = ranked.length === 1 ? '1 story' : `${ranked.length} stories`;
 
@@ -2718,6 +2991,11 @@
     // the whole selection silently no-ops.
     if (!NAVIGABLE_LEAGUE_IDS.has(league)) return;
     activeLeague = league;
+    // Only a real competition choice leaves the all-sports hub. The boot
+    // call passes keepScope, because it exists to establish the default
+    // league for the score rail and the league-scoped sections — it is not
+    // the reader picking a competition.
+    if (!opts.keepScope) homeScope = league;
 
     // The Latest section is data-driven and covers every league. The long-form
     // editorial sections below it only exist for NBA and WNBA, so they are
@@ -5199,6 +5477,15 @@
 
   // The single view switch. Exactly one of homeView / articleView /
   // scheduleView / gameView is ever visible at a time.
+  /* The Featured Video is a live third-party <iframe>. Whenever the home
+     view is hidden behind another view, tear the player down rather than
+     leaving it loaded out of sight — it is re-rendered by renderHomeLead()
+     the moment the reader comes back. */
+  function releaseHomeLeadMedia(){
+    const fv = document.getElementById('featuredVideo');
+    if (fv && !fv.hidden) { fv.hidden = true; fv.innerHTML = ''; }
+  }
+
   function route(opts){
     opts = opts || {};
     closeMega();
@@ -5234,6 +5521,7 @@
       markActiveSport();
       renderArticlePage(story);
       homeView.hidden = true;
+      releaseHomeLeadMedia();
       articleView.hidden = false;
       scheduleView.hidden = true;
       gameView.hidden = true;
@@ -5261,6 +5549,7 @@
       }
       markActiveSport();
       homeView.hidden = true;
+      releaseHomeLeadMedia();
       articleView.hidden = true;
       articleView.innerHTML = '';
       scheduleView.hidden = true;
@@ -5287,6 +5576,7 @@
       }
       markActiveSport();
       homeView.hidden = true;
+      releaseHomeLeadMedia();
       articleView.hidden = true;
       articleView.innerHTML = '';
       scheduleView.hidden = true;
@@ -5315,6 +5605,7 @@
       }
       markActiveSport();
       homeView.hidden = true;
+      releaseHomeLeadMedia();
       articleView.hidden = true;
       articleView.innerHTML = '';
       scheduleView.hidden = false;
@@ -5338,6 +5629,11 @@
     teamView.hidden = true;
     teamView.innerHTML = '';
     homeView.hidden = false;
+    // The lead's video player is released whenever the home view is hidden
+    // (see releaseHomeLeadMedia), so returning here has to rebuild it —
+    // otherwise the Featured Video silently disappears for the rest of the
+    // session after the reader opens a single article.
+    renderHomeLead();
     readProgress.style.width = '0%';
     document.title = 'Fast Break';
     markActiveSport();
@@ -5670,7 +5966,7 @@
   });
 
   // initial state — filterLeague sets the league, route() decides which view
-  filterLeague('nba', { silent: true });
+  filterLeague('nba', { silent: true, keepScope: true });
   markActiveSport();
   route();
 </script>
