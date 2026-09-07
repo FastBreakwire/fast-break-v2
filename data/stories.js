@@ -55,16 +55,55 @@
  *                  // 'bundesliga:tracker:man-of-the-match:2026-27') so a
  *                  // later Scout run can offer an in-place UPDATE instead
  *                  // of a duplicate. Never used to auto-publish anything.
- *     featured,    // NOT what selects the Big Story, and never a pin. The
- *                  // homepage ranks each league by freshness — a recency
- *                  // decay with priority as a weight — and gives the Big
- *                  // Story slot to whatever comes first, so the lead updates
- *                  // itself as stories are added. The renderer does not read
- *                  // this field at all.
- *                  // It is kept as an editorial annotation recording which
- *                  // story held the lead when the file was last edited, one
- *                  // per league. It can go stale as stories age; that is
- *                  // cosmetic and cannot affect what the page shows.
+ *     featured,    // EDITORIAL PLACEMENT — HERO STORY, the ONE manually
+ *                  // selected global homepage Hero (Control Center's draft
+ *                  // editor, one toggle, never hand-authored free text).
+ *                  // Only ever one story should carry featured:true at a
+ *                  // time; the editor enforces this by demoting whichever
+ *                  // other story previously had it, at both the draft level
+ *                  // and (if published) this file, whenever a NEW story is
+ *                  // turned on. featured:true ALSO makes that same story
+ *                  // the Hero / Big Story on its own league page (and only
+ *                  // that league — every other league's page is untouched),
+ *                  // and always implies showOnHomepage:true (below).
+ *                  // If no story in a given scope (global, or one league)
+ *                  // has featured:true, the existing automatic freshness
+ *                  // ranking decides the Hero/Big Story exactly as before —
+ *                  // see index.html's rankedAll/rankedFor and renderHomeLead/
+ *                  // renderStories. A gameResult story (below) is additionally
+ *                  // skipped for the automatic (non-featured) global Hero
+ *                  // slot by default — featured:true is its one explicit
+ *                  // manual override — see index.html's heroEligible().
+ *                  //
+ *                  // NOTE (as of the EDITORIAL PLACEMENT feature landing):
+ *                  // several stories in this file still carry featured:true
+ *                  // from this field's PRIOR meaning (a purely cosmetic,
+ *                  // frequently-stale "one per league" annotation the
+ *                  // general ranking never read). Those now behave as real,
+ *                  // active Hero pins for their league — and the freshest
+ *                  // one among them wins the GLOBAL Hero too, which may not
+ *                  // be the intended editorial choice. Review/clear stale
+ *                  // featured:true entries via the Control Center's HERO
+ *                  // STORY toggle rather than hand-editing this file.
+ *     showOnHomepage, // EDITORIAL PLACEMENT — SHOW ON HOMEPAGE. Omitted or
+ *                  // true (the default — every story published before this
+ *                  // field existed is unaffected): eligible for the global
+ *                  // homepage's modules (Top News, Latest, this hub's lead).
+ *                  // Explicit false: excluded from all of those, but the
+ *                  // story is otherwise completely unaffected — it still
+ *                  // ranks normally on its own league page, its article
+ *                  // page, and related-stories. A gameResult story may
+ *                  // freely use showOnHomepage:true without that making it
+ *                  // eligible for the Hero slot (see featured/gameResult).
+ *     gameResult,  // optional, set only by the Control Center's game_result
+ *                  // pipeline (a WEBSITE-promoted final score, never set by
+ *                  // hand). WEBSITE ≠ HERO: promoting a game is a normal
+ *                  // publish, not a feature request, so a gameResult story
+ *                  // is excluded from the automatic (non-featured) all-sports
+ *                  // Hero slot by default — it still ranks normally
+ *                  // everywhere else (Latest, Top News, its league feed,
+ *                  // its own article page) and may explicitly opt into
+ *                  // showOnHomepage. See index.html's heroEligible().
  *     priority     // high | normal | low. EDITORIAL WEIGHT, and deliberately
  *                  // separate from `featured`. It sets how much room a story
  *                  // earns, not where it sits on the page:
@@ -336,7 +375,6 @@ window.FB_STORIES = [
   },
   {
     id: 'nba-tacko-fall-76ers-2026-09-01',
-    featured: true,
     sport: 'basketball', league: 'nba', category: 'signing', status: 'confirmed',
     headline: 'Tacko Fall returns to the NBA on an Exhibit 10 deal with the 76ers',
     dek: 'The 7-foot-6 center is back after four years playing in China and New Zealand.',
@@ -467,7 +505,6 @@ window.FB_STORIES = [
   },
   {
     id: 'wnba-reese-record-2026-08-30',
-    featured: true,
     sport: 'basketball', league: 'wnba', category: 'results', status: 'confirmed',
     headline: 'Angel Reese sets the WNBA record with her 29th double-double as the Dream beat the Lynx',
     dek: 'Reese passed Alyssa Thomas’s mark of 28, set in 2023, in Atlanta’s 89-81 win over Minnesota.',
@@ -614,7 +651,6 @@ window.FB_STORIES = [
   },
   {
     id: 'nfl-beckham-giants-roster-2026-08-30',
-    featured: true,
     sport: 'americanfootball', league: 'nfl', category: 'roster', status: 'confirmed',
     headline: 'Odell Beckham Jr. makes the Giants’ 53-man roster, completing his return',
     dek: 'Seven years after he left, and after stops with four other teams and a Super Bowl with the Rams, Beckham earned the spot back in camp.',
@@ -832,7 +868,6 @@ window.FB_STORIES = [
   },
   {
     id: 'epl-mudryk-tottenham-loan-2026-09-02',
-    featured: true,
     sport: 'football', league: 'epl', category: 'transfer', status: 'confirmed',
     headline: 'Mykhailo Mudryk joins Tottenham on loan from Chelsea',
     dek: 'The winger returns to competitive football after a doping ban, with a reported £75m non-mandatory buy option.',
@@ -942,7 +977,6 @@ window.FB_STORIES = [
   },
   {
     id: 'laliga-jesus-barcelona-2026-09-01',
-    featured: true,
     sport: 'football', league: 'laliga', category: 'transfer', status: 'confirmed',
     headline: 'Barcelona sign Gabriel Jesus from Arsenal on deadline day',
     dek: 'The Brazilian striker had been training away from Arsenal’s first team since late August.',
@@ -978,7 +1012,6 @@ window.FB_STORIES = [
   /* ------------------------------------------------------------ BUNDESLIGA */
   {
     id: 'bundesliga-elversberg-leverkusen-2026-08-29',
-    featured: true,
     sport: 'football', league: 'bundesliga', category: 'match', status: 'confirmed',
     headline: 'Elversberg beat Leverkusen 3-2 on their Bundesliga debut',
     dek: 'The Saarland club, playing their first ever top-flight match, were three up before Leverkusen made it uncomfortable.',
@@ -1055,7 +1088,6 @@ window.FB_STORIES = [
   /* ----------------------------------------------------- CHAMPIONS LEAGUE */
   {
     id: 'ucl-league-phase-draw-2026-08-28',
-    featured: true,
     sport: 'football', league: 'ucl', category: 'league', status: 'confirmed',
     headline: 'Champions League draw sends Arsenal to Real Madrid and Bayern Munich',
     dek: 'UEFA held the 2026-27 League Phase draw in Monaco, pairing every team with eight opponents.',
@@ -1081,7 +1113,6 @@ window.FB_STORIES = [
   // none are reported as this season's matchups.
   {
     id: 'uel-league-phase-draw-2026-08-28',
-    featured: true,
     sport: 'football', league: 'uel', category: 'league', status: 'confirmed',
     headline: 'Europa League League Phase draw held in Monaco',
     dek: 'Thirty-six clubs learned their opponents for a 144-match league stage running into January.',
@@ -1096,5 +1127,625 @@ window.FB_STORIES = [
     publishedAt: '2026-08-28', updatedAt: null,
     image: null, video: null,
     priority: 'normal'
+  },
+
+  {
+    id: "laliga-valencia-2026-09-06",
+    sport: "football", league: "laliga", category: "match", status: "confirmed",
+    headline: "Barcelona dominates Valencia 5-0 away at Mestalla",
+    dek: "Barcelona's commanding performance on the road delivered a five-goal shutout win in La Liga's fourth round of regular-season play.",
+    summary: "Barcelona beat Valencia 5-0 away from home in La Liga on 2026-09-06, dominating possession and chance creation in the process.",
+    body: [
+      "Barcelona delivered a dominant display at Mestalla, defeating Valencia 5-0 on 2026-09-06 in La Liga's fourth round of regular-season fixtures. Playing away from home, Barcelona controlled the match with 74 percent possession to Valencia's 26 percent, translating that advantage into a comprehensive victory.",
+      "Barcelona's attacking threat was evident throughout. The visitors generated 10 shots on target and created 6 big chances, while Valencia managed only 2 shots on target and 1 big chance. Barcelona also recorded 19 key passes and 15 successful dribbles, showcasing sustained attacking pressure. Expected Goals figures reflected the one-sided nature of the contest: Barcelona 4.05, Valencia 0.67.",
+      "Defensively, Barcelona conceded little danger. Valencia committed 7 fouls to Barcelona's 6, and while both sides shared an equal record in aerial duels at 5 successful apiece, Barcelona's control of the ball and territory left the hosts with few meaningful opportunities. The 5-0 margin delivered a commanding performance on the road."
+    ],
+    source: "Official match data",
+    sourceUrl: null,
+    publishedAt: "2026-09-06", updatedAt: null,
+    image: null, video: {"provider":"youtube","id":"bhtXUaCHL7A","title":"VALENCIA 0 vs 5 FC BARCELONA | LALIGA 2026/27 MD04 🔵🔴","sourceName":"FC Barcelona","sourceUrl":"https://www.youtube.com/watch?v=bhtXUaCHL7A","official":false,"embeddable":true,"rightsStatus":"EMBED_ALLOWED"},
+    articleMode: "performance", continuityKey: null,
+    priority: "normal",
+    gameResult: true
+  },
+
+  {
+    id: "college-football-ole-miss-rebels-2026-09-06",
+    sport: "americanfootball", league: "college-football", category: "game", status: "confirmed",
+    headline: "Ole Miss edges Louisville 41-38 at Nissan Stadium",
+    dek: "The Rebels overcame a third-quarter deficit to secure a three-point home victory in regular-season play on September 6th.",
+    summary: "Ole Miss Rebels defeated Louisville Cardinals 41-38 in college football on 2026-09-06, with the Rebels outgaining Louisville 488 to 469 total yards.",
+    body: [
+      "Ole Miss won 41-38 against Louisville in regular-season college football at Nissan Stadium in Nashville, Tennessee. The Rebels trailed early but seized control in the second quarter and held on through the fourth to secure the three-point victory.",
+      "Ole Miss scored 0 points in the first quarter before adding 10 in the second to lead 10-6 at halftime. Louisville responded with 18 points in the third to take a 24-20 advantage into the final quarter, but Ole Miss scored 17 in the fourth to complete the comeback. The Rebels accumulated 488 total yards—336 passing and 152 rushing—compared to Louisville's 469 total yards (307 passing, 162 rushing). Ole Miss held a 24-20 advantage in first downs.",
+      "Louisville's nine penalties for 82 yards and longer possession time—30:58 to 29:02—proved insufficient to overcome two turnovers, including one interception thrown. Ole Miss committed one fumble lost in the game. Louisville converted all seven of its third-down attempts on six attempts, while Ole Miss went 6-for-16 on third down. Ole Miss gained 9.1 yards per pass attempt compared to Louisville's 10.6."
+    ],
+    source: "Official match data",
+    sourceUrl: null,
+    publishedAt: "2026-09-06", updatedAt: null,
+    image: null, video: {"provider":"youtube","id":"5ow5lZ5Ezqo","title":"No. 24 Louisville Cardinals vs. No. 9 Ole Miss Rebels | Game Highlights | 2026 SEC Football Week 1","sourceName":"SEC","sourceUrl":"https://www.youtube.com/watch?v=5ow5lZ5Ezqo","official":false,"embeddable":true,"rightsStatus":"EMBED_ALLOWED"},
+    articleMode: "performance", continuityKey: null,
+    priority: "normal",
+    gameResult: true
+  },
+
+  {
+    id: "epl-arsenal-2026-09-07",
+    sport: "football", league: "epl", category: "injury", status: "report",
+    headline: "Arteta cautiously optimistic on Mosquera injury after Chelsea absence",
+    dek: "The Arsenal defender sat out Sunday's match against Chelsea with a muscle injury, though the manager believes it may not be severe.",
+    summary: "Mikel Arteta provided an injury update on 22-year-old Cristhian Mosquera, who missed Arsenal's Chelsea fixture with a muscle problem that the manager hopes is not serious.",
+    body: [
+      "Cristhian Mosquera missed Arsenal's Sunday match against Chelsea due to a muscle injury, but manager Mikel Arteta expressed cautious optimism about the severity of the problem.",
+      "The 22-year-old defender's absence came as Arsenal took on Chelsea in what appears to have been a Premier League fixture. While Arteta stopped short of declaring the injury minor, he indicated that early indications suggest it may not be as serious as initial concern might suggest."
+    ],
+    source: "Yahoo Sports",
+    sourceUrl: "https://sports.yahoo.com/articles/arteta-gives-injury-arsenal-22yo-110500225.html",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "epl-manchester-united-2026-09-07",
+    sport: "football", league: "epl", category: "league", status: "report",
+    headline: "Manchester United's defensive struggles and substitution choices come under scrutiny after Everton draw",
+    dek: "Following a 2-2 draw at Everton, questions are being raised about Manchester United's ability to close out matches, with debate over both tactical decisions and the team's defensive record.",
+    summary: "Manchester United fan and former Premier League striker offer contrasting takes on why United drew 2-2 at Everton, citing substitution strategy and defensive frailty.",
+    body: [
+      "Manchester United's 2-2 draw at Everton on Sunday has sparked debate about the club's ability to see matches through to victory. Fan Beth Tucker pointed to manager Michael Carrick's decision to substitute Marcus Rashford as a turning point in the game, while former Premier League striker Clinton Morrison has identified deeper defensive issues as a root cause of United's recent struggles.",
+      "United have conceded six goals across their opening three games of the season, a defensive record that has drawn criticism. The performance at Everton represents the latest setback in what has been a difficult start to the campaign, raising questions about whether the team's problems are merely early-season teething troubles or more fundamental structural issues.",
+      "The contrasting analyses—one focused on in-game management and the other on defensive solidity—reflect broader uncertainty about the direction of Carrick's tenure and whether United can improve their form in the coming weeks."
+    ],
+    source: "Yahoo Sports",
+    sourceUrl: "https://sports.yahoo.com/articles/cannot-trust-man-utd-see-111720801.html",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "nba-timberwolves-trade-josh-green-2026-09-07",
+    sport: "basketball", league: "nba", category: "trade", status: "report",
+    headline: "Timberwolves trade Josh Green and cash to Jazz for Williams and Konchar",
+    dek: "Minnesota has moved the 3-and-D wing to Utah in a deal that brings back forward Cody Williams and guard John Konchar.",
+    summary: "The Timberwolves have traded Josh Green and cash to the Jazz for Cody Williams and John Konchar.",
+    body: [
+      "The Minnesota Timberwolves have traded Josh Green and cash to the Utah Jazz in exchange for forward Cody Williams and guard John Konchar, according to reporting.",
+      "The deal sends the 3-and-D wing out of Minnesota as the team makes a move to reshape its roster. In return, the Timberwolves acquire Williams and Konchar from Utah."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/nba/story/_/id/49759209/wolves-trade-3-d-wing-josh-green-jazaz",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "nba-boston-celtics-2026-09-07",
+    sport: "basketball", league: "nba", category: "league", status: "report",
+    headline: "Jaylen Brown Receives Key to City at Boston Common Farewell Event",
+    dek: "The former Celtics forward marked his departure from Boston with a block party and civic honor.",
+    summary: "Jaylen Brown hosted a farewell block party at Boston Common and received the key to the city.",
+    body: [
+      "Jaylen Brown received the key to the city of Boston during a block party at Boston Common, marking his farewell to the franchise and the city.",
+      "The event served as Brown's public goodbye following his departure from the Boston Celtics. No further details about the timing or circumstances of his exit were available."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/nba/story/_/id/49778671/jaylen-brown-boston-celtics-farewell-block-party-key-city-nba",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: "assets/nba-boston-celtics-2026-09-07.png", video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "nba-oladipo-seeks-nba-return-2026-09-07",
+    sport: "basketball", league: "nba", category: "league", status: "report",
+    headline: "Oladipo seeks NBA return with open letter to general managers",
+    dek: "The guard, sidelined since April 2023, has written directly to NBA front offices stating he is now healthy and ready to play.",
+    summary: "Victor Oladipo has written an open letter to NBA general managers requesting another opportunity in the league, saying he is healthy after being out since April 2023.",
+    body: [
+      "Victor Oladipo has addressed NBA general managers in an open letter asking for another chance at an NBA roster, stating that he is now healthy after more than three years away from the league.",
+      "Oladipo has been out of the NBA since April 2023. The letter represents a direct appeal to front offices as he attempts to secure a path back to professional basketball."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/nba/story/_/id/49794486/oladipo-writes-open-letter-nba-gms-asking-second-chance",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "nba-sacramento-kings-2026-09-07",
+    sport: "basketball", league: "nba", category: "league", status: "report",
+    headline: "Ben Simmons Agrees to One-Year Deal With Kings",
+    dek: "The guard has reached a reported $3.5 million contract with Sacramento after time away from the NBA, according to his representation.",
+    summary: "Ben Simmons has agreed to a one-year, $3.5 million deal with the Sacramento Kings, his agents told ESPN and Andscape.",
+    body: [
+      "Ben Simmons has agreed to a one-year, $3.5 million contract with the Sacramento Kings, according to reporting from ESPN and Andscape, citing Simmons' agents Max Wiepking, Sean Tribe and Ryan Arney.",
+      "The deal marks Simmons' return to NBA competition. The reported contract value is $3.5 million on a one-year term."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/nba/story/_/id/49824980/sources-ben-simmons-agrees-1-year-35m-deal-kings",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "nba-philadelphia-76ers-2026-09-07",
+    sport: "basketball", league: "nba", category: "signing", status: "report",
+    headline: "76ers sign Fall, Nelson Jr., Thomas to training camp deals",
+    dek: "The Philadelphia 76ers have bolstered their camp roster with three Exhibit 10 signings ahead of the 2026–27 season.",
+    summary: "The 76ers signed Tacko Fall, Jameer Nelson Jr., and Saint Thomas to Exhibit 10 contracts for training camp.",
+    body: [
+      "The Philadelphia 76ers have signed three players to Exhibit 10 contracts, according to reporting from ESPN. The signings include Tacko Fall, Jameer Nelson Jr., and Saint Thomas.",
+      "Exhibit 10 deals are non-guaranteed contracts that allow teams to invite players to training camp while retaining flexibility on their final roster decisions. Fall, a 7-foot-6 center, is among those brought in on the agreement."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/nba/story/_/id/49795456/76ers-sign-7-foot-6-center-tacko-fall-others-camp-deal",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "nba-la-clippers-2026-09-07",
+    sport: "basketball", league: "nba", category: "investigation", status: "report",
+    headline: "NBA suspends Clippers owner Ballmer for one year, strips team of five first-round picks over Kawhi Leonard sponsorship investigation",
+    dek: "The league announced significant penalties against the LA Clippers following an investigation into a sponsorship arrangement involving Kawhi Leonard. Owner Steve Ballmer faces a one-year suspension.",
+    summary: "The NBA has penalized the LA Clippers with five forfeited first-round picks, a $30 million fine, and a one-year suspension of owner Steve Ballmer following an investigation into a Kawhi Leonard sponsorship deal.",
+    body: [
+      "The NBA has announced punishments against the LA Clippers stemming from an investigation into a Kawhi Leonard sponsorship arrangement. The league docked the team five first-round picks, fined them $30 million, and suspended owner Steve Ballmer for one year.",
+      "The Clippers have indicated they plan to challenge the findings through legal means, according to reporting."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/nba/story/_/id/49806356/nba-announces-punishments-clippers-kawhi-probe",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: "assets/nba-la-clippers-2026-09-07.jpg", video: null,
+    imageCredit: "Own work", imageSourceUrl: "https://commons.wikimedia.org/wiki/File:L.A._Clippers_Plaza_Basketball_Court_and_Video_Board_at_Intuit_Dome.jpg", imageRights: "CC BY-SA 4.0",
+    articleMode: "news", continuityKey: null,
+    priority: "high"
+  },
+
+  {
+    id: "nba-houston-rockets-thompson-2026-09-07",
+    sport: "basketball", league: "nba", category: "signing", status: "report",
+    headline: "Rockets, Thompson agree to $208M rookie-scale extension",
+    dek: "Houston guard Amen Thompson has reached a five-year deal with the franchise, according to ESPN reporting. The contract is built on the rookie-scale extension framework.",
+    summary: "Amen Thompson and the Houston Rockets have agreed to a five-year, $208 million rookie-scale contract extension, according to ESPN.",
+    body: [
+      "Houston Rockets guard Amen Thompson has agreed to a five-year, $208 million rookie-scale contract extension with the franchise, according to ESPN reporting.",
+      "The deal keeps Thompson with the Rockets on an extended rookie-scale agreement, a structure that applies to players selected early in the NBA Draft during their initial years of eligibility."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/nba/story/_/id/49814480/sources-rockets-amen-thompson-agrees-5-year-208m-extension",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "bundesliga-germany-2026-09-07",
+    sport: "football", league: "bundesliga", category: "league", status: "confirmed",
+    headline: "American players in Germany: 2026/27 Bundesliga tracker",
+    dek: "Several USMNT regulars and promising youngsters are competing in the Bundesliga this season. Here's how they have started.",
+    summary: "Tracks American nationals competing in Germany's Bundesliga during the 2026/27 season, with early-campaign statistics and performance notes.",
+    body: [
+      "A cohort of American players is featured across Bundesliga rosters for the 2026/27 campaign, ranging from established USMNT regulars to developing talent.",
+      "Malik Tillman, a 24-year-old midfielder for Bayer Leverkusen, has appeared in 2 matches with 2 starts. A Bayern Munich academy product, Tillman scored six goals in 29 appearances during his first Bundesliga season at Leverkusen before representing the United States at the 2026 FIFA World Cup. In Leverkusen's Matchday 2 home fixture, Tillman started and played 67 minutes as the club defeated Union Berlin 4-0.",
+      "Joe Scally, a 23-year-old full-back for Borussia Mönchengladbach, has recorded 2 appearances with 1 start through early in the campaign.",
+      "Cole Campbell is among the American contingent, though additional details regarding his club assignment and early-season statistics were not specified in available information.",
+      "Mathis Albert, a 17-year-old forward for Borussia Dortmund, has not yet appeared in a league match this season.",
+      "Lennard Maloney, a 26-year-old midfielder for Mainz, came off the bench in the 88th minute during Mainz's 5-0 victory over Hamburg at the Volksparkstadion. Maloney was primarily used as a substitute during the 2025/26 season, a role he continued in early 2026/27."
+    ],
+    source: "Bundesliga.com",
+    sourceUrl: "https://www.bundesliga.com/en/2bundesliga/news/us-soccer-players-germany-round-up-gio-reyna-scally-tillman-5874",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "tracker", continuityKey: "bundesliga:tracker:american-soccer-players-germany-edition:2026-27",
+    priority: "normal"
+  },
+
+  {
+    id: "epl-western-michigan-2026-09-07",
+    sport: "football", league: "epl", category: "league", status: "report",
+    headline: "Western Michigan chose acceptance over outrage after controversial Michigan finish",
+    dek: "Rather than fight the Big Ten's replay ruling that gave Michigan a walk-off touchdown, Western Michigan's leadership decided to move forward—a notably restrained response in an era of athletic grievance.",
+    summary: "After a controversial loss to Michigan, Western Michigan's president and football coach chose to accept the Big Ten's replay decision instead of contesting the result, despite believing the call may have been unfair.",
+    body: [
+      "When Western Michigan's university president called a press conference the morning after the Broncos' loss to Michigan, the school had an unusually clean case for outrage. According to CBS Sports reporting, Western Michigan had entered Michigan Stadium as a four-touchdown underdog and led for most of the night before a controversial Hail Mary finish cost them the game. Yet instead of filing suit or mounting a public campaign against the Big Ten's replay ruling, the program's leadership chose a path of acceptance.",
+      "The president spent hours after the loss inside Michigan Stadium exploring ways to contest the decision, speaking with MAC commissioner Jon Steinbrecher and Big Ten commissioner Tony Petitti at 1 a.m. Still, the school ultimately declined to push the issue further. According to the reporting, both the president and football coach Lance Taylor neither believed the call was correct nor were they staunch supporters of the outcome, but they expressed support for the integrity of the Big Ten's system and process. People close to the program reportedly wanted them to press the matter further Saturday night, but they did not.",
+      "Taylor took ownership of the loss, assigning responsibility to his own team rather than the controversial finish. He noted that Western Michigan had chances to put the game away before it reached the final Hail Mary and that his own clock management could have been better. The president framed the situation as an opportunity for the university to demonstrate its values. 'Western Michigan University teaches people how to get punched in the mouth and the gut, and then get up and go forward,' he said, according to the reporting. 'That's what we're going to do, because that's what you do if you're from Western Michigan University.' The school was aware that the game's result would not change regardless of their response."
+    ],
+    source: "CBS Sports",
+    sourceUrl: "https://www.cbssports.com/college-football/news/inside-western-michigan-leaders-michigan-clock-controversy-hail-mary/",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "feature", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "epl-anderson-sets-premier-league-2026-09-07",
+    sport: "football", league: "epl", category: "match", status: "report",
+    headline: "Anderson sets Premier League passing record in Man of the Match display against Coventry",
+    dek: "Elliot Anderson reached a new Premier League milestone during Saturday's match against Coventry, earning recognition for an all-action midfield performance.",
+    summary: "Elliot Anderson set a new Premier League passing record during Manchester's Man of the Match performance against Coventry on Saturday.",
+    body: [
+      "Elliot Anderson set a new Premier League record for passes during Saturday's match against Coventry, delivering a Man of the Match display in the process.",
+      "The midfielder's all-action performance helped secure the win, with Anderson's passing output surpassing the previous Premier League standard."
+    ],
+    source: "Yahoo Sports",
+    sourceUrl: "https://sports.yahoo.com/articles/anderson-breaks-premier-league-passing-085000417.html",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: "assets/epl-anderson-sets-premier-league-2026-09-07.png", video: null,
+    articleMode: "performance", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "epl-manchester-united-2026-09-07-2",
+    sport: "football", league: "epl", category: "transfer", status: "report",
+    headline: "Manchester United offered chance to sign Atlético Madrid's Sørloth",
+    dek: "The Norway striker has emerged as a potential target for the Premier League club, though his departure from the Spanish side may hinge on Atlético securing a replacement.",
+    summary: "According to reports, Manchester United have been offered the opportunity to sign Atlético Madrid striker Alexander Sørloth, with the player's availability dependent on Atlético finding a successor.",
+    body: [
+      "Manchester United have been offered the chance to sign Atlético Madrid striker Alexander Sørloth, according to reports from TeamTalk and ESPN's transfer coverage.",
+      "Sørloth's potential departure from Atlético Madrid appears to be conditional on the Spanish club securing a replacement striker. The Norway international's availability for transfer remains uncertain pending how Atlético addresses their attacking options."
+    ],
+    source: "Yahoo Sports",
+    sourceUrl: "https://sports.yahoo.com/articles/rloth-departure-depends-atl-tico-090000620.html",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "laliga-fc-barcelona-2026-09-07",
+    sport: "football", league: "laliga", category: "league", status: "report",
+    headline: "Valencia fans protest after 5-0 home defeat to Barcelona",
+    dek: "Supporters staged a demonstration against club officials and players following a heavy loss to Barcelona in LaLiga on Sunday.",
+    summary: "Valencia fans protested against club officials and players after a 5-0 home loss to Barcelona in LaLiga.",
+    body: [
+      "Valencia fans protested against club officials and players following a 5-0 home defeat to Barcelona in LaLiga on Sunday, according to reporting from ESPN.",
+      "The loss marked a significant setback for the home side, and the demonstration reflected supporter frustration with both the club's leadership and the team's performance on the pitch."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/soccer/story/_/id/49854032/valencia-fans-slam-owner-peter-lim-club-mercenaries",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "epl-arsenal-alonso-2026-09-07",
+    sport: "football", league: "epl", category: "match", status: "report",
+    headline: "Alonso: Chelsea must address defensive frailties after Arsenal loss",
+    dek: "Chelsea manager Xabi Alonso acknowledged his side's defensive vulnerabilities following a 2-1 defeat to Arsenal, a result that has seen the club concede seven goals in just three games this season.",
+    summary: "Chelsea fell 2-1 to Arsenal, conceding their seventh goal in three games; Alonso called for defensive improvements.",
+    body: [
+      "Chelsea suffered a 2-1 defeat against Arsenal, a result that has underscored persistent defensive concerns for Xabi Alonso's side early in the season. According to reports, Alonso acknowledged the need to resolve these frailties, with the loss part of a troubling defensive trend.",
+      "The defeat marked Chelsea's seventh goal conceded in just three games this season, a statistic that reflects the scale of the defensive challenge facing the club as the campaign continues."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/soccer/story/_/id/49851013/xabi-alonso-chelsea-address-defensive-issues-arsenal-defeat",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "performance", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "epl-manchester-united-carrick-2026-09-07",
+    sport: "football", league: "epl", category: "match", status: "report",
+    headline: "Carrick says Man United's draw with Everton 'feels like defeat' after late equaliser",
+    dek: "Manchester United conceded an equaliser in the 96th minute to draw 2-2 with Everton, prompting manager Michael Carrick to express frustration with the result.",
+    summary: "Manchester United drew 2-2 with Everton after conceding a goal in the 96th minute; Carrick said the result felt like a defeat.",
+    body: [
+      "Manchester United drew 2-2 with Everton, conceding an equaliser in the 96th minute at what was reported as Hill Dickinson Stadium. The late goal proved costly, as the match ended level after United appeared positioned for a win.",
+      "Manager Michael Carrick responded to the result by telling reporters that the draw \"feels like a defeat,\" reflecting his disappointment at surrendering a lead so late in the contest."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/soccer/story/_/id/49849966/man-united-draw-everton-feels-defeat",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "performance", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "epl-arsenal-2026-09-07-2",
+    sport: "football", league: "epl", category: "match", status: "report",
+    headline: "Arsenal defeats Chelsea 2-1 in London derby comeback",
+    dek: "Arsenal recovered from a goal down to secure a 2-1 victory over Chelsea in Sunday's Emirates encounter, with Martin Odegaard and Kai Havertz among those involved in the turnaround.",
+    summary: "Arsenal came from behind to beat Chelsea 2-1 at the Emirates on Sunday.",
+    body: [
+      "Arsenal staged a second-half recovery to defeat Chelsea 2-1 in a London derby at the Emirates on Sunday. The hosts fell behind but turned the match around to secure the victory.",
+      "Martin Odegaard and Kai Havertz featured prominently in Arsenal's comeback, according to reporting from the match."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/soccer/story/_/id/49850276/martin-odegaard-kai-havertz-arsenal-statement-london-derby-chelsea-report-reaction",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "performance", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "epl-manchester-united-2026-09-07-3",
+    sport: "football", league: "epl", category: "transfer", status: "report",
+    headline: "Leeds United sign 16-year-old Silva Mexes from Manchester United academy",
+    dek: "The left-winger has agreed a two-year scholarship contract with the Championship club after leaving Manchester United's youth ranks.",
+    summary: "Leeds United have completed the signing of academy prospect Silva Mexes from Manchester United on a two-year scholarship deal.",
+    body: [
+      "Leeds United have agreed a deal to sign Silva Mexes from Manchester United, with the 16-year-old left-winger accepting a two-year scholarship contract at Elland Road.",
+      "Mexes departs Manchester United's academy to join the Championship side. The move concludes Leeds' summer pursuit of the prospect."
+    ],
+    source: "Yahoo Sports",
+    sourceUrl: "https://sports.yahoo.com/articles/leeds-united-land-talented-man-090000435.html",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "bundesliga-rb-leipzig-niclas-f-llkrug-2026-09-05",
+    sport: "football", league: "bundesliga", category: "match", status: "confirmed",
+    headline: "Füllkrug nets return goal as Bremen hammers Leipzig",
+    dek: "Werder Bremen secured a 3-1 victory over RB Leipzig at the Weserstadion, bouncing back from their defeat at Freiburg the previous weekend. Niclas Füllkrug marked his return to the club with a goal in the comfortable win.",
+    summary: "Werder Bremen defeated RB Leipzig 3-1, with Niclas Füllkrug scoring his first goal since rejoining the club.",
+    body: [
+      "Werder Bremen came from their loss at Freiburg to thoroughly outplay RB Leipzig, winning 3-1 at the Weserstadion. Eren Dinkçi opened the scoring in the fourth minute, before Niclas Füllkrug and Marco Grüll added second-half goals to put the match beyond reach. Ridle Baku pulled one back late for Leipzig, but it proved only a consolation.",
+      "Füllkrug powered home unmarked from Grüll's corner in the 68th minute to double Bremen's lead, while Grüll himself netted the third 12 minutes later. Christopher Nkunku, making his second full debut for Leipzig, had the visitors' clearest chance of the first half but his effort from Baku's cross went straight at Bremen goalkeeper Hein.",
+      "Manager Daniel Thioune made three changes to the Bremen side that lost 4-1 in the Black Forest, bringing in new signings Arthur, Youri Regeer and Eren Dinkçi to the starting XI. Leipzig head coach Martín Demichelis was without Castello Lukeba, Rocco Reitz and Brajan Gruda but handed starts to Maxime Estève, Neil El Aynaoui, Johan Bakayoko and summer arrival Nkunku."
+    ],
+    source: "Bundesliga.com (official)",
+    sourceUrl: "https://www.bundesliga.com/en/bundesliga/news/werder-bremen-rb-leipzig-match-report-highlights-matchday-2-fullkrug-39043",
+    publishedAt: "2026-09-05", updatedAt: null,
+    image: null, video: null,
+    articleMode: "performance", continuityKey: null,
+    priority: "high"
+  },
+
+  {
+    id: "bundesliga-eintracht-frankfurt-2026-09-07",
+    sport: "football", league: "bundesliga", category: "match", status: "confirmed",
+    headline: "Augsburg complete stunning comeback to top Bundesliga after crushing Frankfurt",
+    dek: "Arijon Ibrahimović's debut goal started Augsburg's fightback from 1-0 down, with two strikes in quick succession flipping the contest before late finishes sealed a 4-1 victory and sent Manuel Baum's side to the summit.",
+    summary: "Augsburg rallied from a 1-0 deficit to beat Eintracht Frankfurt 4-1, moving to the top of the Bundesliga table on Matchday 2.",
+    body: [
+      "Eintracht Frankfurt made a perfect start but could not hold on as Augsburg stormed back to a 4-1 victory at the Commerzbank-Arena on Matchday 2. Jonathan Burkardt's sixth-minute header gave Frankfurt an early lead, but Arijon Ibrahimović equalized for Augsburg just after the restart before the visitors struck twice more in as many minutes through Mats Fellhauer to seize control of the contest.",
+      "Alexis Claude-Maurice added a third in the 65th minute before Fabian Rieder sealed the rout with a goal in the 89th minute. Ibrahimović, making his Bundesliga debut after joining in place of injured Anton Kade, was influential throughout and claimed 39 per cent of the fan vote for Man of the Match, registering three shots on goal.",
+      "Frankfurt had made three changes to the side that drew at Union Berlin, with Lilian Brassier making his Bundesliga bow alongside returning starters Mario Götze and Ritsu Dōan, but their bright opening proved misleading. The defeat left Frankfurt winless after two matches, while Augsburg, fresh from an opening-day victory over Schalke, moved to the top of the table with the comeback triumph."
+    ],
+    source: "Bundesliga.com",
+    sourceUrl: "https://www.bundesliga.com/en/bundesliga/news/eintracht-frankfurt-augsburg-match-report-highlights-matchday-2-39067",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "performance", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "bundesliga-manuel-baum-2026-09-07",
+    sport: "football", league: "bundesliga", category: "league", status: "confirmed",
+    headline: "Augsburg top Bundesliga after perfect start under Baum",
+    dek: "Manuel Baum's side have won their opening two matches with an impressive goal differential, defeating Schalke and Eintracht Frankfurt to claim the early league lead.",
+    summary: "Augsburg sit atop the Bundesliga table after consecutive wins in the opening two weeks of the 2026/27 season, with seven goals scored and just one conceded.",
+    body: [
+      "Augsburg have made an unexpected flying start to the 2026/27 Bundesliga campaign, winning both of their opening matches to sit top of the table after two weeks. Manuel Baum's side scored seven goals while conceding only one in victories over Schalke and Eintracht Frankfurt, establishing themselves as an early surprise package.",
+      "The wins put Augsburg ahead of Freiburg, Borussia Dortmund, and newly-promoted Elversberg in the standings. Four different players—Rodrigo Ribeiro (21), Anton Kade (22), Fabian Rieder (24), and Arijon Ibrahimović (20)—have already found the net, while defenders Noahkai Banks (19), Chrislain Matsima (24), and Hennes Behrens (21) have also impressed. The squad balances youth with experience, including Michael Gregoritsch (32), Marius Wolf (31), and goalkeeper Finn Dahmen (28), who have combined for 527 Bundesliga appearances.",
+      "Augsburg's strong start builds on a solid finish to last season, when they lost just one of their final seven matches and finished four points short of a UEFA Europa Conference League spot. In their opening fixture, they dominated Schalke with 13 shots on target and an expected goals value of 3.48 en route to a 3-0 victory before a more challenging trip to Frankfurt."
+    ],
+    source: "Bundesliga.com",
+    sourceUrl: "https://www.bundesliga.com/en/bundesliga/news/augsburg-flying-start-baum-frankfurt-schalke-ibrahimovic-39069",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "bundesliga-borussia-dortmund-j-rgen-klopp-2026-09-07",
+    sport: "football", league: "bundesliga", category: "league", status: "confirmed",
+    headline: "Kovač sets Dortmund record after 50 games, surpassing Klopp and Hitzfeld",
+    dek: "Niko Kovač has accumulated more points than any other Borussia Dortmund head coach in their first 50 Bundesliga matches, including legendary predecessors like Jürgen Klopp.",
+    summary: "Kovač has amassed 107 points across 50 Bundesliga games as Dortmund head coach—a club record surpassing Lucien Favre and Thomas Tuchel—while maintaining a 2.14 points-per-game average.",
+    body: [
+      "Niko Kovač has set a new Borussia Dortmund record in his first 50 Bundesliga matches as head coach, accumulating 107 points—more than any other manager to reach that milestone in the club's history. The record was marked by Dortmund's victory over Hoffenheim, which saw the team come from 2-0 down to secure the win.",
+      "Across those 50 games, Dortmund have won 33 matches under Kovač. His 107-point tally surpasses Lucien Favre's 106 points and Thomas Tuchel's 105 points over the same span. By comparison, Jürgen Klopp managed 86 points in his first 50 league games as Dortmund head coach.",
+      "Kovač's points-per-game ratio of 2.14 also tops the list among Dortmund head coaches after 50 games, ahead of Tuchel (2.09), Favre (2.08), Marco Rose (2.03), Edin Terzić (1.97), Klopp (1.91), and Ottmar Hitzfeld (1.85).",
+      "The former Eintracht Frankfurt and Bayern Munich manager downplayed the achievement when speaking to Sky Germany. 'The stats are what they are,' Kovač said. 'When I'm not here anymore, someone else will do better. I will take the praise, but no more than that.'"
+    ],
+    source: "Bundesliga.com",
+    sourceUrl: "https://www.bundesliga.com/en/bundesliga/news/better-than-klopp-hitzeld-kovac-highest-point-per-game-ratio-39070",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "college-football-michigan-wolverines-2026-09-05",
+    sport: "americanfootball", league: "college-football", category: "game", status: "confirmed",
+    headline: "Michigan Edges Western Michigan 13-12 in Defensive Battle",
+    dek: "The Wolverines survived a turnover-plagued performance at home on September 5, 2026, holding off the Broncos by a single point despite significant statistical disadvantages.",
+    summary: "Michigan defeated Western Michigan 13-12 in a regular-season game marked by Michigan's three turnovers and penalties but sealed by a one-point home victory.",
+    body: [
+      "Michigan escaped with a 13-12 victory over Western Michigan at Michigan Stadium, winning a low-scoring defensive struggle that saw the Wolverines overcome their own mistakes to secure the one-point result.",
+      "The Wolverines scored 7 points in the opening quarter and added 6 more in the fourth to reach 13. Western Michigan answered with 3 in the first quarter and 3 in the second, then added 6 in the fourth to finish one point short. The third quarter saw neither team score.",
+      "Michigan's statistical profile was complicated by self-inflicted damage. The Wolverines committed 3 turnovers to Western Michigan's none, including 2 fumbles lost and 1 interception thrown. They also drew 9 penalties for 80 yards against Western Michigan's 5 penalties for 40 yards. Despite those issues, Michigan outgained Western Michigan 276 yards to 221, with a 170-to-89 edge in passing yards balanced against Western Michigan's 132-to-106 rushing advantage.",
+      "Western Michigan controlled the game's tempo, holding the ball for 40 minutes and 8 seconds compared to Michigan's 19 minutes and 52 seconds. The Broncos also led in first downs (16 to 12) and converted 8 of 18 third-down attempts versus Michigan's 3 of 10. Both teams attempted one fourth-down conversion; Michigan converted it while Western Michigan did not."
+    ],
+    source: "Official match data",
+    sourceUrl: null,
+    publishedAt: "2026-09-05", updatedAt: null,
+    image: null, video: null,
+    articleMode: "performance", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "college-football-lsu-tigers-2026-09-06",
+    sport: "americanfootball", league: "college-football", category: "game", status: "confirmed",
+    headline: "LSU routs Clemson 51-10 in season opener",
+    dek: "The Tigers dominated from the start, building a 44-3 lead through three quarters in the regular-season game on September 6.",
+    summary: "LSU defeated Clemson 51-10 on September 6, 2026, scoring 44 points through the first three quarters of regular-season play.",
+    body: [
+      "LSU routed Clemson 51-10 in the regular season on September 6, with the Tigers establishing control early and maintaining it throughout. LSU led 17-3 after the first quarter, extended that advantage to 31-3 by halftime, and had built a 44-3 lead through three quarters before each team scored seven points in the fourth.",
+      "The game saw LSU outscore Clemson in every period except the final quarter, with the home team's offense accounting for the bulk of the scoring in the opening three frames."
+    ],
+    source: "Official match data",
+    sourceUrl: null,
+    publishedAt: "2026-09-06", updatedAt: null,
+    image: null, video: {"provider":"youtube","id":"G4EXb0jEpE4","title":"LSU Tigers vs. Clemson Tigers | Game Highlights | 2026 SEC Football","sourceName":"SEC","sourceUrl":"https://www.youtube.com/watch?v=G4EXb0jEpE4","official":false,"embeddable":true,"rightsStatus":"EMBED_ALLOWED"},
+    articleMode: "performance", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "nfl-mark-sanchez-to-plead-2026-09-06",
+    sport: "americanfootball", league: "nfl", category: "league", status: "report",
+    headline: "Mark Sanchez to plead guilty in Indianapolis assault case",
+    dek: "The former NFL quarterback and current Fox broadcaster has agreed to enter a guilty plea in connection with an alleged 2025 incident involving a truck driver.",
+    summary: "Mark Sanchez has agreed to plead guilty in an assault case stemming from an alleged attack on a truck driver in Indianapolis last year.",
+    body: [
+      "Mark Sanchez, the former NFL quarterback now working as a Fox Sports broadcaster, has agreed to plead guilty in connection with an alleged assault of a truck driver in Indianapolis, according to reporting.",
+      "The incident occurred in 2025. Details regarding the specific charges, timeline for the guilty plea, or any potential sentencing have not been disclosed."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/nfl/story/_/id/49818375/mark-sanchez-plans-plead-guilty-indianapolis-assault-case",
+    publishedAt: "2026-09-06", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "epl-manchester-united-2026-09-06",
+    sport: "football", league: "epl", category: "injury", status: "report",
+    headline: "Maguire suffers nose injury in early collision during Everton clash",
+    dek: "Manchester United defender Harry Maguire was hurt in the opening minutes of Sunday's Premier League match against Everton after colliding with Thierno Barry.",
+    summary: "Harry Maguire sustained a blow to the nose in an early collision with Everton's Thierno Barry during Manchester United's Premier League match on Sunday.",
+    body: [
+      "Manchester United defender Harry Maguire suffered a nose injury in the opening minutes of Sunday's Premier League fixture against Everton after a collision with Everton's Thierno Barry.",
+      "According to reporting from the match, the injury occurred early in the encounter as United looked to secure a second consecutive league victory. The extent of the injury and whether Maguire continued playing was not immediately clear from available updates."
+    ],
+    source: "Yahoo Sports",
+    sourceUrl: "https://sports.yahoo.com/articles/doesn-t-look-good-way-132000540.html",
+    publishedAt: "2026-09-06", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "epl-manchester-city-2026-09-06",
+    sport: "football", league: "epl", category: "league", status: "report",
+    headline: "Haaland reaches 300th club goal as Manchester City beat Coventry to maintain perfect start",
+    dek: "Erling Haaland scored his 300th career club goal in Manchester City's 1-0 victory over Coventry City, a milestone that outpaces Kylian Mbappé in the race toward 300. City extended their unbeaten record at the top of the Premier League.",
+    summary: "Erling Haaland scored his 300th club goal as Manchester City defeated Coventry City 1-0 to maintain their perfect start to the Premier League season.",
+    body: [
+      "Erling Haaland reached 300 club goals as Manchester City defeated Coventry City 1-0 on Sunday, extending the club's unbeaten run at the start of the Premier League season.",
+      "The milestone places Haaland ahead of Kylian Mbappé in the race toward the 300-goal mark at club level. City remain at the top of the Premier League standings following the victory."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/soccer/story/_/id/49839417/erling-haaland-cristiano-ronaldo-kylian-mbappe-300-club-goals",
+    publishedAt: "2026-09-06", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "epl-de-zerbi-2026-09-06",
+    sport: "football", league: "epl", category: "league", status: "report",
+    headline: "De Zerbi unfazed by Spurs' goal drought despite third successive blank",
+    dek: "Tottenham manager Roberto De Zerbi has dismissed concerns over his side's inability to score in three consecutive Premier League matches, suggesting the team's issues run deeper than finishing.",
+    summary: "Roberto De Zerbi says Tottenham are making 'wrong' decisions despite going three Premier League games without a goal.",
+    body: [
+      "Tottenham manager Roberto De Zerbi has expressed a philosophical stance toward his side's recent goalscoring struggles, insisting he is not worried despite the team failing to register in three successive Premier League outings.",
+      "The Spurs boss's comments suggest he views the root of the problem as tactical or decision-making related, rather than a lack of ability in the final third. De Zerbi's public confidence contrasts sharply with the club's form on the pitch, which has seen them enter a goal-scoring drought spanning multiple games."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/soccer/story/_/id/49837481/roberto-de-zerbi-spurs-nottingham-forest-premier-league-transfers",
+    publishedAt: "2026-09-06", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "bundesliga-bayern-m-nchen-harry-kane-2026-09-06",
+    sport: "football", league: "bundesliga", category: "league", status: "confirmed",
+    headline: "Harry Kane two goals from Bundesliga century, eyes milestone against Schalke",
+    dek: "The Bayern Munich striker stands at 98 Bundesliga goals across 95 appearances. A brace in the September 5 fixture could see him reach 100 goals faster than any player in the league's history.",
+    summary: "Harry Kane is two goals short of 100 Bundesliga strikes and could reach the milestone in Bayern Munich's Matchday 2 fixture at Schalke on September 5.",
+    body: [
+      "Harry Kane is two goals away from a century of Bundesliga goals. The Bayern Munich striker has netted 98 times in 95 league appearances, and according to Bundesliga.com, a double against promoted Schalke on September 5 would see him reach three figures after only 96 games—33 fewer than Gerd Müller, the previous record holder.",
+      "Kane's scoring rate in the Bundesliga is among the most prolific in history. Since arriving at Bayern in 2023, he has found the net once every 78.5 minutes, outpacing comparisons with Erling Haaland (87 minutes), Robert Lewandowski (100 minutes) and Müller (105 minutes). The England captain won the Torjägerkanone—the Bundesliga's top scorer award—three times already.",
+      "Beyond the 100-goal mark, Kane's overall output for Bayern suggests further records could fall. He has scored 148 goals in 150 appearances for the club across all competitions, including 61 strikes in 51 games last season. Bundesliga.com noted that he could reach a double century of Bayern goals before the 2026/27 campaign ends."
+    ],
+    source: "Bundesliga.com",
+    sourceUrl: "https://www.bundesliga.com/en/bundesliga/news/harry-kane-100-goals-record-stuttgart-schalke-38258",
+    publishedAt: "2026-09-06", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "epl-liverpool-2026-09-07",
+    sport: "football", league: "epl", category: "match", status: "report",
+    headline: "UEFA Champions League League Phase Schedule: September 2026 to January 2027",
+    dek: "The Champions League league phase begins September 8 and runs through January 27, 2027, with 18 matchdays of regular-season fixtures featuring Europe's elite clubs competing for top-eight and playoff advancement spots.",
+    summary: "Complete schedule for the 2026/27 UEFA Champions League league phase, from matchday 1 through the final matchday on January 27, 2027.",
+    body: [
+      "The UEFA Champions League's new league phase structure runs from September 8 through January 27, 2027. Unlike the traditional group stage, all participating clubs compete in a single standings, with the top eight teams advancing directly to the knockout round and positions 9 through 24 entering a playoff round to complete the Round of 16.",
+      "Matchday 1 takes place on Tuesday, September 8, and includes headline fixtures such as Real Madrid against Inter, Liverpool against Atlético Madrid, and Napoli against Arsenal, among others.",
+      "The schedule spans 18 matchdays across five months, with subsequent rounds scheduled for October 14, November 4, November 24, December 9, January 19, and January 27. Kick-off times are staggered, primarily at 12:45 p.m. and 3 p.m. (likely local European times), to manage simultaneous matches and maintain competitive balance across the league phase.",
+      "The format represents a significant departure from the traditional group-stage model, consolidating all clubs into one unified competition table and altering the qualifying pathway to the knockout stages."
+    ],
+    source: "CBS Sports",
+    sourceUrl: "https://www.cbssports.com/soccer/news/uefa-champions-league-schedule-real-madrid-inter-liverpool-atletico-madrid-matchday-1/",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: "assets/epl-liverpool-2026-09-07.webp", video: null,
+    imageCredit: "UEFA®", imageSourceUrl: "https://www.uefa.com/uefachampionsleague/news/02a8-2174c9e9019d-f909a77bd77a-1000--2026-27-champions-league-all-the-league-phase-fixtures/", imageRights: null,
+    articleMode: "reference", continuityKey: "epl:reference:uefa-champions-league-schedule-real:2026",
+    priority: "normal"
+  },
+
+  {
+    id: "nfl-giants-release-wide-receiver-2026-09-07",
+    sport: "americanfootball", league: "nfl", category: "roster", status: "report",
+    headline: "Giants release wide receiver Darius Slayton",
+    dek: "The New York Giants have parted ways with Slayton, who had been the longest-tenured player on the roster.",
+    summary: "The Giants released wide receiver Darius Slayton, their longest-tenured player, according to reporting.",
+    body: [
+      "The New York Giants have released wide receiver Darius Slayton, ending a seven-season run with the franchise. Slayton had been the longest-tenured player on the roster and will now become an unrestricted free agent.",
+      "A fifth-round pick in 2018, Slayton recorded 296 receptions for 4,435 receiving yards and 22 touchdowns during his time in New York. He posted at least 500 receiving yards in six seasons and led the Giants in receiving four times.",
+      "New York signed Slayton to a three-year, $36 million contract before last season, but the veteran receiver was due $13 million in 2026. His release creates just over $3 million in cap space for the Giants.",
+      "Slayton's role became increasingly uncertain after the team added Darnell Mooney and Odell Beckham Jr., while Malik Nabers is working toward a Week 1 return and rookie Malachi Fields has impressed. The Giants had also explored a potential trade during final roster cuts, but Slayton's salary made a deal difficult.",
+      "The 29-year-old is not subject to waivers because of his veteran status and is free to sign with another team immediately."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/nfl/story/_/id/49862543/giants-release-wr-darius-slayton-team-longest-tenured-player",
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: "assets/nfl-giants-release-wide-receiver-2026-09-07.jpg", video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal",
+    featured: true
   }
 ];

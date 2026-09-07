@@ -1084,6 +1084,31 @@
   }
   .fv-frame{ position:relative; width:100%; aspect-ratio:16/9; background:#000; }
   .fv-frame iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; display:block; }
+
+  /* ---- YouTube embed fallback ------------------------------------------
+     Shown only when the player itself reports that its owner blocks embedded
+     playback. Fills the frame the iframe occupied, so nothing reflows and no
+     broken third-party error page stays on screen. Used by both the Featured
+     Video card (.fv-frame) and the article hero (.fb-video-frame). */
+  .fb-video-frame.has-embed-fallback,
+  .fv-frame.has-embed-fallback{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:12px; padding:20px; text-align:center;
+    background:var(--surface-2); border-radius:inherit;
+  }
+  .fb-video-fallback{ display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .fvf-msg{
+    margin:0; font-size:13px; line-height:1.4; color:var(--ink-soft);
+  }
+  .fvf-cta{
+    display:inline-flex; align-items:center; gap:7px;
+    font-family:var(--sans); font-size:11px; font-weight:700;
+    letter-spacing:.1em; text-transform:uppercase; text-decoration:none;
+    color:var(--ink); padding:9px 14px; border-radius:8px;
+    border:1px solid var(--indigo-line, var(--line-strong)); background:var(--indigo-veil);
+    transition:background .18s var(--ease), border-color .18s var(--ease);
+  }
+  .fvf-cta:hover{ background:rgba(155,144,214,.16); border-color:var(--indigo); }
   .fv-body{ padding:14px var(--sp-4) var(--sp-4); }
   .fv-eyebrow{
     display:flex; align-items:center; gap:8px; margin-bottom:8px;
@@ -1562,7 +1587,7 @@
   }
   .sport-nav-label{ display:none; }
   .sport-nav-inner{
-    display:flex; gap:2px; align-items:stretch;
+    display:flex; gap:6px; align-items:stretch;
     overflow-x:auto; scrollbar-width:none; padding:0 var(--sp-4);
   }
   .sport-nav-inner::-webkit-scrollbar{ display:none; }
@@ -1576,13 +1601,16 @@
     /* the right padding reserves the mark's landing zone. On the horizontal
        strip a tab is only as wide as its label, so without it the mark would
        land on top of the text. */
-    padding:13px 42px 13px 16px; flex:none; white-space:nowrap; text-align:left;
-    font-family:var(--sans); font-size:13px; font-weight:700;
+    padding:14px 42px 14px 16px; flex:none; white-space:nowrap; text-align:left;
+    font-family:var(--sans); font-size:14px; font-weight:700;
     letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft);
     border:none; background:none; cursor:pointer;
     transition:color .22s var(--ease), background .22s var(--ease);
   }
   .sport-tab:hover{ color:var(--ink); background:var(--indigo-veil); }
+  /* HOME carries no sport mark, so it does not need the mark's landing zone
+     reserved on its right edge. */
+  .sport-tab-home{ padding-right:16px; }
   /* You are here. Indigo, never red. */
   .sport-tab.is-active{ color:var(--ink); }
   .sport-tab.is-active::after{
@@ -1602,19 +1630,28 @@
       display:flex; flex-direction:column; padding-top:var(--sp-5);
     }
     .sport-nav-inner{
-      flex-direction:column; overflow:visible; padding:0 10px; gap:2px;
+      /* Real separation between entries, so the rail reads as four distinct
+         destinations rather than one dense block. */
+      flex-direction:column; overflow:visible; padding:0 10px; gap:10px;
     }
     .sport-nav-label{
       display:block;
       font-family:var(--label); font-size:9.5px; font-weight:600; letter-spacing:.16em;
-      text-transform:uppercase; color:var(--ink-faint); padding:0 14px 10px;
+      text-transform:uppercase; color:var(--ink-faint); padding:0 14px 16px;
     }
-    /* identical box, height, padding and type for every sport */
+    /* identical box, height, padding and type for every entry */
     .sport-tab{
-      width:100%; height:48px; border-radius:9px;
-      font-family:var(--sans); font-size:12.5px; font-weight:700;
-      letter-spacing:.06em; text-transform:uppercase; padding:0 15px;
-      white-space:normal; line-height:1.15;
+      width:100%; min-height:56px; border-radius:10px;
+      font-family:var(--sans); font-size:15px; font-weight:700;
+      letter-spacing:.05em; text-transform:uppercase; padding:0 16px;
+      white-space:normal; line-height:1.2;
+    }
+    /* HOME leads the rail and is separated from the sports below it: it
+       answers "where am I", they answer "where can I go". */
+    .sport-tab-home{ padding-right:16px; margin-bottom:6px; }
+    .sport-tab-home::before{
+      content:""; position:absolute; left:16px; right:16px; bottom:-9px;
+      height:1px; background:var(--border-subtle);
     }
     /* the label is capped short of the mark's landing zone, so a two-line
        label (American Football) never runs under the icon */
@@ -1623,7 +1660,12 @@
     .sport-tab.is-active::after{
       left:0; right:auto; top:9px; bottom:9px; width:2px; height:auto; border-radius:0 2px 2px 0;
     }
-    .sport-tab.is-active{ background:var(--indigo-veil); }
+    /* Active must not read the same as hover. Hover uses --indigo-veil
+       (.09); the active entry sits a step deeper and keeps the leading
+       indigo bar, so "where I am" and "what I'm pointing at" stay clearly
+       different states. */
+    .sport-tab.is-active{ background:rgba(155,144,214,.16); }
+    .sport-tab.is-active .st-label{ color:var(--ink); }
   }
 
   /* ============ MEGA MENU ============
@@ -1884,6 +1926,8 @@
     font-family:var(--label); font-size:10px; letter-spacing:.07em; text-transform:uppercase;
     color:var(--cool-faint); padding:9px 13px; border-top:1px solid var(--line);
   }
+  .article-hero-cap a{ color:inherit; text-decoration:underline; text-underline-offset:2px; }
+  .article-hero-cap a:hover{ color:var(--ink); }
   .article-body-copy p{
     font-size:17.5px; line-height:1.75; color:var(--ink); margin-bottom:22px; max-width:68ch;
   }
@@ -1921,16 +1965,45 @@
   }
   .rail-item .rail-title{
     font-family:var(--display); font-size:14px; font-weight:500; line-height:1.35; letter-spacing:-.01em;
-    color:var(--ink); transition:color .2s var(--ease); display:block;
+    color:var(--ink); transition:color .2s var(--ease);
+    /* Clamp to a max line count instead of letting an unusually long
+       headline grow the card indefinitely — wraps naturally up to the
+       limit, ellipsizes past it. -webkit-line-clamp is supported in every
+       browser this site otherwise targets. */
+    display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden;
   }
   .rail-item .rail-meta{ font-size:11px; color:var(--ink-faint); margin-top:6px; }
-  /* compact thumb variant for the "more from" block */
+  /* compact thumb variant for the "more from" block. Named .rail-item-thumb
+     (NOT .rail-thumb) deliberately — .rail-thumb is already the Score
+     Rail's drag-handle (position:absolute; width:56px; height:13px, above)
+     and shared the same class name here entirely by accident. Because that
+     rule never sets its own position back to static, and this rule never
+     reset it either, the leaked `position:absolute` silently pulled this
+     thumbnail out of the grid's normal flow — its own item was gone from
+     grid layout, so the ONE remaining in-flow child (the text column) got
+     auto-placed into the FIRST track (64px) instead of the intended second
+     (minmax(0,1fr)) one. That is the confirmed root cause of the related-
+     story cards collapsing into a vertical sliver with the thumbnail
+     floating over the text: not a layout logic bug, a class-name collision
+     between two unrelated components. Renaming removes the collision
+     outright rather than patching around it with an explicit `position`
+     override that the next edit could just as easily reintroduce. */
   .rail-item.has-thumb{ display:grid; grid-template-columns:64px minmax(0,1fr); gap:12px; align-items:center; }
-  .rail-item.has-thumb .rail-thumb{
+  .rail-item.has-thumb .rail-item-thumb{
     width:64px; height:64px; border-radius:8px; overflow:hidden; background:var(--black);
     border:1px solid var(--line); display:flex; align-items:center; justify-content:center; padding:4px;
+    flex:none;
   }
-  .rail-item.has-thumb .rail-thumb img{ width:100%; height:auto; max-height:100%; object-fit:contain; }
+  .rail-item.has-thumb .rail-item-thumb img{ width:100%; height:auto; max-height:100%; object-fit:contain; }
+  /* Text column: an explicit min-width:0 alongside the grid track's own
+     minmax(0,1fr) — belt and suspenders against the exact "content refuses
+     to shrink below its own intrinsic width" collapse this bug produced,
+     so a long unbroken headline/source name can never force the column
+     wide again even if something upstream changes. */
+  .rail-item.has-thumb > span:not(.rail-item-thumb){ min-width:0; }
+  /* Thumbed cards are more cramped horizontally — clamp one line shorter
+     than the plain (no-thumb) variant above. */
+  .rail-item.has-thumb .rail-title{ -webkit-line-clamp:2; }
 
   @media (max-width:999px){
     .article-rail{ border-top:1px solid var(--line); padding-top:var(--sp-6); }
@@ -2681,10 +2754,21 @@
 
      Nothing here fetches anything. It reads the same published STORIES data
      the rest of the page already uses; no provider call, no draft, no
-     Highlightly. */
+     Highlightly.
+
+     EDITORIAL PLACEMENT: `showOnHomepage === false` excludes a story from
+     every global-homepage module (this hub's lead, Top News, and the
+     all-sports Latest grid below) — but ONLY here. rankedFor() above is
+     untouched, so the same story still ranks normally on its own league
+     page, its article page, and anywhere related-stories pulls from a
+     league feed. A story published before this field existed simply omits
+     it, which reads as "not false", so old stories keep appearing on the
+     homepage exactly as before — nothing here can make one disappear by
+     accident. */
   function rankedAll(refMs){
     const ref = refMs === undefined ? Date.now() : refMs;
-    return STORIES.slice().sort((a, b) => compareStories(a, b, ref));
+    return STORIES.filter(s => s.showOnHomepage !== false)
+                  .sort((a, b) => compareStories(a, b, ref));
   }
 
   // Whether the PUBLIC renderer can actually play this video. Deliberately
@@ -2696,6 +2780,28 @@
     if (v.provider === 'youtube') return /^[A-Za-z0-9_-]{11}$/.test(String(v.id || ''));
     if (v.provider === 'vimeo')   return /^\d{6,12}$/.test(String(v.id || ''));
     return false;
+  }
+
+  // WEBSITE ≠ HERO. Promoting a game_result to the website (Control
+  // Center's manual WEBSITE button) publishes it like any other story, but
+  // must not be treated as equivalent to featuring it — a routine result
+  // reaching the site the same day it's played would otherwise win the
+  // all-sports Hero slot on freshness alone, crowding out real news for a
+  // game that is already fully covered by Latest, Top News, its own league
+  // feed and its article page (all untouched by this — see heroEligible's
+  // only call site below).
+  //
+  // `story.gameResult` is additive and optional (see websitePublisher.js's
+  // buildStoryObject) — every story published before this existed simply
+  // omits it and is unaffected. `story.featured` stays exactly what its own
+  // schema doc comment above says for every OTHER purpose (an inert
+  // annotation the general ranking never reads) — this is the one deliberate
+  // exception: an editor who genuinely wants a specific game result to lead
+  // the homepage can still set featured: true on that one story by hand,
+  // which is the "explicit manual promotion" escape hatch, not a second
+  // ranking system.
+  function heroEligible(story){
+    return !story.gameResult || story.featured === true;
   }
 
   // The best-ranked recent story that carries a usable video. Ranking order
@@ -2712,14 +2818,16 @@
     // rendered as an empty shell.
     if (!story) { el.hidden = true; el.innerHTML = ''; return; }
     const v = story.video;
-    const src = v.provider === 'youtube'
-      ? `https://www.youtube.com/embed/${v.id}`
-      : `https://player.vimeo.com/video/${v.id}`;
+    const isYouTube = v.provider === 'youtube';
+    // Same shared builder the article uses, so an embed blocked by its owner
+    // reports back here too and gets the same clean fallback.
+    const src = isYouTube ? youtubeEmbedSrc(v.id) : `https://player.vimeo.com/video/${v.id}`;
+    const ytAttr = isYouTube ? ` data-yt-id="${v.id}"` : '';
     const title = String(v.title || story.headline).replace(/"/g, '&quot;');
     el.hidden = false;
     el.innerHTML = `
       <div class="fv-frame">
-        <iframe src="${src}" title="${title}" loading="lazy" allowfullscreen
+        <iframe src="${src}"${ytAttr} title="${title}" loading="lazy" allowfullscreen
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
       </div>
       <div class="fv-body">
@@ -2727,6 +2835,7 @@
         <a href="${storyUrl(story.id)}" data-story-link="${story.id}"><h3>${story.headline}</h3></a>
         <div class="fv-meta">${v.sourceName || story.source} · ${formatStoryDate(story.publishedAt)}</div>
       </div>`;
+    wireYouTubeFallbacks(el);
     const link = el.querySelector('a[data-story-link]');
     if (link) link.addEventListener('click', e => {
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
@@ -2788,15 +2897,28 @@
     if (heroEl) heroEl.innerHTML = '';
     if (!ranked.length) { renderFeaturedVideo(null); renderTopNews([]); return new Set(); }
 
-    // Hero = the strongest current story by the existing ranking, not simply
-    // the newest publish.
-    const hero = ranked[0];
+    // EDITORIAL PLACEMENT — a manually designated Hero (story.featured ===
+    // true, set from the Control Center's draft editor) always wins the
+    // global lead outright, overriding the automatic ranking below. HERO
+    // implies SHOW ON HOMEPAGE (enforced editor/server-side), so the
+    // manual Hero is always present in `ranked` already — no separate,
+    // unfiltered lookup needed. Only one story is ever meant to carry
+    // featured:true at a time (the editor enforces this); if more than one
+    // somehow does, the freshest of them wins, same tie-break as everywhere
+    // else on this page.
+    //
+    // Otherwise: Hero = the strongest current story by the existing
+    // ranking, not simply the newest publish — skipping over a game_result
+    // (see heroEligible) unless nothing else qualifies, so the lead never
+    // comes up empty.
+    const manualHero = ranked.find(s => s.featured === true);
+    const hero = manualHero || ranked.find(heroEligible) || ranked[0];
     if (heroEl) heroEl.appendChild(buildStoryCard(hero, { big: true }));
 
     // The featured video's own story is allowed to be the hero if that is
     // genuinely the best story — but it is preferred from the rest first, so
     // the two modules normally surface different stories.
-    const rest = ranked.slice(1);
+    const rest = ranked.filter(s => s.id !== hero.id);
     const featured = pickFeaturedVideoStory(rest) || (isPlayableVideo(hero.video) ? hero : null);
     renderFeaturedVideo(featured);
 
@@ -2827,9 +2949,21 @@
     // League isolation still applies whenever a competition is selected: the
     // ranking only ever sees that league's stories, so a new NBA story can
     // never displace an NFL one. On the hub, every league competes together.
-    const ranked = allSports
+    let ranked = allSports
       ? rankedAll().filter(s => !consumed.has(s.id))
       : rankedFor(activeLeague);
+
+    // EDITORIAL PLACEMENT — item 4/8: the same manually designated global
+    // Hero (story.featured === true) also leads its OWN league page as
+    // Hero/Big Story, reusing this one league-scoped `ranked` array so it
+    // can never leak into a different league (rankedFor(activeLeague)
+    // already only ever contains this league's stories). If this league has
+    // no featured story, `ranked` is untouched and the existing automatic
+    // ranking below decides the Big Story exactly as before.
+    if (!allSports) {
+      const leagueHero = ranked.find(s => s.featured === true);
+      if (leagueHero) ranked = [leagueHero, ...ranked.filter(s => s.id !== leagueHero.id)];
+    }
 
     if (marker) marker.textContent = allSports ? 'ALL SPORTS' : (leagueNames[activeLeague] || activeLeague).toUpperCase();
 
@@ -3245,7 +3379,14 @@
     const logo = entry.id === NBA_LOGO_ID
       ? (entry.logo || null)
       : (wnbaIsNbaDuplicate ? null : (rawLogo || entry.logo || null));
-    const fallbackLabel = (entry.id || '').toUpperCase().slice(0, 4);
+    // A single-letter monogram — same "clean fallback, never a bare circle"
+    // convention .logo-fallback already documents itself for above — not the
+    // 4-letter competition-id abbreviation (EPL/LALI/BUND/UCL/UEL) this used
+    // to show, which reads as a cramped, ugly wall of text jammed into a
+    // 20px box. The full competition name is already shown right next to
+    // this icon (mega-title below), so the monogram only ever needs to be
+    // a quiet placeholder, not a second label.
+    const fallbackLabel = (entry.name || entry.id || '').trim().charAt(0).toUpperCase();
     const iconCls = MONOCHROME_LOGO_IDS.has(entry.id) ? 'st-icon-mono' : '';
     return `
       <div class="mega-col">
@@ -3397,6 +3538,31 @@
   const SPORT_TAB_DEFAULT_LEAGUE = { basketball: 'nba', americanfootball: 'nfl' };
 
   // --- the rail -------------------------------------------------------------
+
+  /* HOME — the first entry, and the one that says what `/` is. The three
+     sport tabs below it are navigation destinations; on the homepage none of
+     them is where you are, so none of them may look active. Built from the
+     same .sport-tab component for visual consistency, minus the sport mark
+     (there is no ball for "everything") and minus the mega panel (there is
+     nothing to expand). */
+  const homeBtn = document.createElement('button');
+  homeBtn.className = 'sport-tab sport-tab-home';
+  homeBtn.dataset.sportId = 'home';
+  homeBtn.innerHTML = '<span class="st-label">Home</span>';
+  if (canHover) {
+    // Hovering HOME has no panel of its own, so it closes whichever sport
+    // panel is open rather than leaving a stale one hanging over the page.
+    homeBtn.addEventListener('mouseenter', () => { clearTimeout(hoverTimer); scheduleMegaClose(); });
+  }
+  homeBtn.addEventListener('click', () => {
+    homeScope = 'all';
+    closeMega();
+    navigate(homeUrl());
+    renderStories();
+    markActiveSport();
+  });
+  sportNavInner.appendChild(homeBtn);
+
   navNodes.forEach(node => {
     const btn = document.createElement('button');
     btn.className = 'sport-tab';
@@ -3474,10 +3640,17 @@
 
   // A tab is active when it IS the active league, or when it is the group
   // containing it. Same check for every node — no per-sport branching.
+  /* Exactly one entry is ever "you are here".
+     On `/` (homeScope === 'all') that is HOME, and no sport tab is active —
+     Basketball/Football/American Football are destinations you have not gone
+     to yet. Pick a competition and the owning sport becomes active while HOME
+     stops being. */
   function markActiveSport(){
+    const onHome = homeScope === 'all';
     sportNavInner.querySelectorAll('.sport-tab').forEach(el => {
+      if (el.dataset.sportId === 'home') { el.classList.toggle('is-active', onHome); return; }
       const node = navNodes.find(n => n.id === el.dataset.sportId);
-      const isActive = !!node && node.children.some(c => c.id === activeLeague);
+      const isActive = !onHome && !!node && node.children.some(c => c.id === activeLeague);
       el.classList.toggle('is-active', isActive);
     });
   }
@@ -5367,6 +5540,96 @@
     return '';
   }
 
+  /* ---- YOUTUBE EMBED FALLBACK ------------------------------------------
+     Some official uploads (LaLiga's match highlights are the live example)
+     are playable on youtube.com but blocked from embedding on other sites.
+     Nothing lets us know that in advance: YouTube's oEmbed endpoint returns
+     HTTP 200 with full metadata for exactly those videos, which is why the
+     stored `embeddable: true` flag is wrong for them and cannot be corrected
+     at publish time either.
+
+     What the reader saw instead was YouTube's own error page inside the
+     iframe — in German, and with its fallback link leaking as raw
+     "<a href='...'>Auf YouTube ansehen</a>" text, because YouTube injects
+     unescaped HTML into that message. It is cross-origin, so it can be
+     neither styled nor read.
+
+     The only reliable signal is the player's own error event. The embed is
+     therefore created with enablejsapi=1, the widget handshake is sent on
+     load, and an embed-blocked error code swaps OUR iframe for a clean Fast
+     Break fallback. A player that never errors is never touched, so working
+     embeds behave exactly as before. */
+  const YT_BLOCKED_ERROR_CODES = new Set([
+    100, // video not found / removed
+    101, // owner does not allow embedded playback
+    150  // same as 101, reported by some clients
+  ]);
+  const ytPlayers = [];
+
+  function youtubeEmbedSrc(id){
+    // origin is only meaningful over http(s); on a file:// preview it would
+    // serialise to "null" and make the handshake fail for no benefit.
+    const origin = /^https?:$/.test(location.protocol)
+      ? `&origin=${encodeURIComponent(location.origin)}` : '';
+    return `https://www.youtube.com/embed/${id}?enablejsapi=1${origin}`;
+  }
+
+  // Built from the already format-validated 11-char id, never from a stored
+  // URL, so a hand-edited stories.js entry can't inject a link target.
+  function youtubeWatchUrl(id){ return `https://www.youtube.com/watch?v=${id}`; }
+
+  function youtubeFallbackHtml(id){
+    return `<div class="fb-video-fallback">
+        <p class="fvf-msg">Video unavailable for embedding</p>
+        <a class="fvf-cta" href="${youtubeWatchUrl(id)}" target="_blank" rel="noopener noreferrer">Watch on YouTube <span aria-hidden="true">&rarr;</span></a>
+      </div>`;
+  }
+
+  // Registers every YouTube iframe inside `root` and opens the handshake that
+  // makes the player report its errors back to us.
+  function wireYouTubeFallbacks(root){
+    if (!root) return;
+    root.querySelectorAll('iframe[data-yt-id]').forEach(iframe => {
+      if (iframe.dataset.ytWired === '1') return;
+      iframe.dataset.ytWired = '1';
+      ytPlayers.push(iframe);
+      const handshake = () => {
+        try {
+          iframe.contentWindow.postMessage(
+            JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }),
+            'https://www.youtube.com'
+          );
+        } catch (_e) { /* player not reachable yet — nothing to do */ }
+      };
+      iframe.addEventListener('load', handshake);
+      handshake(); // in case it is already loaded (cached)
+    });
+  }
+
+  function showYouTubeFallback(iframe){
+    const frame = iframe.closest('.fb-video-frame, .fv-frame');
+    if (!frame || frame.dataset.fallbackShown === '1') return;
+    frame.dataset.fallbackShown = '1';
+    frame.classList.add('has-embed-fallback');
+    frame.innerHTML = youtubeFallbackHtml(iframe.dataset.ytId);
+  }
+
+  window.addEventListener('message', ev => {
+    if (ev.origin !== 'https://www.youtube.com') return;
+    let data;
+    try { data = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data; }
+    catch (_e) { return; }
+    if (!data) return;
+    // The widget reports errors either as a bare onError event or inside an
+    // infoDelivery payload, depending on client version.
+    const code = data.event === 'onError' ? Number(data.info)
+      : (data.info && data.info.errorCode != null) ? Number(data.info.errorCode)
+      : null;
+    if (code === null || Number.isNaN(code) || !YT_BLOCKED_ERROR_CODES.has(code)) return;
+    const hit = ytPlayers.find(f => f.contentWindow === ev.source);
+    if (hit) showYouTubeFallback(hit);
+  });
+
   // Only ever builds an iframe from a format-RE-validated provider+id pair —
   // never from raw/returned HTML, even though the pair was already validated
   // once server-side at generate/publish time. This is what keeps a
@@ -5377,7 +5640,7 @@
     const cap = caption ? `<div class="fb-video-cap">${caption}</div>` : '';
     const title = video.title ? String(video.title).replace(/"/g, '&quot;') : '';
     if (video.provider === 'youtube' && /^[A-Za-z0-9_-]{11}$/.test(video.id)) {
-      return `<div class="fb-video fb-video-embed"><div class="fb-video-frame"><iframe src="https://www.youtube.com/embed/${video.id}" title="${title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>${cap}</div>`;
+      return `<div class="fb-video fb-video-embed"><div class="fb-video-frame"><iframe src="${youtubeEmbedSrc(video.id)}" data-yt-id="${video.id}" title="${title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>${cap}</div>`;
     }
     if (video.provider === 'vimeo' && /^\d{6,12}$/.test(video.id)) {
       return `<div class="fb-video fb-video-embed"><div class="fb-video-frame"><iframe src="https://player.vimeo.com/video/${video.id}" title="${title}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>${cap}</div>`;
@@ -5672,8 +5935,11 @@
 
   function railItem(s, opts){
     opts = opts || {};
+    // .rail-item-thumb, not .rail-thumb — that name is already the Score
+    // Rail's drag-handle elsewhere on this page (see its CSS comment) and
+    // colliding with it is exactly what broke this card's layout.
     const thumb = (opts.thumb && s.image)
-      ? `<span class="rail-thumb"><img src="${thumbAssetUrl(s.image)}" alt="" width="184" height="184" loading="lazy" decoding="async"></span>` : '';
+      ? `<span class="rail-item-thumb"><img src="${thumbAssetUrl(s.image)}" alt="" width="184" height="184" loading="lazy" decoding="async"></span>` : '';
     const cls = 'rail-item' + (thumb ? ' has-thumb' : '');
     return `<a class="${cls}" href="${storyUrl(s.id)}" data-story-link="${s.id}">
         ${thumb}
@@ -5712,6 +5978,40 @@
       </section>`;
   }
 
+  // Item H — subtle editorial credit line under the hero image, e.g.
+  // "Photo: EJ Hersom / DVIDS · Public Domain". imageCredit/imageSourceUrl/
+  // imageRights are additive and optional (see websitePublisher.js's
+  // buildStoryObject) — a story published before this existed, or one
+  // without a hero image at all, has none of them, so this returns '' and
+  // renders exactly as before. Only the fields that exist are shown, with
+  // no dangling separator when one is missing.
+  //
+  // Unlike the rest of this renderer, this text is explicitly escaped:
+  // credit/rights strings can originate from third-party metadata (a
+  // Wikimedia Commons Artist/Credit/License field via Image Discovery,
+  // see lib/imageDiscovery.js) rather than being typed by an editor like
+  // the headline/dek/body are, so they get the same treatment as the one
+  // other place on this page that renders less-trusted text (search
+  // results, escapeHtml above) — never innerHTML'd as raw stored HTML.
+  function heroImageAttributionHtml(s){
+    if (!s.imageCredit && !s.imageRights) return '';
+    const parts = [];
+    if (s.imageCredit) parts.push(escapeHtml(s.imageCredit));
+    if (s.imageRights) parts.push(escapeHtml(s.imageRights));
+    const text = 'Photo: ' + parts.join(' · ');
+    // Only a plain http/https link may be clickable — anything else (a
+    // relative path, javascript:, a malformed value) renders as plain text.
+    const safeUrl = s.imageSourceUrl && /^https?:\/\//i.test(s.imageSourceUrl) ? s.imageSourceUrl : null;
+    const inner = safeUrl
+      ? `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer">${text}</a>`
+      : text;
+    // .article-hero-cap already exists in this file's own stylesheet
+    // (a small uppercase caption style with a top border) but was never
+    // wired to anything — reused here rather than adding a second style
+    // for the same purpose.
+    return `<figcaption class="article-hero-cap">${inner}</figcaption>`;
+  }
+
   function renderArticlePage(s){
     const statusCls  = STORY_STATUS_CLASS[s.status] || '';
     const paragraphs = Array.isArray(s.body) ? s.body : [];
@@ -5722,7 +6022,7 @@
     // The card thumbnail and the article hero are the same asset; only the
     // presentation differs. No image means no frame at all.
     const hero = s.image
-      ? `<figure class="article-hero"><img src="${assetUrl(s.image)}" alt=""></figure>` : '';
+      ? `<figure class="article-hero"><img src="${assetUrl(s.image)}" alt="">${heroImageAttributionHtml(s)}</figure>` : '';
 
     // Outlet and date only. sourceUrl stays in the data for editorial
     // verification and is deliberately never rendered.
@@ -5765,6 +6065,7 @@
       a.addEventListener('click', e => { e.preventDefault(); navigate(homeUrl()); });
     });
     wireStoryLinks(articleView);
+    wireYouTubeFallbacks(articleView);
   }
 
   // Any element carrying data-story-link routes to the article in the same tab.

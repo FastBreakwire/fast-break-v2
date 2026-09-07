@@ -8,7 +8,40 @@
  * site keeps working in development.
  *
  * Run:  HIGHLIGHTLY_API_KEY=... node server/api.js
+ * — or just `npm run api` with server/.env present (loaded below).
  */
+
+const fs = require('fs');
+const path = require('path');
+
+// Minimal, dependency-free .env loader — this project ships with zero npm
+// dependencies (no node_modules here), so pulling in the `dotenv` package
+// would break `npm run api` outright rather than fix anything. Confirmed
+// root cause of "league logos disappeared": server/.env genuinely holds a
+// working HIGHLIGHTLY_API_KEY, but nothing ever loaded it into
+// process.env before highlightlyProvider.js reads it at require-time, so a
+// plain `npm run api` silently ran in DEMO mode (empty competitionLogos),
+// which is exactly what left every football league card showing the
+// lettermark-abbreviation fallback instead of a real crest. A real,
+// already-exported environment variable always wins over the file — this
+// only fills in what isn't already set, same precedence `dotenv` itself uses.
+(function loadDotEnv() {
+  const envPath = path.join(__dirname, '.env');
+  let raw;
+  try { raw = fs.readFileSync(envPath, 'utf8'); } catch (_err) { return; }
+  raw.split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) return;
+    const eq = trimmed.indexOf('=');
+    if (eq === -1) return;
+    const key = trimmed.slice(0, eq).trim();
+    let value = trimmed.slice(eq + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    if (key && !(key in process.env)) process.env[key] = value;
+  });
+})();
 
 const http = require('http');
 const provider = require('./highlightlyProvider');
