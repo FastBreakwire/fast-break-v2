@@ -30,6 +30,24 @@
   // ===========================================================================
   const ESPN = (sport, abbr) => `https://a.espncdn.com/i/teamlogos/${sport}/500/${abbr}.png`;
 
+  // A league's OWN mark does not live under its sport's team path. ESPN keys
+  // competition marks separately, under `teamlogos/leagues/500/{id}.png` — the
+  // sport-path form only ever resolves for a TEAM abbreviation. NBA happens to
+  // work either way (nba/500/nba.png is a real file), which is why the
+  // sport-path form looked correct until an american-football league needed it:
+  // nfl/500/nfl.png is a 404, so the row silently fell back to a lettermark.
+  // Verified 200 + 500x500 PNG at the time of writing; same hotlink caveat as
+  // the note above applies.
+  const ESPN_LEAGUE = (id) => `https://a.espncdn.com/i/teamlogos/leagues/500/${id}.png`;
+
+  // The NCAA's mark is not a "league" in ESPN's competition path at all — it
+  // sits in the generic misc_logos bucket. Verified 200 + 500x500 PNG (the
+  // official blue NCAA disc). Deliberately NOT `misc_logos/500/ncaa_football.png`,
+  // which also resolves but is a black silhouette pictogram of a quarterback on
+  // a transparent background: not a competition mark, and near-invisible on the
+  // dark header this renders against.
+  const ESPN_NCAA = 'https://a.espncdn.com/i/espn/misc_logos/500/ncaa.png';
+
   const SUB_ITEMS = ["Latest", "Scores", "Standings", "Teams", "Players"];
 
   const SPORTS_CFG = [
@@ -73,17 +91,20 @@
   // Deliberately NO entry in TEAMS_CFG: FBS is 130+ programmes and Fast Break
   // has no verified logo/roster set for them. An empty team list is an honest
   // gap that renders as "no teams yet" — inventing a partial directory would
-  // be worse than showing none. `logo: null` for the same reason: ESPN's CDN
-  // has no verified league mark for NCAA football at the path scheme used
-  // above, so this renders a lettermark rather than a guessed URL.
+  // be worse than showing none. The league MARK, however, is now resolved: see
+  // ESPN_NCAA above — a verified official NCAA asset, not a guessed URL. (The
+  // provider supplies no competition logo here: getCompetitionLogos() only
+  // covers leagues with a Highlightly /leagues endpoint, which the
+  // american-football vertical does not have, so this static entry is the
+  // only source of branding for both NFL and College Football.)
   const LEAGUES_CFG = [
     { id:"nba",        sport:"basketball",      name:"NBA",             country:"US", logo:ESPN("nba","nba") },
     { id:"wnba",       sport:"basketball",      name:"WNBA",            country:"US", logo:ESPN("wnba","wnba") },
     { id:"epl",        sport:"football",        name:"Premier League",  country:"EN", logo:null },
     { id:"laliga",     sport:"football",        name:"La Liga",         country:"ES", logo:null },
     { id:"bundesliga", sport:"football",        name:"Bundesliga",      country:"DE", logo:null },
-    { id:"nfl",        sport:"americanfootball",name:"NFL",             country:"US", logo:ESPN("nfl","nfl") },
-    { id:"college-football", sport:"americanfootball", name:"College Football", country:"US", logo:null }
+    { id:"nfl",        sport:"americanfootball",name:"NFL",             country:"US", logo:ESPN_LEAGUE("nfl") },
+    { id:"college-football", sport:"americanfootball", name:"College Football", country:"US", logo:ESPN_NCAA }
   ];
 
   // Teams. NBA/WNBA/NFL use ESPN's verified abbreviation-based logo path.

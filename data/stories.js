@@ -1966,5 +1966,47 @@ window.FB_STORIES = [
     imageCredit: "Depositphotos®", imageSourceUrl: "https://depositphotos.com/editorial/february-15-2020-brazil-in-this-photo-illustration-the-national-collegiate-athletic-association-ncaa-website-344773882.html", imageRights: "rafapress ID 344773882",
     articleMode: "news", continuityKey: null,
     priority: "normal"
+  },
+
+  {
+    id: "nfl-seattle-seahawks-2026-09-10",
+    sport: "americanfootball", league: "nfl", category: "game", status: "confirmed",
+    headline: "Seahawks outlast Patriots 13-10 in fourth-quarter surge",
+    dek: "Seattle scored 10 unanswered points in the fourth quarter to defeat New England at home. The Seahawks improved their efficiency in the final period after a tightly contested first three quarters.",
+    summary: "Seattle Seahawks 13, New England Patriots 10 — Seahawks win on September 10, 2026.",
+    body: [
+      "The Seattle Seahawks beat the New England Patriots 13-10 at Lumen Field, winning a low-scoring contest defined by a scoreless first quarter and a decisive fourth-quarter push. The Seahawks scored 10 points in the final period to claim victory by a 3-point margin.",
+      "The Patriots took an early lead, scoring 7 points in the second quarter to reach halftime with the advantage. Seattle responded with 3 points in the third quarter, and New England matched that with 3 more to keep the game competitive entering the fourth. The Seahawks then outscored the Patriots 10-0 in the final frame to secure the win.",
+      "Seattle finished with 285 total yards, outpacing New England's 277. The Seahawks completed 17 of 24 passes for 188 yards and a pass efficiency rating of 0.71, while the Patriots completed 23 of 33 passes for 168 yards and a rating of 0.70. New England rushed for 109 yards on 31 attempts; Seattle managed 97 yards on 22 rushes. The Patriots committed three turnovers to Seattle's zero, but the Seahawks were penalized more frequently with 10 penalties for 98 yards compared to seven penalties for 50 yards for New England."
+    ],
+    source: "Official match data",
+    sourceUrl: null,
+    publishedAt: "2026-09-10", updatedAt: null,
+    image: null, video: null,
+    articleMode: "performance", continuityKey: null,
+    priority: "normal",
+    gameResult: true
+  },
+
+  {
+    id: "laliga-fc-barcelona-2026-09-10",
+    sport: "football", league: "laliga", category: "league", status: "report",
+    headline: "Deco explains Gordon preference over Rashford as Barcelona reinforces squad",
+    dek: "Barcelona's sporting director has outlined why the club chose to sign Anthony Gordon from Newcastle rather than make Marcus Rashford's loan permanent, citing stylistic fit with head coach Hansi Flick's system.",
+    summary: "Deco says Gordon's playing style aligns better with Barcelona's tactical approach than Rashford's did, explaining the club's summer transfer strategy.",
+    body: [
+      "Barcelona sporting director Deco has clarified the club's decision to pursue Anthony Gordon instead of retaining Marcus Rashford ahead of the 2026/27 season. In an interview with Catalan radio station RAC1, Deco said Gordon's style of play matched the requirements of head coach Hansi Flick more closely than the England forward's did.",
+      "Rashford spent last season on loan at Barcelona, scoring 14 goals across all competitions as the club won La Liga and the Copa del Rey. Barcelona held the option to sign him permanently for £30.3m (35 million euros) but chose not to exercise it, allowing the Manchester United forward to return to Old Trafford. Gordon joined from Newcastle United in a deal worth over 80 million euros, making him one of Barcelona's two most expensive signings alongside Manchester City midfielder Rodri.",
+      "Deco praised Rashford's contributions while explaining the rationale for the shift. \"We are extremely grateful to Rashford,\" he said. \"He contributed a lot last season, but our idea of play is much more linked to Anthony's. His style fits with what the coach is looking for.\" Gordon, 25, has made an early impression since his arrival, laying on five assists in his opening five matches, though he is yet to score.",
+      "Both Gordon and Rodri were brought in to address specific weaknesses in the squad, according to Deco, as Barcelona continued their rebuild following a successful 2025/26 campaign."
+    ],
+    source: "BBC Sport",
+    sourceUrl: "https://www.bbc.co.uk/sport/football/articles/clyl7njnk46o?at_medium=RSS&at_campaign=rss",
+    publishedAt: "2026-09-10", updatedAt: null,
+    image: "assets/laliga-fc-barcelona-2026-09-10.jpg", video: null,
+    imageCredit: "Depositphotos", imageSourceUrl: "https://depositphotos.com/editorial/anthony-gordon-newcastle-united-arrives-carabao-cup-quarter-final-match-856778834.html", imageRights: "856778834",
+    articleMode: "news", continuityKey: null,
+    priority: "normal",
+    featured: true
   }
 ];

@@ -2604,7 +2604,11 @@
         { id:'epl',        sport:'football',         name:'Premier League', country:'EN', logo:null },
         { id:'laliga',     sport:'football',         name:'La Liga',        country:'ES', logo:null },
         { id:'bundesliga', sport:'football',         name:'Bundesliga',     country:'DE', logo:null },
-        { id:'nfl',        sport:'americanfootball', name:'NFL',            country:'US', logo:_E('nfl','nfl') }
+        // League marks live under ESPN's `leagues` path, not the sport's team
+        // path (nfl/500/nfl.png is a 404) — mirrors data/sports.js's ESPN_LEAGUE.
+        { id:'nfl',        sport:'americanfootball', name:'NFL',            country:'US', logo:_E('leagues','nfl') },
+        { id:'college-football', sport:'americanfootball', name:'College Football', country:'US',
+          logo:'https://a.espncdn.com/i/espn/misc_logos/500/ncaa.png' }
       ],
       TEAMS_CFG: [],
       COMPETITION_TIMEZONES: {
