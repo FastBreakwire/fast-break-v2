@@ -1069,6 +1069,161 @@ async function getPlayers({ league, teamId, name } = {}) {
   return rows(data).map(r => mapPlayer(r, league));
 }
 
+// ---------------------------------------------------------------------------
+// RECENT FINALS — homepage "Latest Results" module. A final game carries no
+// explicit completion timestamp anywhere in the provider's response (no
+// endTime/finishedAt field exists on a match, live or final), so recency is
+// judged from the one real timestamp every game does carry — startTime — a
+// genuine absolute instant, not a calendar date string. That is exactly what
+// makes this safe across timezones: "final AND started within the last N
+// hours" holds regardless of which side of midnight (in ANY zone) the game
+// actually fell on, unlike a naive `gameDate === yesterday` calendar check.
+//
+// The underlying /matches endpoint only answers for a SPECIFIC calendar date
+// at a time (see getGames above), so covering an N-hour trailing window means
+// querying every calendar date — in the competition's own editorial zone,
+// same convention as everywhere else in this file — that window could touch:
+// normally 1-2 dates, occasionally 3 for a window spanning two midnights.
+// Each league:date combination is cached briefly so one homepage load never
+// re-fetches a date another reader's load already fetched moments earlier.
+// ---------------------------------------------------------------------------
+// A date strictly before "today" (in the competition's own zone) can never
+// gain a new Final after the fact — it's cached far longer than "today",
+// which can still flip from live/scheduled to final at any moment. Cuts
+// the repeat-request volume of the LATEST_SLATE walk-back (below) a lot,
+// since most of the dates it inspects are already safely in the past.
+const RECENT_FINALS_TODAY_CACHE_MS = 3 * 60 * 1000;
+const RECENT_FINALS_PAST_CACHE_MS = 30 * 60 * 1000;
+const recentFinalsDateCache = new Map(); // `${league}:${date}` -> { at, games }
+
+function dateStringInZone(ms, timeZone) {
+  const p = zonedParts(ms, timeZone);
+  const pad = n => String(n).padStart(2, '0');
+  return `${p.y}-${pad(p.mo)}-${pad(p.d)}`;
+}
+
+async function getGamesForDateCached(league, date, timeZone) {
+  const key = `${league}:${date}`;
+  const isToday = date === dateStringInZone(Date.now(), timeZone);
+  const ttl = isToday ? RECENT_FINALS_TODAY_CACHE_MS : RECENT_FINALS_PAST_CACHE_MS;
+  const cached = recentFinalsDateCache.get(key);
+  if (cached && Date.now() - cached.at < ttl) return cached.games;
+  const games = await getGames({ league, date });
+  recentFinalsDateCache.set(key, { at: Date.now(), games });
+  return games;
+}
+
+// One competition's Finals from the last `hours` hours, freshest first.
+// Never returns a live game — a game that is still live is not final,
+// however long ago it started; the status check below is independent of,
+// and takes priority over, the timing math.
+async function getRecentFinals({ league, hours = 36 } = {}) {
+  const cfg = LEAGUE_CONFIG[league];
+  if (!cfg) return [];
+
+  const now = Date.now();
+  const windowStart = now - hours * 60 * 60 * 1000;
+  const timeZone = COMPETITION_TIMEZONES[league] || 'UTC';
+
+  // Every distinct calendar date (in this competition's own zone) the
+  // window touches, plus "today" as a final safety net — at most 3 dates
+  // for the largest window this feature ever asks for (36h can cross at
+  // most two midnights).
+  const dates = [];
+  for (let ms = windowStart; ms <= now; ms += 24 * 60 * 60 * 1000) {
+    const d = dateStringInZone(ms, timeZone);
+    if (!dates.includes(d)) dates.push(d);
+  }
+  const todayStr = dateStringInZone(now, timeZone);
+  if (!dates.includes(todayStr)) dates.push(todayStr);
+
+  const perDate = await Promise.all(dates.map(d => getGamesForDateCached(league, d, timeZone)));
+  const seenIds = new Set();
+  const games = [];
+  perDate.flat().forEach(g => {
+    if (seenIds.has(g.id)) return;
+    seenIds.add(g.id);
+    games.push(g);
+  });
+
+  return games
+    .filter(g => {
+      if (g.status !== 'final') return false; // never a live game, however old its kickoff
+      if (!g.startTime) return false;
+      const t = Date.parse(g.startTime);
+      return Number.isFinite(t) && t <= now && t >= windowStart;
+    })
+    .sort((a, b) => Date.parse(b.startTime) - Date.parse(a.startTime)); // most recently kicked off first
+}
+
+// LATEST COMPLETED SLATE — the fallback used when a competition has no
+// Final within RECENT_FINALS_FALLBACK_HOURS (e.g. College Football's most
+// recent Saturday, well outside a 36h window by Tuesday). Walks backward
+// ONE CALENDAR DAY AT A TIME (in the competition's own zone, starting the
+// day before "today") until it finds a date with at least one Final, and
+// returns every Final from THAT ONE DATE — a whole matchday/slate, not a
+// single game plucked out of a longer stretch. Stops at maxHours/24 days
+// with nothing found rather than reaching further back and calling
+// something genuinely stale a "latest" result. Never fabricates a game;
+// an empty return here is exactly as valid an answer as a full slate.
+const LATEST_SLATE_MAX_HOURS = 168; // 7 days — a conservative ceiling, not the preferred age
+async function getLatestSlate({ league, maxHours = LATEST_SLATE_MAX_HOURS } = {}) {
+  const cfg = LEAGUE_CONFIG[league];
+  if (!cfg) return [];
+
+  const now = Date.now();
+  const timeZone = COMPETITION_TIMEZONES[league] || 'UTC';
+  const maxDaysBack = Math.max(1, Math.ceil(maxHours / 24));
+
+  for (let daysBack = 1; daysBack <= maxDaysBack; daysBack++) {
+    const dateStr = dateStringInZone(now - daysBack * 24 * 60 * 60 * 1000, timeZone);
+    const games = await getGamesForDateCached(league, dateStr, timeZone);
+    const finals = games
+      .filter(g => g.status === 'final' && g.startTime && Date.parse(g.startTime) <= now && (now - Date.parse(g.startTime)) / 3600000 <= maxHours)
+      .sort((a, b) => Date.parse(b.startTime) - Date.parse(a.startTime));
+    if (finals.length) return finals;
+  }
+  return [];
+}
+
+// One competition's Recent Results, decided independently of every other
+// competition (this is the core fix for "only Champions League ever
+// showed up" — the OLD logic picked one window globally across every
+// league at once, so a competition whose latest action was a few days ago
+// disappeared entirely the moment ANY other competition had a fresher
+// Final). Each competition tries progressively wider nets on its own:
+//   1. a Final within RECENT_FINALS_PRIMARY_HOURS  -> use it
+//   2. else a Final within RECENT_FINALS_FALLBACK_HOURS -> use it
+//   3. else its latest completed slate, up to LATEST_SLATE_MAX_HOURS old -> use it
+//   4. else genuinely nothing to show for this competition right now
+// Mirrored client-side in index.html (same constant names) purely for
+// documentation — the actual tiered decision now lives here, once.
+const RECENT_FINALS_PRIMARY_HOURS = 18;
+const RECENT_FINALS_FALLBACK_HOURS = 36;
+async function getRecentFinalsForLeague(league) {
+  const primary = await getRecentFinals({ league, hours: RECENT_FINALS_PRIMARY_HOURS });
+  if (primary.length) return primary;
+  const fallback = await getRecentFinals({ league, hours: RECENT_FINALS_FALLBACK_HOURS });
+  if (fallback.length) return fallback;
+  return getLatestSlate({ league, maxHours: LATEST_SLATE_MAX_HOURS });
+}
+
+// All supported competitions' Recent Results in one call — the homepage's
+// Latest Results module groups by competition and needs every league's data
+// at once rather than issuing one request per competition tab. Leagues are
+// fetched in parallel; one league's provider error never blocks the others.
+async function getRecentFinalsAllLeagues() {
+  const pairs = await Promise.all(LEAGUE_IDS.map(async league => {
+    try {
+      return [league, await getRecentFinalsForLeague(league)];
+    } catch (err) {
+      console.error('[getRecentFinalsAllLeagues]', league, err.code || err.message);
+      return [league, []];
+    }
+  }));
+  return Object.fromEntries(pairs);
+}
+
 module.exports = {
   name: 'highlightly',
   isEnabled,
@@ -1080,6 +1235,10 @@ module.exports = {
   getTeams,
   getCompetitionLogos,
   getPlayers,
+  getRecentFinals,
+  getLatestSlate,
+  getRecentFinalsForLeague,
+  getRecentFinalsAllLeagues,
   SUPPORTED_LEAGUES: LEAGUE_IDS,
   // exported for tests/inspection only — not part of the provider contract
   LEAGUE_CONFIG

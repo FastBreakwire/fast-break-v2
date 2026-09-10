@@ -204,9 +204,30 @@ async function handleCompetitionLogos() {
   }
 }
 
+// RECENT FINALS — the all-sports homepage's "Latest Results" module. Every
+// supported competition's Recent Results in one call, grouped by league.
+// The tiered per-competition window decision (18h -> 36h -> latest
+// completed slate, up to 7 days) now lives entirely in
+// highlightlyProvider.js's getRecentFinalsForLeague — this route no longer
+// takes an `hours` override, since the window is no longer a single value
+// a caller could usefully pick; it's decided independently per league.
+async function handleRecentFinals() {
+  if (!provider.isEnabled()) {
+    return { status: 200, body: { finals: {}, source: 'demo' } };
+  }
+  try {
+    const finals = await provider.getRecentFinalsAllLeagues();
+    return { status: 200, body: { finals, source: provider.name } };
+  } catch (err) {
+    console.error('[api/recentFinals]', err.code || err.message);
+    return { status: 200, body: { finals: {}, source: 'demo', providerError: err.code || 'PROVIDER_ERROR' } };
+  }
+}
+
 const ROUTES = {
   '/api/games': handleGames,
   '/api/schedule': handleSchedule,
+  '/api/recentFinals': handleRecentFinals,
   '/api/match': handleMatch,
   '/api/standings': passthrough('getStandings'),
   '/api/teams': passthrough('getTeams'),

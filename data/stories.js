@@ -55,17 +55,22 @@
  *                  // 'bundesliga:tracker:man-of-the-match:2026-27') so a
  *                  // later Scout run can offer an in-place UPDATE instead
  *                  // of a duplicate. Never used to auto-publish anything.
- *     featured,    // EDITORIAL PLACEMENT — HERO STORY, the ONE manually
- *                  // selected global homepage Hero (Control Center's draft
- *                  // editor, one toggle, never hand-authored free text).
- *                  // Only ever one story should carry featured:true at a
- *                  // time; the editor enforces this by demoting whichever
- *                  // other story previously had it, at both the draft level
- *                  // and (if published) this file, whenever a NEW story is
- *                  // turned on. featured:true ALSO makes that same story
- *                  // the Hero / Big Story on its own league page (and only
- *                  // that league — every other league's page is untouched),
- *                  // and always implies showOnHomepage:true (below).
+ *     featured,    // EDITORIAL PLACEMENT — HERO STORY, a manually selected
+ *                  // global homepage Hero (Control Center's draft editor,
+ *                  // one toggle, never hand-authored free text). MULTI-HERO
+ *                  // (2026-09): any number of stories may carry featured:true
+ *                  // at once — turning it on for one story never demotes any
+ *                  // other. index.html's homepage rotates through every
+ *                  // featured:true story in the global Hero slot (freshest
+ *                  // first, same ranking as everywhere else on the page; see
+ *                  // renderHomeLead/showHero); a single one is simply static.
+ *                  // featured:true ALSO makes that same story the Hero / Big
+ *                  // Story on its own league page (and only that league —
+ *                  // every other league's page is untouched); a league page
+ *                  // never rotates — if more than one of that league's
+ *                  // stories is featured, the freshest one wins there (same
+ *                  // tie-break as everywhere else — see renderStories()).
+ *                  // Always implies showOnHomepage:true (below).
  *                  // If no story in a given scope (global, or one league)
  *                  // has featured:true, the existing automatic freshness
  *                  // ranking decides the Hero/Big Story exactly as before —
@@ -74,17 +79,6 @@
  *                  // skipped for the automatic (non-featured) global Hero
  *                  // slot by default — featured:true is its one explicit
  *                  // manual override — see index.html's heroEligible().
- *                  //
- *                  // NOTE (as of the EDITORIAL PLACEMENT feature landing):
- *                  // several stories in this file still carry featured:true
- *                  // from this field's PRIOR meaning (a purely cosmetic,
- *                  // frequently-stale "one per league" annotation the
- *                  // general ranking never read). Those now behave as real,
- *                  // active Hero pins for their league — and the freshest
- *                  // one among them wins the GLOBAL Hero too, which may not
- *                  // be the intended editorial choice. Review/clear stale
- *                  // featured:true entries via the Control Center's HERO
- *                  // STORY toggle rather than hand-editing this file.
  *     showOnHomepage, // EDITORIAL PLACEMENT — SHOW ON HOMEPAGE. Omitted or
  *                  // true (the default — every story published before this
  *                  // field existed is unaffected): eligible for the global
@@ -1745,7 +1739,232 @@ window.FB_STORIES = [
     publishedAt: "2026-09-07", updatedAt: null,
     image: "assets/nfl-giants-release-wide-receiver-2026-09-07.jpg", video: null,
     articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "college-football-florida-state-seminoles-2026-09-07",
+    sport: "americanfootball", league: "college-football", category: "game", status: "confirmed",
+    headline: "SMU Tops Florida State 27-24 on the Road",
+    dek: "The Mustangs improved to a perfect record in road contests with a three-point victory over the Seminoles at Doak Campbell Stadium.",
+    summary: "SMU won 27-24 at Florida State in regular-season college football on September 7, 2026, behind a 430-yard passing performance.",
+    body: [
+      "SMU defeated Florida State 27-24 on the road in regular-season college football action, securing a three-point win at Doak Campbell Stadium in Tallahassee.",
+      "The Mustangs' offense was led by their passing attack, which generated 430 yards and a pass efficiency of 0.72. SMU gained 585 total yards and 23 first downs. Florida State managed 324 total yards—125 passing and 199 rushing—with a pass efficiency of 0.52.",
+      "The scoring was distributed evenly early: both teams scored 7 points in the first quarter. SMU pulled ahead 17-10 at halftime after outscoring Florida State 10-3 in the second quarter. Florida State cut into the lead with 7 points in the third quarter while SMU did not score, trimming the deficit. In the fourth quarter, both teams scored 10 points, but SMU's margin held.",
+      "SMU converted 8 of 14 third-down attempts, while Florida State converted 2 of 15. The Mustangs committed 4 turnovers—2 interceptions and 2 lost fumbles—to Florida State's 1 lost fumble. SMU also drew 6 penalties for 47 yards compared to Florida State's 3 penalties for 27 yards. Florida State held possession longer at 32:16 to SMU's 27:44."
+    ],
+    source: "Official match data",
+    sourceUrl: null,
+    publishedAt: "2026-09-07", updatedAt: null,
+    image: null, video: {"provider":"youtube","id":"hpqo7nFX7wg","title":"SMU vs. Florida State Highlights | 2026 ACC Football","sourceName":"ACC Digital Network","sourceUrl":"https://www.youtube.com/watch?v=hpqo7nFX7wg","official":false,"embeddable":true,"rightsStatus":"EMBED_ALLOWED"},
+    articleMode: "performance", continuityKey: null,
+    priority: "normal",
+    gameResult: true
+  },
+
+  {
+    id: "nfl-gonzalez-agrees-to-record-2026-09-08",
+    sport: "americanfootball", league: "nfl", category: "contract", status: "report",
+    headline: "Gonzalez agrees to record-breaking extension with Patriots",
+    dek: "The cornerback has signed a four-year deal worth $135 million, becoming the highest-paid player at his position in NFL history.",
+    summary: "Christian Gonzalez and the New England Patriots have agreed to a four-year, $135 million extension that makes Gonzalez the highest-paid cornerback in NFL history.",
+    body: [
+      "# Christian Gonzalez agrees to record $135M Patriots extension",
+      "The New England Patriots have agreed to a four-year, $135 million extension with star cornerback Christian Gonzalez, according to ESPN.",
+      "The deal includes $102 million guaranteed*and a $33 million signing bonus, making Gonzalez the highest-paid cornerback in NFL history at $33.75 million per year.",
+      "The 24-year-old surpasses Devon Witherspoon, who signed a four-year, $132 million extension with Seattle last month.",
+      "Gonzalez, the No. 17 pick in the 2023 NFL Draft, has developed into one of New England’s most important defensive players and has earned both Pro Bowl and All-Pro honors.",
+      "The extension settles one of the Patriots’ biggest offseason storylines just before the start of the 2026 season."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/nfl/story/_/id/49865736/sources-christian-gonzalez-patriots-reach-4-year-135m-deal",
+    publishedAt: "2026-09-08", updatedAt: null,
+    image: "assets/nfl-gonzalez-agrees-to-record-2026-09-08.jpg", video: null,
+    articleMode: "news", continuityKey: null,
     priority: "normal",
     featured: true
+  },
+
+  {
+    id: "ucl-club-brugge-kv-2026-09-08",
+    sport: "football", league: "ucl", category: "match", status: "confirmed",
+    headline: "Aston Villa wins 3-2 at Club Brugge in Champions League opener",
+    dek: "Aston Villa secured victory in the Champions League League Stage with a 3-2 away win over Club Brugge KV on September 8. The visitors overcame a dominant possession performance from the hosts to seal all three points.",
+    summary: "Aston Villa won 3-2 away at Club Brugge KV in Champions League League Stage play, with superior finishing compensating for Brugge's 64% possession advantage.",
+    body: [
+      "Aston Villa beat Club Brugge KV 3-2 in the Champions League League Stage on September 8, winning by a single goal despite conceding possession to their hosts. Playing away from home, Villa converted their chances more efficiently than Brugge, whose control of the ball did not translate into goals.",
+      "Aston Villa had 9 shots on target to Club Brugge's 7, and created 4 big chances compared to Brugge's 2. The visitors also generated a higher expected goals figure of 3 to 1.46. Club Brugge dominated possession at 64% to 36% and completed significantly more passes—602 to 338—but the Belgian side's 7 shots on target were not enough to prevent the defeat. Both teams received 3 yellow cards each; there were no red cards."
+    ],
+    source: "Official match data",
+    sourceUrl: null,
+    publishedAt: "2026-09-08", updatedAt: null,
+    image: "assets/ucl-club-brugge-kv-2026-09-08-2.jpg", video: null,
+    imageCredit: "m.iacobucci.tiscali.it", imageSourceUrl: "https://depositphotos.com/photos/aston-villa.html?filter=all&sh=75a2b7eac9b201b0b2775b19ff3ec4c6ebd101ea&qview=897282356", imageRights: "ID: 897282356",
+    articleMode: "performance", continuityKey: null,
+    priority: "normal",
+    gameResult: true
+  },
+
+  {
+    id: "epl-liverpool-2026-09-08",
+    sport: "football", league: "epl", category: "contract", status: "report",
+    headline: "Mac Allister signals he'll depart Liverpool to make room for Camara signing",
+    dek: "The midfielder has confirmed Liverpool won't offer him a new contract, positioning himself as the likely departure needed to fund and accommodate a move for AS Monaco's Lamine Camara in 2027.",
+    summary: "Alexis Mac Allister has indicated he will leave Liverpool after the club declined to offer him a contract extension, apparently clearing space for the club's pursuit of Lamine Camara.",
+    body: [
+      "Alexis Mac Allister has essentially confirmed his exit from Liverpool after revealing the club informed him it cannot offer a new contract. The midfielder, who arrived at Anfield at the same time as Ryan Gravenberch and Dominik Szoboszlai, has notably not received contract talks despite both teammates securing new deals.",
+      "\"I received the news that the club wasn't in a position to offer me a new contract which makes me sad. The fans don't need to worry, I will give 100% until last day I'm here,\" Mac Allister said. The statement follows Liverpool's decision not to renew his terms, leaving him without a deal extension as the only senior midfielder in that position.",
+      "According to reports, Liverpool's reluctance to extend Mac Allister stems from their interest in signing Lamine Camara from AS Monaco. Journalist Ben Jacobs reported that Liverpool contacted both Camara and Monaco on deadline day to signal an intention to move for the player in 2027. The club could not pursue that deal in 2026 because Mac Allister remained on the roster, and selling him would provide both the financial resources and free up a foreign player slot needed for Camara's arrival.",
+      "Liverpool previously sold Curtis Jones to Inter Milan while he was entering the final year of his contract, with Jones similarly absent from new deal discussions before the transfer."
+    ],
+    source: "Yahoo Sports",
+    sourceUrl: "https://sports.yahoo.com/articles/liverpool-star-confirms-hes-sacrifice-190500221.html",
+    publishedAt: "2026-09-08", updatedAt: null,
+    image: "assets/epl-liverpool-2026-09-08.jpg", video: null,
+    imageCredit: "Musiu0  ID 872900836", imageSourceUrl: "https://depositphotos.com/editorial/madrid-spain-march-2026-liga-match-real-madrid-elche-played-872900836.html", imageRights: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "ucl-kylian-scores-as-ethan-2026-09-08",
+    sport: "football", league: "ucl", category: "league", status: "report",
+    headline: "Kylian scores as Ethan sent off in Mbappé brothers' contrasting Champions League nights",
+    dek: "Kylian Mbappé netted in Real Madrid's win over Inter Milan while his younger brother Ethan was dismissed for Lille in a separate Champions League fixture on Tuesday.",
+    summary: "Kylian Mbappé scored in Real Madrid's 2-0 Champions League win against Inter Milan on Tuesday; his brother Ethan, playing for Lille, was sent off in the 56th minute of his side's 3-2 home loss to Real Betis.",
+    body: [
+      "The Mbappé brothers made contrasting impacts in their Champions League fixtures on Tuesday. Kylian struck for Real Madrid in a 2-0 victory over Inter Milan, while Ethan was dismissed for Lille during a 3-2 home defeat to Real Betis.",
+      "Kylian opened the scoring in the 14th minute with a first-time finish after winning possession deep in Inter's half. At 27 years old, the goal was his 71st in 99 Champions League appearances, moving him level with Real Madrid legend Raúl as the fifth all-time leading scorer in the competition.",
+      "Ethan's evening at Lille began promisingly. The 22-year-old registered his first Champions League assist in the 12th minute with a left-footed cross to the far post for Japan forward Ayase Ueda, helping Lille into an early lead. However, his night ended in the 56th minute when he was sent off following a video review for raising his right elbow to the face of Betis defender Natan in an off-the-ball incident. It was Ethan's first red card across all competitions. Tuesday's fixture was only his third Champions League appearance and his second start.",
+      "Both brothers are currently coached by an Ancelotti."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/soccer/story/_/id/49871988/kylian-ethan-mbappe-champions-league-goal-red-card-real-madrid-lille",
+    publishedAt: "2026-09-08", updatedAt: null,
+    image: "assets/ucl-kylian-scores-as-ethan-2026-09-08.jpg", video: null,
+    imageCredit: "depositphotos®", imageSourceUrl: "https://depositphotos.com/editorial/san-sebastian-spain-september-2024-league-match-real-sociedad-real-747337942.html", imageRights: "Musiu0 ID 747337942",
+    articleMode: "news", continuityKey: null,
+    priority: "normal",
+    featured: true
+  },
+
+  {
+    id: "ucl-mcginn-reaches-villa-milestone-2026-09-08",
+    sport: "football", league: "ucl", category: "match", status: "report",
+    headline: "McGinn reaches Villa milestone in Champions League opener",
+    dek: "Aston Villa's captain scored to become the club's all-time leading goalscorer in European competition as Villa defeated Club Brugge 3-2 in their opening UCL match.",
+    summary: "John McGinn scored in Villa's 3-2 Champions League win at Club Brugge, becoming Aston Villa's all-time leading scorer in UEFA competitions with his 12th European goal.",
+    body: [
+      "Aston Villa opened their Champions League campaign with a 3-2 victory over Belgian champions Club Brugge, with captain John McGinn scoring in the 11th minute to mark a significant personal milestone. McGinn's curling left-footed shot from outside the area found the top corner beyond goalkeeper Yann Sommer, giving Villa an early lead.",
+      "McGinn's goal was his 12th in European competition for Villa, surpassing Ollie Watkins' previous club record in UEFA competitions. Emiliano Buendía added a second for Villa shortly after, and Nicolas Jackson, who arrived from Chelsea this summer to replace Watkins, scored a third in the 43rd minute after Sommer ventured from his penalty area. Hugo Vetlesen equalized for Brugge in the 19th minute with a low left-footed strike, and Nicolo Tresoldi added a second from the penalty spot in the 61st.",
+      "The victory came after Villa endured three consecutive games without a goal in their Premier League campaign. The club underwent significant changes over the summer, with Watkins, Morgan Rogers, Emiliano Martínez, Ezri Konsa and Youri Tielemans among several key departures following last season's Europa League title win."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/soccer/report/_/gameId/401915426",
+    publishedAt: "2026-09-08", updatedAt: null,
+    image: "assets/ucl-mcginn-reaches-villa-milestone-2026-09-08.jpg", video: null,
+    imageCredit: "depositphotos", imageSourceUrl: "https://depositphotos.com/editorial/salzburg-austria-august-2026-john-mcginn-midfielders-aston-villa-2026-897282412.html", imageRights: "m.iacobucci.tiscali.it ID 897282412",
+    articleMode: "performance", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "nfl-sec-seeks-legal-authority-2026-09-08",
+    sport: "americanfootball", league: "nfl", category: "roster", status: "report",
+    headline: "SEC seeks legal authority to expel LSU in updated federal court filing",
+    dek: "The conference claims it has the votes to remove the school, citing its rules against pro athletes returning to college sports. LSU coach Lane Kiffin's recruitment efforts are central to the dispute.",
+    summary: "The SEC has filed updated legal language seeking authority to expel LSU over the school's attempts to roster players with professional contracts, according to a federal court filing.",
+    body: [
+      "The SEC is seeking legal authority to expel LSU, according to an updated federal court filing obtained by CBS Sports. The language is part of a legal suit first filed last week as the conference seeks to enforce rules prohibiting athletes with professional contracts from returning to college sports.",
+      "In the filing, the SEC argues that association with LSU violates the conference's First Amendment rights. 'Forced association with a member whose conduct is antithetical to the SEC's mission and core values violates the Conference's fundamental First Amendment rights,' the filing states, adding that LSU has 'rejected those core values repeatedly and publicly.' The conference claims an injunction is necessary to prevent harm to the SEC's name, brand, and media properties.",
+      "The dispute centers on LSU's effort to roster players Dae'Quan Wright and Zxavian Harris, both of whom have signed professional contracts. LSU did not include them on its roster for a game against Clemson on Saturday night, though a Louisiana judge previously granted a preliminary injunction clearing the way for them to play. The SEC's federal suit keeps their long-term eligibility uncertain. With two open spots on its roster, LSU could still add the duo at some point this season.",
+      "LSU coach Lane Kiffin's public statements and recruitment efforts regarding professionally signed players feature prominently in the dispute. Kiffin's name appears 32 times in the SEC's 44-page filing, with numerous references to his public comments about his recruiting strategy."
+    ],
+    source: "CBS Sports",
+    sourceUrl: "https://www.cbssports.com/college-football/news/sec-legal-authority-expel-lsu-court/",
+    publishedAt: "2026-09-08", updatedAt: null,
+    image: "assets/nfl-sec-seeks-legal-authority-2026-09-08.jpg", video: null,
+    imageCredit: "depositphotos", imageSourceUrl: "https://depositphotos.com/editorial/baton-rouge-louisiana-usa-2020-tiger-stadium-popularly-known-death-369333198.html", imageRights: "mfmegevand ID 369333198",
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "nba-grizzlies-2026-09-08",
+    sport: "basketball", league: "nba", category: "trade", status: "report",
+    headline: "Pelicans trade Hawkins and Peavy to Grizzlies for Johnson and Gibson",
+    dek: "New Orleans has dealt guard Jordan Hawkins and forward Micah Peavy, along with draft compensation, to Memphis in a reported four-player swap.",
+    summary: "The Pelicans have traded Jordan Hawkins, Micah Peavy, and future draft picks to the Grizzlies for AJ Johnson and Taj Gibson, according to reporting.",
+    body: [
+      "The Pelicans have traded Jordan Hawkins, Micah Peavy, a future second-round draft pick and a future second-round pick swap to the Grizzlies for AJ Johnson and Taj Gibson, according to ESPN reporting.",
+      "The deal involves four players and draft assets moving between the two teams. Hawkins and Peavy depart New Orleans while Johnson and Gibson arrive in exchange."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/nba/story/_/id/49868291/sources-pelicans-trade-jordan-hawkins-grizzlies-4-player-deal",
+    publishedAt: "2026-09-08", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "nfl-dallas-cowboys-2026-09-08",
+    sport: "americanfootball", league: "nfl", category: "roster", status: "report",
+    headline: "Jerry Jones says Cowboys have 'serious room financially' to pursue trades",
+    dek: "After restructuring three veteran contracts last week, Dallas has generated over $19 million in cap space and signaled openness to moves before the 2026 season.",
+    summary: "Cowboys owner Jerry Jones told 105.3 The Fan that the team has 'serious room financially' to make a trade following recent contract restructures.",
+    body: [
+      "Dallas Cowboys owner and general manager Jerry Jones said the team has created enough salary cap flexibility to pursue trades, according to remarks he made to 105.3 The Fan on Tuesday.",
+      "The Cowboys restructured the contracts of defensive tackle Kenny Clark, cornerback DaRon Bland, and tight end Jake Ferguson last week, generating a little more than $19 million in salary cap room. Jones characterized that move as a signal of the team's financial readiness. 'That does show that we have really viable, serious room financially to make a trade if we wanted to right now,' Jones said. According to NFLPA figures, Dallas currently has $33.6 million in cap room, which would roll over to the 2027 cap if unused.",
+      "Jones had previously indicated at the start of training camp that he would be willing to make a significant trade to strengthen the Cowboys' roster in 2026, even if it required trading away future draft picks. On Tuesday, he said general trade discussions have continued, though he noted that nothing is currently being negotiated."
+    ],
+    source: "ESPN",
+    sourceUrl: "https://www.espn.com/nfl/story/_/id/49869284/cowboys-serious-financial-room-make-trade-says-jones",
+    publishedAt: "2026-09-08", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "epl-liverpool-2026-09-08-2",
+    sport: "football", league: "epl", category: "contract", status: "report",
+    headline: "LIV Golf Files for Chapter 11 Bankruptcy, Owing Top Players $64 Million",
+    dek: "The Saudi-backed golf league and roughly 50 affiliated entities have entered Chapter 11 protection while owing a combined $64.2 million to 27 creditors, with 14 of its own players among the largest unsecured debtors.",
+    summary: "LIV Golf and affiliated entities filed for Chapter 11 bankruptcy, listing top players including Jon Rahm among creditors owed a combined $64.2 million.",
+    body: [
+      "LIV Golf New Jersey LLC and approximately 50 affiliated entities have filed for Chapter 11 bankruptcy protection in U.S. Bankruptcy Court. The filing allows the league to continue operating while a court-supervised restructuring determines how it will pay back creditors.",
+      "According to the bankruptcy filing, 14 of LIV Golf's own players rank among its 30 largest unsecured debts. Two-time major champion Jon Rahm leads the creditor list, followed by Bryson DeChambeau ($5.77 million), Dustin Johnson ($5.49 million), Cameron Smith ($4.84 million), Adrian Meronk ($4.44 million), and Tyrell Hatton ($3.37 million). All are owed money under their player contracts with the tour. The 27 named creditors with specified amounts are collectively owed $64.2 million.",
+      "Beyond player contracts, other creditors include IMG Media, owed $3.2 million as a vendor, and the United Nations refugee agency, listed as owed $1.72 million under a grant agreement, though LIV disputes that claim. Three additional creditors, including the rival Premier Golf League concept that predated LIV's launch, appear on the filing with undetermined dollar amounts because those debts are tied to ongoing lawsuits.",
+      "The restructuring plan could potentially settle some player debts through ownership stakes rather than direct cash payments, though details remain unclear as the bankruptcy process unfolds."
+    ],
+    source: "Yahoo Sports",
+    sourceUrl: "https://sports.yahoo.com/articles/liv-golf-owes-top-players-220257189.html",
+    publishedAt: "2026-09-08", updatedAt: null,
+    image: null, video: null,
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
+  },
+
+  {
+    id: "college-football-college-football-playoff-opens-2026-09-08",
+    sport: "americanfootball", league: "college-football", category: "league", status: "report",
+    headline: "College Football Playoff opens 30-day window to negotiate 24-team expansion with ESPN",
+    dek: "The CFP has triggered an exclusive negotiating period with ESPN to explore media rights for a potential 24-team field, with a formal Dec. 1 deadline to decide whether to expand for the 2027 season.",
+    summary: "The College Football Playoff announced a 30-day negotiating window with ESPN to discuss financial terms for potential expansion to 24 teams, ahead of a Dec. 1 deadline for a decision on 2027 changes.",
+    body: [
+      "The College Football Playoff triggered a 30-day exclusive negotiating window with ESPN on Tuesday to explore media rights and financial considerations for a potential 24-team field. The announcement represents an initial step toward evaluating expansion, though the CFP clarified the move does not constitute a commitment to expand.",
+      "The mandatory negotiating period will allow ESPN to present firm offers to the CFP. If no agreement is reached, the playoff field will remain at 12 teams for the 2027 season. The CFP has set a formal deadline of Dec. 1 to decide whether expansion will take effect in 2027.",
+      "Conference preferences on expansion remain divided. The Big Ten, ACC, and Big 12 have all advocated for a 24-team format, while the SEC has maintained support for a 16-team field. The SEC's commissioner has cited models suggesting his conference would see only marginal financial benefit from a 24-team playoff. Scheduling complications, particularly the potential elimination of conference championship games—which remain substantial revenue generators for conferences—remain a key consideration in the expansion debate.",
+      "The CFP noted it may also explore offers from other media companies during or after the 30-day window with ESPN, allowing it to evaluate multiple options before the December deadline."
+    ],
+    source: "CBS Sports",
+    sourceUrl: "https://www.cbssports.com/college-football/news/college-football-playoff-expansion-negotiating-window/",
+    publishedAt: "2026-09-08", updatedAt: null,
+    image: "assets/college-football-college-football-playoff-opens-2026-09-08.jpg", video: null,
+    imageCredit: "Depositphotos®", imageSourceUrl: "https://depositphotos.com/editorial/february-15-2020-brazil-in-this-photo-illustration-the-national-collegiate-athletic-association-ncaa-website-344773882.html", imageRights: "rafapress ID 344773882",
+    articleMode: "news", continuityKey: null,
+    priority: "normal"
   }
 ];

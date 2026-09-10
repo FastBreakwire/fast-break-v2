@@ -32,12 +32,24 @@ function stripHtmlTags(str) {
 
 function extractTag(itemXml, tagName) {
   // Prefer a CDATA payload if present, else plain text content.
+  //
+  // ORDER BUG FIX (2026-09): decodeEntities must run BEFORE stripHtmlTags,
+  // not after. A plain (non-CDATA) <description> — confirmed live against
+  // The Guardian's own football feed — carries its HTML entity-ENCODED
+  // ("&lt;p&gt;&lt;a href=...&gt;"), not literal. Stripping tags first finds
+  // nothing to strip (there are no literal '<'/'>' characters yet), and
+  // decoding entities afterwards then RECONSTRUCTS the very tags stripping
+  // was supposed to remove — which is exactly how raw "<p><a href=...>
+  // <strong>" markup was reaching NEWS cards. Decoding first is safe for a
+  // CDATA payload too (CDATA already contains literal HTML; decoding other
+  // entities like &amp;/&#8217; inside it is correct either way), so this
+  // single order swap fixes both branches uniformly.
   const cdataRe = new RegExp(`<${tagName}[^>]*>\\s*<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>\\s*<\\/${tagName}>`, 'i');
   const plainRe = new RegExp(`<${tagName}[^>]*>([\\s\\S]*?)<\\/${tagName}>`, 'i');
   const cdataMatch = itemXml.match(cdataRe);
-  if (cdataMatch) return decodeEntities(stripHtmlTags(cdataMatch[1]));
+  if (cdataMatch) return stripHtmlTags(decodeEntities(cdataMatch[1]));
   const plainMatch = itemXml.match(plainRe);
-  if (plainMatch) return decodeEntities(stripHtmlTags(plainMatch[1]));
+  if (plainMatch) return stripHtmlTags(decodeEntities(plainMatch[1]));
   return null;
 }
 

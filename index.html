@@ -354,6 +354,12 @@
   .score-rail-label.is-live{ color:var(--live-bright); }
   .score-rail-label.is-upcoming{ color:var(--cool-muted); }
   .score-rail-label.is-upcoming .pulse{ background:var(--cool-faint); animation:none; box-shadow:none; }
+  /* Latest Results: a completed game is neither "live" (red, pulsing) nor
+     really "upcoming" — same calm/still dot treatment as is-upcoming, under
+     its own name so the homepage results label reads correctly in the
+     markup rather than borrowing an unrelated state's class. */
+  .score-rail-label.is-final{ color:var(--cool-muted); }
+  .score-rail-label.is-final .pulse{ background:var(--cool-faint); animation:none; box-shadow:none; }
   .league-notice{
     margin-top:12px; font-family:var(--label); font-size:11px; letter-spacing:.04em;
     color:var(--cool-muted); border-left:2px solid var(--line-strong); padding-left:10px;
@@ -1010,7 +1016,12 @@
      layout goes side-by-side on desktop, explicitly no radius on the sides
      that border the article-content area) — rather than relying only on
      the card's overflow:hidden to imply rounding. */
-  .big-story.has-image .img-wrap{ overflow:hidden; height:320px; }
+  /* position:relative gives the Hero's own progress bars (.hero-bars.is-
+     overlay, appended here at render time — see attachHeroBars()) a
+     positioning context scoped to just the image, not the whole card —
+     inert for every other .big-story (league-page Big Story, which never
+     carries the Hero bars element at all). */
+  .big-story.has-image .img-wrap{ position:relative; overflow:hidden; height:320px; }
   .big-story.has-image .img-wrap img{
     width:100%; height:100%; object-fit:cover; display:block;
     border-radius:var(--r-lg) var(--r-lg) 0 0; /* stacked (mobile): image is the top edge */
@@ -1062,20 +1073,139 @@
   /* ============ CARD GRIDS ============ */
   .grid-editorial{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-5); }
 
-  /* ================= HOME LEAD (all sports front page) =================
-     Hero on the left, a narrow rail on the right holding the Featured Video
-     and Top News. Deliberately built from the existing card tokens
-     (--surface-card, --border-subtle, --radius-card) so it sits inside the
-     established system rather than introducing a second visual language.
-     Indigo stays the accent and red stays reserved for LIVE, per the token
-     block at the top of this file. */
-  .home-lead{ display:grid; grid-template-columns:minmax(0,2.05fr) minmax(0,1fr); gap:var(--sp-6); align-items:start; }
+  /* ================= HOME COLUMNS (all sports front page) =================
+     Hero + Latest share the left column so Latest begins directly under the
+     Hero; the right rail (Featured Video + Top News) occupies its own
+     column and ends independently, wherever its own (usually shorter)
+     content runs out — see the markup comment on #homeColumns for the full
+     "why" (this replaces a version where the rail's height dictated when
+     Latest could even start). grid-template-areas gives the two sections
+     that share column 1 their own named cells while the rail's single name
+     spans both rows automatically; row-gap is 0 because #homeLead and
+     #latest already carry their own vertical padding (.section) — a second
+     gap on top of that would just re-introduce empty space, the opposite of
+     the point of this change. Deliberately built from the existing card
+     tokens (--surface-card, --border-subtle, --radius-card) so it sits
+     inside the established system rather than introducing a second visual
+     language. Indigo stays the accent and red stays reserved for LIVE, per
+     the token block at the top of this file. */
+  .home-columns{
+    display:grid;
+    grid-template-columns:minmax(0,2.05fr) minmax(0,1fr);
+    grid-template-areas:"hero rail" "latest rail";
+    gap:0 var(--sp-6);
+    align-items:start;
+  }
+  #homeColumns > #homeLead{ grid-area:hero; }
+  #homeColumns > #homeLeadRail{ grid-area:rail; }
+  #homeColumns > #latest{ grid-area:latest; }
+  /* League-scoped pages (homeScope !== 'all'): Hero and the rail are both
+     hidden/empty, so the grid collapses to one natural column and Latest
+     (plus the Q-sections/Replay that follow it, outside this grid) uses
+     the full width — exactly the layout this page had before Latest
+     Results/multi-Hero existed. Toggled in renderHomeLead(). */
+  .home-columns.is-single{ grid-template-columns:1fr; grid-template-areas:"hero" "rail" "latest"; }
+  .home-columns.is-single > #homeLeadRail{ display:none; }
   .home-lead-main{ min-width:0; }
   /* The hero is the existing .big-story component — no second hero card
-     exists. Only its bottom margin is dropped here, since the grid owns the
-     spacing between the two columns. */
+     exists. Only its bottom margin is dropped here, since #homeLead's own
+     padding (.section) owns the spacing below it instead. */
   .home-lead-main .big-story{ margin-bottom:0; }
   .home-lead-rail{ display:flex; flex-direction:column; gap:var(--sp-5); min-width:0; }
+
+  /* Hero fades between rotating stories rather than jump-cutting — the
+     container's own size never changes, only what's inside it. Skipped
+     entirely for a reduced-motion reader, who gets an instant swap instead. */
+  #leadHero{ transition:opacity .32s var(--ease); }
+  #leadHero.is-fading{ opacity:0; }
+  @media (prefers-reduced-motion: reduce){ #leadHero{ transition:none; } }
+
+  /* ---- MULTI-HERO progress bars — premium, but genuinely visible and
+     easy to click; never shown for a single (or automatic-fallback) Hero.
+     One bar per rotating story; the active bar's fill animates left->right
+     over HERO_ROTATION_MS via a plain CSS width transition the script
+     starts/restarts (see showHero()/renderHeroBars()), so there is no
+     per-frame JS driving it.
+
+     PLACEMENT — attachHeroBars() (script) moves this one persistent
+     element onto the current Hero's own image (.is-overlay: bottom-
+     anchored inside .img-wrap, over a dark gradient scrim so it reads over
+     a light OR dark photo) whenever the Hero has an image; a Hero with no
+     image leaves it in its default static position right after #leadHero
+     (plain flow, no scrim needed — it's sitting on the app's own dark
+     surface, not a photo). Both variants share the same bar markup/sizing
+     below; only the wrapper's own position/background differs. ---- */
+  .hero-bars{ display:flex; gap:10px; margin-top:14px; }
+  .hero-bars.is-overlay{
+    position:absolute; left:0; right:0; bottom:0; z-index:3; margin-top:0;
+    padding:38px 20px 18px;
+    /* Strengthened (was .38/.64) — this is the one thing actually being
+       fixed here: some Hero photos (bright jerseys, white backgrounds)
+       left the bars genuinely hard to see. Still a local scrim, not a
+       panel: fully transparent at the top, so it fades out naturally well
+       before it reaches the headline/subject, and never darkens the image
+       as a whole. */
+    background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.16) 35%, rgba(0,0,0,.5) 68%, rgba(0,0,0,.8) 100%);
+    pointer-events:none; /* the gradient itself is decorative; only the buttons inside need clicks */
+  }
+  .hero-bars.is-overlay .hero-bar{ pointer-events:auto; }
+  /* The visible track/fill are a slim ~4px bar, but each BUTTON is a much
+     taller real hit target (item 13: clickable area larger than the
+     visible bar) — flex + align-items:center keeps the slim bar centered
+     inside that taller invisible button without any extra markup. */
+  .hero-bar{
+    flex:1; height:28px; padding:0; border:0; background:none; cursor:pointer;
+    position:relative; display:flex; align-items:center;
+  }
+  .hero-bar-track, .hero-bar-fill{
+    position:absolute; left:0; right:0; top:50%; height:4px; transform:translateY(-50%);
+    border-radius:var(--r-pill);
+  }
+  /* A genuinely visible inactive track over ANY photo — brighter than
+     before (.4 -> .58 opacity) plus a thin dark ring, since opacity alone
+     can't create contrast against a bright/white image (white-on-white is
+     still white-on-white no matter how opaque). The ring is on the bar
+     shape itself, not a panel behind it — stays a slim line, not a button. */
+  .hero-bar-track{ background:rgba(255,255,255,.58); box-shadow:0 0 0 1px rgba(0,0,0,.4); }
+  .hero-bars:not(.is-overlay) .hero-bar-track{ background:var(--line-strong); box-shadow:none; }
+  /* Active fill: pure white (brighter than --ink) with the same dark ring
+     plus a soft glow, so it reads as clearly "the active one" even at a
+     glance and even over a light photo. */
+  .hero-bar-fill{
+    right:auto; width:0; background:#fff;
+    box-shadow:0 0 0 1px rgba(0,0,0,.4), 0 0 5px rgba(0,0,0,.3);
+  }
+  .hero-bars:not(.is-overlay) .hero-bar-fill{ background:var(--indigo); box-shadow:none; }
+  .hero-bar:hover .hero-bar-track{ background:rgba(255,255,255,.75); }
+  .hero-bars:not(.is-overlay) .hero-bar:hover .hero-bar-track{ background:var(--border-subtle-hover); }
+  @media (prefers-reduced-motion: reduce){ .hero-bar-fill{ transition:none !important; } }
+
+  /* ---- Homepage Latest Results — compact competition tabs next to the
+     rail's own label. Reuses .score-rail-label's spacing; the tabs
+     themselves are intentionally small (item 10: never a giant nav). ---- */
+  .score-rail-head{ justify-content:space-between; }
+  .results-tabs{ display:flex; gap:6px; flex-wrap:wrap; }
+  .results-tab{
+    font:inherit; font-size:11px; font-weight:700; letter-spacing:.06em;
+    padding:5px 10px; border-radius:var(--r-pill); border:1px solid var(--border-subtle);
+    background:transparent; color:var(--ink-soft); cursor:pointer; white-space:nowrap;
+  }
+  .results-tab:hover{ border-color:var(--border-subtle-hover); color:var(--ink); }
+  .results-tab.is-active{ background:var(--indigo-deep); border-color:var(--indigo); color:var(--ink); }
+
+  /* ---- Football landing page competition filter (item 16) — same compact
+     pill language as .results-tab, reused rather than a second style.
+     ALL re-selects the combined page; every competition pill routes to its
+     own existing league page (see renderFootballFilterBar()). ---- */
+  .football-filter{ display:flex; gap:6px; flex-wrap:wrap; margin:16px 0 0; }
+  .football-filter-pill{
+    font:inherit; font-size:11px; font-weight:700; letter-spacing:.06em;
+    padding:6px 12px; border-radius:var(--r-pill); border:1px solid var(--border-subtle);
+    background:transparent; color:var(--ink-soft); cursor:pointer; white-space:nowrap;
+    transition:background .18s var(--ease), border-color .18s var(--ease), color .18s var(--ease);
+  }
+  .football-filter-pill:hover{ border-color:var(--border-subtle-hover); color:var(--ink); }
+  .football-filter-pill.is-active{ background:var(--indigo-deep); border-color:var(--indigo); color:var(--ink); }
 
   /* ---- Featured Video: compact by design, never competing with the hero ---- */
   .featured-video{
@@ -1154,11 +1284,18 @@
   .tn-item:hover h4{ color:var(--indigo); }
   .tn-meta{ margin-top:5px; font-size:10.5px; color:var(--ink-faint); }
 
-  /* Mobile: one column, in reading order — hero, video, top news, then the
-     Latest section that already follows in the document. The video keeps its
-     16/9 ratio at full width, so it never renders too small to watch. */
+  /* Mobile: one column, in reading order — hero, video, top news, THEN
+     Latest — even though Hero and Latest now share a column on desktop
+     (see .home-columns above), grid-template-areas lets this breakpoint
+     define its own stacking order independent of that, same reading order
+     this page has always used on small screens. The video keeps its 16/9
+     ratio at full width, so it never renders too small to watch. */
   @media (max-width: 960px){
-    .home-lead{ grid-template-columns:1fr; gap:var(--sp-5); }
+    .home-columns{
+      grid-template-columns:1fr;
+      grid-template-areas:"hero" "rail" "latest";
+      gap:var(--sp-5);
+    }
     .home-lead-main .big-story{ margin-bottom:0; }
   }
   @media (max-width:920px){ .grid-editorial{ grid-template-columns:1fr 1fr; } }
@@ -1680,6 +1817,17 @@
     overflow:hidden;
   }
   .mega.open{ display:block; }
+  /* Football-only "All Football" row above the five competition columns —
+     see footballAllLinkHtml(). Reuses the same link/hover language as
+     .mega-link rather than inventing a second style. */
+  .mega-all-link{
+    display:flex; flex-direction:column; gap:2px;
+    padding:14px 28px; border-bottom:1px solid var(--line);
+    text-decoration:none; transition:background .18s var(--ease);
+  }
+  .mega-all-link:hover{ background:var(--indigo-veil); }
+  .mega-all-label{ font-family:var(--display); font-size:15px; font-weight:600; color:var(--ink); }
+  .mega-all-sub{ font-size:11.5px; color:var(--cool-faint); }
   .mega-inner > .mega-col{ border-bottom:none; }
   .mega-inner{ display:grid; gap:0; }
   .mega-col{
@@ -2060,7 +2208,12 @@
        is what it shows; there is no separate "live" vs "upcoming" section
        here, just one rail scoped to GAME_RAIL_DAYS (see index.html script).
        #scoreRailBody carries .score-row's existing horizontal-scroll rules
-       directly — reused, not reinvented. -->
+       directly — reused, not reinvented.
+
+       LEAGUE-SCOPED ONLY: this is the single-competition rail a reader sees
+       after picking NBA/NFL/etc from the nav. On the all-sports homepage
+       (homeScope === 'all') it is hidden and #homeResults below takes its
+       place instead — see renderScoreRail()'s own homeScope branch. -->
   <div class="score-rail wrap" id="scores">
     <div class="score-rail-head">
       <span class="score-rail-label" id="scoreRailLabel"><span class="pulse"></span>Live</span>
@@ -2085,58 +2238,117 @@
     </div>
   </div>
 
+  <!-- HOMEPAGE ONLY — Latest/Recent Results. Replaces the single-competition
+       rail above whenever homeScope === 'all': groups recently-FINAL games
+       by competition (freshest competition leads), auto-rotates between
+       competitions, and falls back to the same honest "Upcoming" empty
+       state the league rail already uses when nothing has finished
+       recently anywhere. See renderHomeResults() in index.html's script —
+       reuses buildGameCard()/fetchSchedule(), no second card design. -->
+  <div class="score-rail wrap results-rail" id="homeResults" hidden>
+    <div class="score-rail-head">
+      <span class="score-rail-label" id="resultsRailLabel"><span class="pulse"></span>Latest Results</span>
+      <div class="results-tabs" id="resultsTabs"></div>
+    </div>
+    <div class="score-row" id="resultsRailBody" tabindex="0" aria-label="Recent results, scroll horizontally"></div>
+    <div class="rail-footer">
+      <a href="#" class="rail-full-link" id="resultsFullLink">View full schedule →</a>
+    </div>
+  </div>
+
   <main class="wrap">
 
-    <!-- ================= HOME LEAD (all sports) =================
-         Fast Break's cross-sport front page: one Hero, a compact Featured
-         Video, and a dense Top News list. Rendered ONLY when no single
-         competition is selected (homeScope === 'all'); picking a league from
-         the nav hides this whole block and restores the existing
-         league-scoped presentation below, unchanged.
+    <!-- ================= HOME COLUMNS =================
+         Wraps the Hero, the right rail (Featured Video + Top News) and
+         Latest in ONE grid so the right rail's height never dictates when
+         Latest begins. Before this wrapper existed, Hero+rail were a
+         self-contained grid INSIDE #homeLead, and Latest was a plain
+         sibling section that started only once that whole grid (i.e. the
+         TALLER of Hero or rail) had finished — a short Hero next to a long
+         Top News list left a large dead gap under the Hero before Latest
+         ever began. Now Hero and Latest share column 1 (so column 1's own
+         height is Hero+Latest together) while the rail occupies column 2
+         and simply ends on its own, independently, whenever its own
+         (usually shorter) content runs out — see the .home-columns rule
+         and its is-single/mobile overrides for the two other layouts this
+         same markup also has to serve (a league page, and small screens).
 
-         Everything here is driven by PUBLISHED story data only. It never
-         queries a provider, never sees a draft, and the Featured Video uses
-         a video already attached to a story by the editorial workflow. -->
-    <section class="section" id="homeLead" hidden>
-      <div class="section-head reveal">
-        <div class="section-title-group">
-          <span class="q-marker">ALL SPORTS</span>
-          <h2 class="section-title">The Brief</h2>
-          <p class="section-desc">The stories driving the day, across every competition Fast Break covers.</p>
-        </div>
-        <span class="section-date" id="homeLeadCount"></span>
-      </div>
-      <div class="home-lead">
-        <div class="home-lead-main" id="leadHero"></div>
-        <aside class="home-lead-rail">
-          <!-- Rendered empty (and hidden) unless a published story carries a
-               video the public renderer can actually embed. -->
-          <section class="featured-video" id="featuredVideo" hidden></section>
-          <section class="top-news" id="topNews" hidden></section>
-        </aside>
-      </div>
-    </section>
+         On a league page (homeScope !== 'all') #homeLead and the rail are
+         both hidden/collapsed (renderHomeLead() toggles is-single on this
+         element) and Latest simply uses the full width, exactly as before
+         this task. -->
+    <div class="home-columns" id="homeColumns">
 
-    <!-- LATEST — rendered from the central STORIES data structure -->
-    <section class="section" id="latest">
-      <div class="section-head reveal">
-        <div class="section-title-group">
-          <span class="q-marker" id="latestMarker">NBA</span>
-          <h2 class="section-title">Latest</h2>
-          <p class="section-desc" id="latestDesc">Verified reporting, every story sourced.</p>
+      <!-- ================= HOME LEAD (all sports) =================
+           Fast Break's cross-sport front page hero. Rendered ONLY when no
+           single competition is selected (homeScope === 'all'); picking a
+           league from the nav hides this and restores the existing
+           league-scoped presentation, unchanged.
+
+           Everything here is driven by PUBLISHED story data only. It never
+           queries a provider, never sees a draft, and the Featured Video
+           uses a video already attached to a story by the editorial
+           workflow. -->
+      <section class="section" id="homeLead" hidden>
+        <div class="section-head reveal">
+          <div class="section-title-group">
+            <span class="q-marker" id="homeLeadMarker">ALL SPORTS</span>
+            <h2 class="section-title" id="homeLeadTitle">The Brief</h2>
+            <p class="section-desc" id="homeLeadDesc">The stories driving the day, across every competition Fast Break covers.</p>
+          </div>
+          <span class="section-date" id="homeLeadCount"></span>
         </div>
-        <span class="section-date" id="latestCount"></span>
-      </div>
-      <!-- NBA-specific edition metadata: demoted to quiet editorial fine
-           print (was a full-width top strip) and moved here, right under
-           the Latest header, so it never reads as a headline-level element.
-           Still scoped with the existing data-league mechanism (see
-           filterLeague()/[data-league].league-hidden) so it stays NBA-only,
-           exactly as before. -->
-      <p class="edition-note" data-league="nba">Edition 224 · Offseason coverage · Aug 12–Aug 29 · Sources: NBA.com · ESPN · HoopsHype</p>
-      <div id="bigStory"></div>
-      <div class="grid-editorial" id="latestGrid"></div>
-    </section>
+        <!-- FOOTBALL COMPETITION FILTER — only populated/shown on the
+             Football landing page. ALL leads back to this same combined
+             page; each competition pill navigates to its OWN existing
+             league page (selectLeague()) — never a second, duplicate
+             filtered view. See renderFootballFilterBar() in the script. -->
+        <div class="football-filter" id="footballFilterBar" hidden></div>
+        <div class="home-lead-main">
+          <div id="leadHero"></div>
+          <!-- MULTI-HERO progress bars — one per rotating Hero story, only
+               ever rendered when 2+ manual Heroes exist (a single Hero, or
+               the automatic fallback, renders none of this and the Hero
+               looks exactly as it always has). Moved onto the Hero image
+               itself at render time — see attachHeroBars()/showHero() in
+               index.html's script; this is just the default/fallback
+               position, used only when the current Hero has no image to
+               overlay onto. -->
+          <div class="hero-bars" id="leadHeroBars" hidden></div>
+        </div>
+      </section>
+
+      <!-- Right rail — Featured Video + Top News. A grid AREA of its own
+           (see .home-columns), independent of Hero/Latest's height. -->
+      <aside class="home-lead-rail" id="homeLeadRail">
+        <!-- Rendered empty (and hidden) unless a published story carries a
+             video the public renderer can actually embed. -->
+        <section class="featured-video" id="featuredVideo" hidden></section>
+        <section class="top-news" id="topNews" hidden></section>
+      </aside>
+
+      <!-- LATEST — rendered from the central STORIES data structure -->
+      <section class="section" id="latest">
+        <div class="section-head reveal">
+          <div class="section-title-group">
+            <span class="q-marker" id="latestMarker">NBA</span>
+            <h2 class="section-title">Latest</h2>
+            <p class="section-desc" id="latestDesc">Verified reporting, every story sourced.</p>
+          </div>
+          <span class="section-date" id="latestCount"></span>
+        </div>
+        <!-- NBA-specific edition metadata: demoted to quiet editorial fine
+             print (was a full-width top strip) and moved here, right under
+             the Latest header, so it never reads as a headline-level element.
+             Still scoped with the existing data-league mechanism (see
+             filterLeague()/[data-league].league-hidden) so it stays NBA-only,
+             exactly as before. -->
+        <p class="edition-note" data-league="nba">Edition 224 · Offseason coverage · Aug 12–Aug 29 · Sources: NBA.com · ESPN · HoopsHype</p>
+        <div id="bigStory"></div>
+        <div class="grid-editorial" id="latestGrid"></div>
+      </section>
+
+    </div>
 
     <!-- ================= THE Q SYSTEM =================
          A Fast Break editorial device for BASKETBALL only. NBA and WNBA get
@@ -2429,6 +2641,11 @@
       homeScope = 'all';
       navigate(homeUrl());
       if (typeof renderStories === 'function') renderStories();
+      // renderStories() re-renders the story feed but not the game rail —
+      // without this, returning to the hub via the logo left whichever
+      // single-competition rail was already on screen in place instead of
+      // switching to the all-sports Latest Results module.
+      if (typeof renderScoreRail === 'function') renderScoreRail();
     });
   });
 
@@ -2675,8 +2892,12 @@
   //   the rest                  -> a Q section (basketball) or Replay
   //
   // The window includes the Big Story, so ACTIVE_LATEST_COUNT = 5 means one
-  // Big Story plus four cards.
+  // Big Story plus four cards. League-scoped pages keep this exact value,
+  // unchanged — only the all-sports homepage (see HOME_LATEST_COUNT below)
+  // shows more, since that hub already has its own separate Hero/Top News
+  // lead and would otherwise leave most of the page empty (item 29-32).
   const ACTIVE_LATEST_COUNT = 5;
+  const HOME_LATEST_COUNT = 16;
 
   // Recency is the primary force. Priority is a weight applied on top of it,
   // not a tier that outranks it — so a genuinely current story beats an
@@ -2769,6 +2990,58 @@
     const ref = refMs === undefined ? Date.now() : refMs;
     return STORIES.filter(s => s.showOnHomepage !== false)
                   .sort((a, b) => compareStories(a, b, ref));
+  }
+
+  /* ================= FOOTBALL LANDING PAGE =================
+     The five football competitions Fast Break covers, combined into one
+     aggregate presentation layer over the SAME published story data — no
+     new CMS field, no duplicate records.
+
+     EDITORIAL PLACEMENT — deliberately mirrors rankedFor() (a league page),
+     NOT rankedAll() (the global homepage): it does NOT filter on
+     showOnHomepage. That field's own doc comment (data/stories.js) scopes
+     it to the GLOBAL homepage's own modules; a league page has never
+     respected it, and the Football page is presentation-wise a league page
+     that happens to span five competitions instead of one, not a second
+     "global homepage" — a story an editor set showOnHomepage:false on
+     (meaning "keep off the global hub") should still surface on its own
+     competition's page, exactly as it already does for e.g. an EPL story
+     on /  (well, the EPL league view) today. */
+  const FOOTBALL_LEAGUE_IDS = ['epl', 'laliga', 'bundesliga', 'ucl', 'uel'];
+  function rankedFootball(refMs){
+    const ref = refMs === undefined ? Date.now() : refMs;
+    return STORIES.filter(s => FOOTBALL_LEAGUE_IDS.includes(s.league))
+                  .sort((a, b) => compareStories(a, b, ref));
+  }
+
+  // COMPETITION BALANCE (item 15) — a sensible diversity rule, not a strict
+  // quota. Round-robins across competitions in the order each competition's
+  // OWN best story appears in `sorted` (so the freshest/most important
+  // competition's best story still leads overall), taking each league's
+  // next-best story in turn on each subsequent pass. A competition that
+  // runs out of stories simply drops out of later rounds — nothing is
+  // padded or forced, and a competition with zero relevant stories
+  // contributes nothing. This is what stops one deep competition's feed
+  // (e.g. 8 Premier League stories) from filling every slot ahead of a
+  // single strong, fresher story from another competition sitting right
+  // behind it in strict rank order. Returns every input story reordered,
+  // never a subset — callers slice however many they actually need.
+  function diversifyByLeague(sorted){
+    const byLeague = new Map();
+    sorted.forEach(s => {
+      if (!byLeague.has(s.league)) byLeague.set(s.league, []);
+      byLeague.get(s.league).push(s);
+    });
+    const leagueOrder = [...byLeague.keys()]; // first-appearance order = best-story-first, since `sorted` already is
+    const out = [];
+    for (let round = 0, addedAny = true; addedAny; round++) {
+      addedAny = false;
+      for (const lg of leagueOrder) {
+        const pool = byLeague.get(lg);
+        if (round < pool.length) { out.push(pool[round]); addedAny = true; }
+      }
+    }
+    return out;
   }
 
   // Whether the PUBLIC renderer can actually play this video. Deliberately
@@ -2873,61 +3146,291 @@
    * Latest section below can skip them instead of repeating the same story
    * twice on one screen.
    */
+  // ===========================================================================
+  // MULTI-HERO ROTATION — the global Hero slot (index.html's existing
+  // .big-story component, unchanged) now rotates across every story a
+  // Control Center editor has manually marked featured:true, instead of
+  // assuming there is ever only one. 0 manual Heroes keeps the previous
+  // automatic-fallback behavior (a static, non-rotating Hero); 1 manual
+  // Hero is likewise static (nothing to rotate to); 2+ rotate on a fixed
+  // interval with small clickable progress bars — see showHero()/
+  // renderHeroBars() below. Container position/size never changes between
+  // stories; only the content inside #leadHero and the Hero DOES.
+  // ===========================================================================
+  const HERO_ROTATION_MS = 7000;
+  let heroStories = [];
+  let heroIndex = 0;
+  let heroRotationTimer = null;
+  const heroPreloaded = new Set();
+
+  function stopHeroRotation(){
+    clearTimeout(heroRotationTimer);
+    heroRotationTimer = null;
+  }
+
+  // prefersReducedMotion() is defined once, later in this file (the rail
+  // scrubber section) — a plain hoisted function declaration, so calling it
+  // here before its textual definition is safe, same pattern already used
+  // throughout this file (e.g. filterLeague() calling renderScoreRail()).
+
+  // Warms the browser cache for the NEXT Hero's image only — never the
+  // whole set at once (item 27: avoid preloading many full-resolution
+  // images), and never twice for the same story.
+  function preloadHeroImage(s){
+    if (!s || !s.image || heroPreloaded.has(s.id)) return;
+    heroPreloaded.add(s.id);
+    const img = new Image();
+    img.src = assetUrl(s.image);
+  }
+
+  // Moves the one persistent #leadHeroBars element onto the CURRENT Hero
+  // card's own image — overlaid at the bottom of .img-wrap, per item 11 of
+  // the task this shipped under ("controls must overlay the image", not
+  // sit as a thin line underneath it). A Hero with no image has nothing to
+  // overlay onto, so it falls back to #leadHeroBars's own default position
+  // in the markup (right after #leadHero, inside .home-lead-main) — the
+  // node is simply re-parented back there, never duplicated or recreated,
+  // so its click listeners/content only ever need building once per call
+  // to renderHeroBars() below, regardless of which parent it's currently in.
+  function attachHeroBars(heroEl){
+    const bars = document.getElementById('leadHeroBars');
+    if (!bars || !heroEl) return;
+    const card = heroEl.querySelector('.big-story');
+    const imgWrap = card && card.querySelector('.img-wrap');
+    if (imgWrap) {
+      imgWrap.appendChild(bars);
+      bars.classList.add('is-overlay');
+    } else if (heroEl.nextSibling !== bars) {
+      heroEl.insertAdjacentElement('afterend', bars);
+      bars.classList.remove('is-overlay');
+    } else {
+      bars.classList.remove('is-overlay');
+    }
+  }
+
+  function renderHeroBars(){
+    const wrap = document.getElementById('leadHeroBars');
+    if (!wrap) return;
+    if (heroStories.length < 2) { wrap.hidden = true; wrap.innerHTML = ''; return; } // never shown for a single/automatic Hero
+    wrap.hidden = false;
+    // A real <button> per Hero, each a proper click target — see the CSS
+    // for how the visible ~4px track sits inside a much taller (~28px)
+    // invisible hit area (item 13: the clickable area must be larger than
+    // the visible bar, not the same size as it).
+    wrap.innerHTML = heroStories.map((s, i) =>
+      `<button type="button" class="hero-bar${i === heroIndex ? ' is-active' : ''}" data-hero-index="${i}" aria-label="Show hero story ${i + 1} of ${heroStories.length}"><span class="hero-bar-track"></span><span class="hero-bar-fill"></span></button>`
+    ).join('');
+    wrap.querySelectorAll('[data-hero-index]').forEach(btn => {
+      // stopPropagation is required, not decorative: attachHeroBars() nests
+      // this button inside the Hero's own <a class="big-story"> image once
+      // an image exists, and that card has its own click listener that
+      // navigates to the article on ANY click bubbling up through it —
+      // without this, clicking a bar would switch the Hero AND immediately
+      // navigate away to the story it just switched away from.
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        e.preventDefault();
+        showHero(Number(btn.dataset.heroIndex));
+      });
+    });
+    // The active bar's fill is a plain CSS width transition the script only
+    // starts/restarts here — no per-frame JS drives the animation itself.
+    const fill = wrap.querySelector('.hero-bar.is-active .hero-bar-fill');
+    if (!fill) return;
+    fill.style.transition = 'none';
+    fill.style.width = '0%';
+    if (prefersReducedMotion()) { fill.style.width = '100%'; return; }
+    void fill.offsetWidth; // force reflow so the transition below actually restarts
+    fill.style.transition = `width ${HERO_ROTATION_MS}ms linear`;
+    fill.style.width = '100%';
+  }
+
+  // Single entry point for EVERY Hero change — the initial render, the
+  // rotation timer, and a manual bar click all call this, so "click resets
+  // the timer and progress" (item 26) and "never more than one timer"
+  // (item 40) both fall out for free rather than needing separate logic.
+  function showHero(index, opts){
+    opts = opts || {};
+    if (!heroStories.length) return;
+    heroIndex = ((index % heroStories.length) + heroStories.length) % heroStories.length;
+
+    const heroEl = document.getElementById('leadHero');
+    if (heroEl) {
+      const swap = () => {
+        // #leadHeroBars is a PERSISTENT node that attachHeroBars() may have
+        // re-parented INSIDE the previous card's own .img-wrap (i.e. inside
+        // heroEl) on the last rotation. heroEl.innerHTML = '' below performs
+        // real DOM removal of everything inside heroEl — if the bars are
+        // still in there when that runs, they are destroyed for good, not
+        // just visually cleared, and every rotation after the first one
+        // would silently lose its progress bars. Detach it back out to its
+        // default position FIRST so it always survives the wipe.
+        const bars = document.getElementById('leadHeroBars');
+        if (bars && heroEl.contains(bars)) heroEl.insertAdjacentElement('afterend', bars);
+        heroEl.innerHTML = '';
+        heroEl.appendChild(buildStoryCard(heroStories[heroIndex], { big: true }));
+        heroEl.classList.remove('is-fading');
+        attachHeroBars(heroEl); // onto the NEW card's image (or back to the fallback spot)
+        renderHeroBars();
+      };
+      // Subtle crossfade between rotating stories; an immediate swap for the
+      // very first paint (nothing to fade from) and for a reduced-motion
+      // reader, who gets an instant change instead of any animation.
+      if (opts.immediate || prefersReducedMotion()) swap();
+      else { heroEl.classList.add('is-fading'); setTimeout(swap, 220); }
+    }
+
+    if (heroStories.length > 1) preloadHeroImage(heroStories[(heroIndex + 1) % heroStories.length]);
+
+    stopHeroRotation();
+    if (heroStories.length > 1) {
+      heroRotationTimer = setTimeout(() => showHero(heroIndex + 1), HERO_ROTATION_MS);
+    }
+  }
+
   function renderHomeLead(){
     const sec = document.getElementById('homeLead');
     if (!sec) return new Set();
-    if (homeScope !== 'all') {
+    const isFootball = homeScope === 'football';
+    // Both the all-sports hub and the Football landing page reuse this
+    // exact Hero/rail/Latest layout — only which stories populate it
+    // differs (see rankedFootball()/FOOTBALL_LEAGUE_IDS above). Any real
+    // league scope keeps the original single-column layout untouched.
+    const isAggregate = homeScope === 'all' || isFootball;
+    // See .home-columns's own CSS comment — collapses the Hero+Latest/rail
+    // grid to one natural column whenever Hero/rail have nothing to show
+    // (any league-scoped page), so Latest and everything after it use the
+    // full width exactly as they did before this grid existed.
+    const columnsEl = document.getElementById('homeColumns');
+    if (columnsEl) columnsEl.classList.toggle('is-single', !isAggregate);
+    const filterBar = document.getElementById('footballFilterBar');
+    if (!isAggregate) {
       // Tear the lead down rather than just hiding it: a hidden container
       // still holds a live third-party <iframe>, and leaving a YouTube
       // player loaded on a page that never shows it is both wasteful and
       // more third-party surface than the reader asked for.
       sec.hidden = true;
+      if (filterBar) { filterBar.hidden = true; filterBar.innerHTML = ''; }
+      stopHeroRotation();
+      heroStories = [];
       const heroEl = document.getElementById('leadHero');
+      const barsEl = document.getElementById('leadHeroBars');
+      // Detach BEFORE wiping heroEl's contents — attachHeroBars() may have
+      // moved barsEl inside heroEl's own image (.img-wrap), and
+      // heroEl.innerHTML = '' performs real DOM removal, not a visual
+      // clear: leaving it nested here would destroy the node outright
+      // (getElementById('leadHeroBars') would return null forever after).
+      if (heroEl && barsEl && heroEl.contains(barsEl)) heroEl.insertAdjacentElement('afterend', barsEl);
       if (heroEl) heroEl.innerHTML = '';
+      if (barsEl) { barsEl.hidden = true; barsEl.innerHTML = ''; barsEl.classList.remove('is-overlay'); }
       renderFeaturedVideo(null);
       renderTopNews([]);
       return new Set();
     }
 
-    const ranked = rankedAll();
+    const markerEl = document.getElementById('homeLeadMarker');
+    const titleEl  = document.getElementById('homeLeadTitle');
+    const descEl   = document.getElementById('homeLeadDesc');
+    if (markerEl) markerEl.textContent = isFootball ? 'FOOTBALL' : 'ALL SPORTS';
+    if (titleEl)  titleEl.textContent  = isFootball ? 'The Pitch' : 'The Brief';
+    if (descEl)   descEl.textContent   = isFootball
+      ? 'The stories driving football, across Premier League, La Liga, Bundesliga, Champions League and Europa League.'
+      : 'The stories driving the day, across every competition Fast Break covers.';
+    renderFootballFilterBar(isFootball);
+
+    const ranked = isFootball ? rankedFootball() : rankedAll();
     sec.hidden = !ranked.length;
     const countEl = document.getElementById('homeLeadCount');
     if (countEl) countEl.textContent = ranked.length === 1 ? '1 story' : `${ranked.length} stories`;
-    const heroEl = document.getElementById('leadHero');
-    if (heroEl) heroEl.innerHTML = '';
-    if (!ranked.length) { renderFeaturedVideo(null); renderTopNews([]); return new Set(); }
+    if (!ranked.length) {
+      stopHeroRotation();
+      heroStories = [];
+      const heroEl = document.getElementById('leadHero');
+      const barsEl = document.getElementById('leadHeroBars');
+      // Detach BEFORE wiping heroEl's contents — attachHeroBars() may have
+      // moved barsEl inside heroEl's own image (.img-wrap), and
+      // heroEl.innerHTML = '' performs real DOM removal, not a visual
+      // clear: leaving it nested here would destroy the node outright
+      // (getElementById('leadHeroBars') would return null forever after).
+      if (heroEl && barsEl && heroEl.contains(barsEl)) heroEl.insertAdjacentElement('afterend', barsEl);
+      if (heroEl) heroEl.innerHTML = '';
+      if (barsEl) { barsEl.hidden = true; barsEl.innerHTML = ''; barsEl.classList.remove('is-overlay'); }
+      renderFeaturedVideo(null); renderTopNews([]); return new Set();
+    }
 
-    // EDITORIAL PLACEMENT — a manually designated Hero (story.featured ===
-    // true, set from the Control Center's draft editor) always wins the
-    // global lead outright, overriding the automatic ranking below. HERO
-    // implies SHOW ON HOMEPAGE (enforced editor/server-side), so the
-    // manual Hero is always present in `ranked` already — no separate,
-    // unfiltered lookup needed. Only one story is ever meant to carry
-    // featured:true at a time (the editor enforces this); if more than one
-    // somehow does, the freshest of them wins, same tie-break as everywhere
-    // else on this page.
+    // EDITORIAL PLACEMENT — every manually designated Hero (story.featured
+    // === true, set from the Control Center's draft editor) leads the
+    // global lead, rotating between all of them — see the MULTI-HERO block
+    // above. HERO implies SHOW ON HOMEPAGE (enforced editor/server-side),
+    // so every manual Hero is always already present in `ranked` — no
+    // separate, unfiltered lookup needed. `ranked` is already
+    // freshness-sorted, so the set below is automatically freshest-first.
     //
-    // Otherwise: Hero = the strongest current story by the existing
-    // ranking, not simply the newest publish — skipping over a game_result
-    // (see heroEligible) unless nothing else qualifies, so the lead never
-    // comes up empty.
-    const manualHero = ranked.find(s => s.featured === true);
-    const hero = manualHero || ranked.find(heroEligible) || ranked[0];
-    if (heroEl) heroEl.appendChild(buildStoryCard(hero, { big: true }));
+    // FOOTBALL LANDING PAGE (item 12/13): deliberately ONE Big Story, never
+    // a rotating set — the strongest current manually-featured football
+    // story if one exists, else the strongest by the existing automatic
+    // ranking, same tie-break as everywhere else. heroStories staying at
+    // length 1 is also what keeps renderHeroBars() from ever rendering
+    // rotation controls here (its own existing "< 2 -> hidden" rule) — no
+    // separate flag needed to suppress rotation on this page.
+    //
+    // 0 manual Heroes (all-sports hub): Hero = the strongest current story
+    // by the existing automatic ranking, not simply the newest publish —
+    // skipping over a game_result (see heroEligible) unless nothing else
+    // qualifies, so the lead never comes up empty. Exactly the same
+    // fallback as before.
+    if (isFootball) {
+      const manualFootballHero = ranked.find(s => s.featured === true);
+      heroStories = [manualFootballHero || ranked.find(heroEligible) || ranked[0]];
+    } else {
+      const manualHeroes = ranked.filter(s => s.featured === true);
+      heroStories = manualHeroes.length ? manualHeroes : [ranked.find(heroEligible) || ranked[0]];
+    }
+    showHero(0, { immediate: true });
 
-    // The featured video's own story is allowed to be the hero if that is
+    const heroIds = new Set(heroStories.map(s => s.id));
+    // The featured video's own story is allowed to be a hero if that is
     // genuinely the best story — but it is preferred from the rest first, so
-    // the two modules normally surface different stories.
-    const rest = ranked.filter(s => s.id !== hero.id);
-    const featured = pickFeaturedVideoStory(rest) || (isPlayableVideo(hero.video) ? hero : null);
+    // the two modules normally surface different stories. For football this
+    // naturally only ever picks a football video (or none) — `rest` never
+    // contains anything outside FOOTBALL_LEAGUE_IDS to begin with.
+    let rest = ranked.filter(s => !heroIds.has(s.id));
+    if (isFootball) rest = diversifyByLeague(rest); // item 15: reasonable competition balance, not a strict quota
+    const heroWithVideo = heroStories.find(s => isPlayableVideo(s.video));
+    const featured = pickFeaturedVideoStory(rest) || heroWithVideo || null;
     renderFeaturedVideo(featured);
 
-    const used = new Set([hero.id]);
+    const used = new Set(heroIds);
     if (featured) used.add(featured.id);
     const top = rest.filter(s => !used.has(s.id)).slice(0, TOP_NEWS_COUNT);
     renderTopNews(top);
     top.forEach(s => used.add(s.id));
     return used;
+  }
+
+  // FOOTBALL COMPETITION FILTER (item 16) — compact pills near the top of
+  // the Football landing page. ALL re-selects this same combined page
+  // (a no-op if already here); every competition pill navigates to its
+  // OWN existing league page via the normal selectLeague() — never a
+  // second, duplicate filtered view inside /football. Hidden entirely
+  // outside football scope.
+  function renderFootballFilterBar(isFootball){
+    const bar = document.getElementById('footballFilterBar');
+    if (!bar) return;
+    if (!isFootball) { bar.hidden = true; bar.innerHTML = ''; return; }
+    bar.hidden = false;
+    bar.innerHTML =
+      `<button type="button" class="football-filter-pill is-active" data-football-filter="all">All</button>` +
+      FOOTBALL_LEAGUE_IDS.map(id =>
+        `<button type="button" class="football-filter-pill" data-football-filter="${id}">${(leagueNames[id] || id).toUpperCase()}</button>`
+      ).join('');
+    bar.querySelectorAll('[data-football-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.footballFilter;
+        if (id === 'all') { selectFootball(); return; }
+        selectLeague(id);
+      });
+    });
   }
 
   function renderStories(){
@@ -2937,21 +3440,28 @@
     const count  = document.getElementById('latestCount');
     const big    = document.getElementById('bigStory');
     const allSports = homeScope === 'all';
+    const isFootball = homeScope === 'football';
+    // Both share the aggregate (Hero-above, no second Big Story) layout —
+    // see renderHomeLead()'s own isAggregate.
+    const isAggregate = allSports || isFootball;
     // The Q sections are a basketball-only device and are league-scoped, so
-    // they stay off on the cross-sport hub.
-    const isBasketball = !allSports && BASKETBALL_LEAGUES.includes(activeLeague);
+    // they stay off both the cross-sport hub and the Football landing page.
+    const isBasketball = !isAggregate && BASKETBALL_LEAGUES.includes(activeLeague);
 
-    // Render the all-sports lead first; it reports which stories it used so
-    // Latest can skip them rather than repeating the hero and the top-news
-    // items immediately underneath themselves.
+    // Render the lead first (all-sports OR football — see renderHomeLead's
+    // own isFootball branch); it reports which stories it used so Latest
+    // can skip them rather than repeating the hero and the top-news items
+    // immediately underneath themselves.
     const consumed = renderHomeLead();
 
-    // League isolation still applies whenever a competition is selected: the
-    // ranking only ever sees that league's stories, so a new NBA story can
-    // never displace an NFL one. On the hub, every league competes together.
-    let ranked = allSports
-      ? rankedAll().filter(s => !consumed.has(s.id))
-      : rankedFor(activeLeague);
+    // League isolation still applies whenever a single competition is
+    // selected: the ranking only ever sees that league's stories, so a new
+    // NBA story can never displace an NFL one. On the hub every league
+    // competes together; on the Football page every FOOTBALL competition
+    // competes together (see FOOTBALL_LEAGUE_IDS) — never NBA/NFL/etc.
+    let ranked = allSports  ? rankedAll().filter(s => !consumed.has(s.id))
+               : isFootball ? diversifyByLeague(rankedFootball().filter(s => !consumed.has(s.id))) // item 15
+               : rankedFor(activeLeague);
 
     // EDITORIAL PLACEMENT — item 4/8: the same manually designated global
     // Hero (story.featured === true) also leads its OWN league page as
@@ -2959,13 +3469,15 @@
     // can never leak into a different league (rankedFor(activeLeague)
     // already only ever contains this league's stories). If this league has
     // no featured story, `ranked` is untouched and the existing automatic
-    // ranking below decides the Big Story exactly as before.
-    if (!allSports) {
+    // ranking below decides the Big Story exactly as before. Not applicable
+    // to the aggregate pages — their Hero is already chosen, separately, by
+    // renderHomeLead() above, and must not be re-inserted into Latest too.
+    if (!isAggregate) {
       const leagueHero = ranked.find(s => s.featured === true);
       if (leagueHero) ranked = [leagueHero, ...ranked.filter(s => s.id !== leagueHero.id)];
     }
 
-    if (marker) marker.textContent = allSports ? 'ALL SPORTS' : (leagueNames[activeLeague] || activeLeague).toUpperCase();
+    if (marker) marker.textContent = allSports ? 'ALL SPORTS' : isFootball ? 'FOOTBALL' : (leagueNames[activeLeague] || activeLeague).toUpperCase();
 
     grid.innerHTML = '';
     if (big) big.innerHTML = '';
@@ -2976,13 +3488,14 @@
     if (section) section.hidden = !ranked.length;
     if (!ranked.length) { if (count) count.textContent = ''; return; }
 
-    const active    = ranked.slice(0, ACTIVE_LATEST_COUNT);
-    let   displaced = ranked.slice(ACTIVE_LATEST_COUNT);
+    const windowSize = isAggregate ? HOME_LATEST_COUNT : ACTIVE_LATEST_COUNT;
+    const active    = ranked.slice(0, windowSize);
+    let   displaced = ranked.slice(windowSize);
 
     // The Big Story is whatever currently ranks first — chosen, not pinned. It
     // renders with its image if it has one and cleanly without if it does not;
     // having artwork never promotes a story into the slot.
-    if (allSports) {
+    if (isAggregate) {
       // The hero above already is the lead — a second Big Story here would
       // read as two competing leads on one screen.
       active.forEach(s => grid.appendChild(buildStoryCard(s)));
@@ -3147,6 +3660,24 @@
     // moment any of the others has live data (as they do). The rail is
     // scoped to exactly this one competition (never a merged sport), so a
     // league switch always means a genuinely different game set.
+    if (typeof renderScoreRail === 'function') renderScoreRail();
+    if (!opts.silent && articleView.hidden) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // FOOTBALL LANDING PAGE — the combined-competition counterpart to
+  // filterLeague() above. Deliberately does NOT touch activeLeague:
+  // football isn't a single competition the score rail or a league page
+  // could scope to, and leaving activeLeague alone is what lets a reader's
+  // last-viewed single league (if any) stay intact underneath, exactly the
+  // same way the all-sports hub already does.
+  function filterFootball(opts){
+    opts = opts || {};
+    homeScope = 'football';
+    // No single [data-league] value matches an aggregate scope — NBA's own
+    // edition-note fine print (the only current [data-league] element) must
+    // never show here, same as it already doesn't on the all-sports hub.
+    document.querySelectorAll('[data-league]').forEach(el => el.classList.add('league-hidden'));
+    renderStories();
     if (typeof renderScoreRail === 'function') renderScoreRail();
     if (!opts.silent && articleView.hidden) window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -3401,9 +3932,22 @@
   }
 
   // --- the one panel renderer ----------------------------------------------
+  // Football-only addition (item 10 of the task this shipped under): a
+  // compact link ABOVE the five competition columns, leading to the
+  // combined /football landing page. Every other sport's panel is
+  // completely untouched — this only ever renders when node.id==='football'.
+  function footballAllLinkHtml(node){
+    if (node.id !== 'football') return '';
+    return `<a class="mega-all-link" href="${footballUrl()}" data-football-all role="menuitem">
+      <span class="mega-all-label">All Football</span>
+      <span class="mega-all-sub">Combined coverage across every competition below</span>
+    </a>`;
+  }
+
   function renderMega(node){
     const cols = Math.min(node.children.length, 3);
     megaMenu.innerHTML =
+      footballAllLinkHtml(node) +
       `<div class="mega-inner cols-${cols}">` +
         node.children.map(childColumn).join('') +
       `</div>`;
@@ -3413,6 +3957,7 @@
     markOpenTab(node.id);
     wireMegaLinks();
     wireTeamsToggle();
+    wireFootballAllLink();
 
     // Fetch (once, ever, per id) the real roster for anything in this panel
     // that isn't cached yet, then repaint this exact panel in place once it
@@ -3471,6 +4016,20 @@
           closeMega();
         });
       }
+    });
+  }
+
+  // The "All Football" link only exists in the football panel (see
+  // footballAllLinkHtml() above) — a no-op elsewhere, same guarded-query
+  // pattern wireMegaLinks() itself already uses for optional elements.
+  function wireFootballAllLink(){
+    const link = megaMenu.querySelector('[data-football-all]');
+    if (!link) return;
+    link.addEventListener('click', e => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      e.preventDefault();
+      selectFootball();
+      closeMega();
     });
   }
 
@@ -3533,9 +4092,11 @@
   // one — used only by the sport-tab click handler below. Deliberately
   // omits football: Premier League, La Liga, Bundesliga, Champions League
   // and Europa League are five equally-weighted competitions with no single
-  // default, so clicking the "Football" tab keeps opening the picker
-  // instead of guessing one.
+  // default LEAGUE. Football's own destination is the combined /football
+  // landing page instead — see SPORT_TAB_DEFAULT_ACTION below, a parallel
+  // map for a sport whose click target isn't a league at all.
   const SPORT_TAB_DEFAULT_LEAGUE = { basketball: 'nba', americanfootball: 'nfl' };
+  const SPORT_TAB_DEFAULT_ACTION = { football: selectFootball };
 
   // --- the rail -------------------------------------------------------------
 
@@ -3559,6 +4120,10 @@
     closeMega();
     navigate(homeUrl());
     renderStories();
+    // renderStories() re-renders the story feed but not the game rail —
+    // without this, returning to the hub left whichever single-competition
+    // rail was already on screen instead of switching to Latest Results.
+    if (typeof renderScoreRail === 'function') renderScoreRail();
     markActiveSport();
   });
   sportNavInner.appendChild(homeBtn);
@@ -3595,19 +4160,26 @@
     //    competition (Basketball -> NBA, American Football -> NFL — see
     //    SPORT_TAB_DEFAULT_LEAGUE) a click is a direct shortcut straight to
     //    that competition's main/news view, exactly like clicking its own
-    //    entry in the open panel would. Navigating closes the panel (every
-    //    route() call does), which is correct here, not a bug — hover
-    //    remains how a desktop reader reaches WNBA or a specific football
-    //    competition instead.
-    //  - No hover (mobile/touch), or a sport with no single default
-    //    (Football — 5 competitions, no one obvious landing page): click's
-    //    only job is opening/closing the picker, unchanged from before. On
-    //    mobile this is the ONLY way to reach WNBA or a football
-    //    competition at all, so it must never be skipped in favor of an
-    //    auto-navigate the way the hover-capable branch above does.
+    //    entry in the open panel would. Football has no single default
+    //    LEAGUE (five equally-weighted competitions) but DOES have its own
+    //    obvious destination — the combined /football landing page — so its
+    //    click is the same kind of direct shortcut, just to a different
+    //    kind of target (SPORT_TAB_DEFAULT_ACTION, not ...LEAGUE). Navigating
+    //    closes the panel (every route() call does), which is correct here,
+    //    not a bug — hover remains how a desktop reader reaches WNBA or one
+    //    specific football competition instead.
+    //  - No hover (mobile/touch): click's only job is opening/closing the
+    //    picker, unchanged from before — this is the ONLY way to reach WNBA
+    //    or a specific football competition on mobile, so it must never be
+    //    skipped in favor of an auto-navigate the way the hover-capable
+    //    branch above does. The combined Football page is still reachable
+    //    on mobile too, via the "All" entry inside the opened panel itself
+    //    (see renderMega()'s football-only addition).
     btn.addEventListener('click', () => {
       const defaultLeague = SPORT_TAB_DEFAULT_LEAGUE[node.id];
+      const defaultAction = SPORT_TAB_DEFAULT_ACTION[node.id];
       if (canHover && defaultLeague) { selectLeague(defaultLeague); return; }
+      if (canHover && defaultAction) { defaultAction(); return; }
       if (openNodeId === node.id) closeMega(); else renderMega(node);
     });
     sportNavInner.appendChild(btn);
@@ -3638,19 +4210,36 @@
     markActiveSport();
   }
 
+  // Single entry point for the combined Football landing page — same shape
+  // as selectLeague() above, but a real distinct URL (/football, not '/')
+  // since this is a genuine bookmarkable/shareable destination, not a
+  // same-URL scope switch the way every single league already is.
+  function selectFootball(){
+    clearTimeout(hoverTimer); clearTimeout(closeTimer);
+    navigate(footballUrl());
+    filterFootball();
+    markActiveSport();
+  }
+
   // A tab is active when it IS the active league, or when it is the group
   // containing it. Same check for every node — no per-sport branching.
   /* Exactly one entry is ever "you are here".
      On `/` (homeScope === 'all') that is HOME, and no sport tab is active —
      Basketball/Football/American Football are destinations you have not gone
      to yet. Pick a competition and the owning sport becomes active while HOME
-     stops being. */
+     stops being. The Football landing page (homeScope === 'football') is the
+     one destination that isn't "the owning sport containing activeLeague" —
+     it's its own thing, so it's checked directly rather than through that
+     same activeLeague lookup. */
   function markActiveSport(){
     const onHome = homeScope === 'all';
+    const onFootball = homeScope === 'football';
     sportNavInner.querySelectorAll('.sport-tab').forEach(el => {
       if (el.dataset.sportId === 'home') { el.classList.toggle('is-active', onHome); return; }
       const node = navNodes.find(n => n.id === el.dataset.sportId);
-      const isActive = !onHome && !!node && node.children.some(c => c.id === activeLeague);
+      const isActive = onFootball
+        ? node && node.id === 'football'
+        : !onHome && !!node && node.children.some(c => c.id === activeLeague);
       el.classList.toggle('is-active', isActive);
     });
   }
@@ -3935,6 +4524,7 @@
   // only their innerHTML is replaced on every render, so the listeners never
   // need to be re-attached.
   wireGameCardClicks('scoreRailBody');
+  wireGameCardClicks('resultsRailBody');
   wireGameCardClicks('scheduleView');
   wireGameCardClicks('teamView');
 
@@ -3971,6 +4561,21 @@
   });
 
   async function renderScoreRail(){
+    // The all-sports homepage AND the Football landing page both show the
+    // Latest Results module instead of this single-competition rail — see
+    // renderHomeResults() below, which itself narrows to football-only
+    // competitions when homeScope === 'football'. Nothing past this point
+    // ever runs in either of those two scopes.
+    if (homeScope === 'all' || homeScope === 'football') { return renderHomeResults(); }
+    // Leaving (or never having entered) the hub: the results module and its
+    // own rotation timer are homepage-only and must not keep running behind
+    // this rail once it takes the same visual slot back over.
+    stopResultsRotation();
+    const homeResultsEl = document.getElementById('homeResults');
+    if (homeResultsEl) homeResultsEl.hidden = true;
+    const legacyRailEl = document.getElementById('scores');
+    if (legacyRailEl) legacyRailEl.hidden = false;
+
     clearTimeout(scoreRailTimer);
     const myRequestId = ++scoreRailRequestId;
     const body  = document.getElementById('scoreRailBody');
@@ -4011,6 +4616,241 @@
     updateScrubber();
     scheduleScoreRailRefresh(hasLive);
     updatePhoneMockPreview(games);
+  }
+
+  // ===========================================================================
+  // HOMEPAGE — LATEST RESULTS (all-sports hub only)
+  // ---------------------------------------------------------------------------
+  // Replaces the single-competition score rail on `/` with recent-result
+  // games grouped by competition, freshest competition first, auto-rotating
+  // with compact manual tabs. Falls back to the existing single-competition
+  // UPCOMING rail (same #scores element, unchanged code path) when nothing
+  // has finished recently anywhere.
+  //
+  // PER-COMPETITION WINDOW — decided entirely server-side, independently for
+  // EACH competition (server/highlightlyProvider.js's getRecentFinalsForLeague):
+  //   1. a Final within RECENT_FINALS_PRIMARY_HOURS  -> that competition uses it
+  //   2. else a Final within RECENT_FINALS_FALLBACK_HOURS -> uses that instead
+  //   3. else its latest completed slate, up to LATEST_SLATE_MAX_HOURS old -> uses that
+  //   4. else nothing for that competition right now
+  // This was previously ONE global decision applied across every league at
+  // once (a real bug: the moment any competition had an 18h-fresh Final,
+  // every OTHER competition got clipped to that same 18h window too, which
+  // is exactly why College Football — whose latest slate is routinely a few
+  // days old — disappeared the instant Champions League had a fresh
+  // result). Each competition's own window is now independent, so a
+  // 3-hour-old UCL result and a 3-day-old College Football slate can both
+  // be real, simultaneously-available groups. Constants mirrored
+  // server-side (same names) for documentation only — the actual decision
+  // is made once, there, never duplicated here.
+  const RECENT_FINALS_PRIMARY_HOURS  = 18;
+  const RECENT_FINALS_FALLBACK_HOURS = 36;
+  const LATEST_SLATE_MAX_HOURS       = 168;
+  const RESULT_GROUP_ROTATION_MS     = 8000;
+  const MAX_RESULTS_PER_GROUP        = 8;
+  const RECENT_FINALS_CLIENT_CACHE_MS = 60 * 1000;
+
+  let recentFinalsCache   = null; // { at, data:{ finals, source } }
+  let resultsRequestId    = 0;    // out-of-order-fetch guard, same pattern as scoreRailRequestId
+  let resultsRotationTimer = null;
+  let resultsGroups       = [];   // [{ league, games }], freshest-lead-game first
+  let resultsActiveLeague = null;
+
+  async function fetchRecentFinals(){
+    if (recentFinalsCache && Date.now() - recentFinalsCache.at < RECENT_FINALS_CLIENT_CACHE_MS) {
+      return recentFinalsCache.data;
+    }
+    let data = { finals: {}, source: 'demo' };
+    try {
+      const res = await fetch(`${FB_API_BASE}/recentFinals`, { headers: { Accept: 'application/json' } });
+      if (res.ok) {
+        const json = await res.json();
+        if (json && typeof json.finals === 'object') data = json;
+      }
+    } catch (e) { /* API layer down -> empty; the UPCOMING fallback below covers it */ }
+    recentFinalsCache = { at: Date.now(), data };
+    return data;
+  }
+
+  // Groups the already-per-competition-decided results into the rotation's
+  // own shape. No window logic here any more (see the block comment above)
+  // — each league's games array already IS the correct set for that league;
+  // this only groups, sorts each group's own games freshest-first, and
+  // ranks the groups themselves by freshness so a genuinely recent Final
+  // always leads ahead of an older latest-slate fallback (item 3: the
+  // fallback can never outrank a real recent result, because it is
+  // necessarily older and freshness is the only sort key).
+  function buildResultGroups(finalsData){
+    const groups = Object.entries(finalsData.finals || {})
+      .map(([league, games]) => ({
+        league,
+        games: (games || [])
+          .filter(g => g.status === 'final')
+          .slice()
+          .sort((a, b) => Date.parse(b.startTime || 0) - Date.parse(a.startTime || 0))
+      }))
+      .filter(e => e.games.length);
+
+    // COMPETITION PRIORITY (data-driven, never hardcoded): the competition
+    // whose most recent game is freshest leads; a tie goes to whichever has
+    // more recent games to show.
+    groups.sort((a, b) => {
+      const at = Date.parse(a.games[0].startTime || 0), bt = Date.parse(b.games[0].startTime || 0);
+      if (bt !== at) return bt - at;
+      return b.games.length - a.games.length;
+    });
+    return groups;
+  }
+
+  function stopResultsRotation(){
+    clearTimeout(resultsRotationTimer);
+    resultsRotationTimer = null;
+  }
+
+  function scheduleResultsRotation(){
+    stopResultsRotation();
+    if (resultsGroups.length < 2) return; // nothing to rotate to
+    resultsRotationTimer = setTimeout(() => {
+      const idx = resultsGroups.findIndex(g => g.league === resultsActiveLeague);
+      const next = resultsGroups[(idx + 1) % resultsGroups.length];
+      showResultsGroup(next.league);
+    }, RESULT_GROUP_ROTATION_MS);
+  }
+
+  function renderResultsTabs(){
+    const tabs = document.getElementById('resultsTabs');
+    if (!tabs) return;
+    if (resultsGroups.length < 2) { tabs.innerHTML = ''; return; } // one group -> nothing to switch between
+    tabs.innerHTML = resultsGroups.map(g =>
+      `<button type="button" class="results-tab" data-results-tab="${g.league}">${(leagueNames[g.league] || g.league).toUpperCase()}</button>`
+    ).join('');
+    tabs.querySelectorAll('[data-results-tab]').forEach(btn => {
+      btn.addEventListener('click', () => showResultsGroup(btn.dataset.resultsTab));
+    });
+  }
+
+  // Manual click OR automatic rotation both land here — a single entry
+  // point, so "click resets the timer" (item 26) falls out for free: every
+  // call, however it was triggered, tears down and reschedules one timer.
+  function showResultsGroup(league){
+    const group = resultsGroups.find(g => g.league === league);
+    if (!group) return;
+    resultsActiveLeague = league;
+
+    const body  = document.getElementById('resultsRailBody');
+    const label = document.getElementById('resultsRailLabel');
+    const tabs  = document.getElementById('resultsTabs');
+    if (label) {
+      label.classList.remove('is-upcoming');
+      label.classList.add('is-final');
+      label.innerHTML = '<span class="pulse"></span>Latest Results';
+    }
+    if (body) body.innerHTML = group.games.slice(0, MAX_RESULTS_PER_GROUP).map(buildGameCard).join('');
+    if (tabs) tabs.querySelectorAll('[data-results-tab]').forEach(btn => {
+      btn.classList.toggle('is-active', btn.dataset.resultsTab === league);
+    });
+    const fullLink = document.getElementById('resultsFullLink');
+    if (fullLink) fullLink.href = scheduleUrl(league);
+
+    scheduleResultsRotation();
+  }
+
+  // Reuses fetchSchedule() (already cached, already the one upcoming-games
+  // source of truth) across every competition to find the single best
+  // UPCOMING fallback when there are no recent Finals anywhere — a live
+  // game anywhere wins outright, otherwise whichever competition's next
+  // game kicks off soonest. Never a fixed default league. `leagueIds`
+  // narrows the candidate pool (item 19: the Football page's own fallback
+  // must only ever consider football competitions, never NBA/NFL/etc) —
+  // omitted, it falls back to every league with editorial content, same as
+  // the all-sports hub always has.
+  async function pickFallbackUpcomingLeague(leagueIds){
+    const candidates = leagueIds && leagueIds.length ? leagueIds
+      : Object.keys(LEAGUES).length ? Object.keys(LEAGUES) : [activeLeague];
+    const results = await Promise.all(candidates.map(async lg => {
+      const r = await fetchSchedule(lg, GAME_RAIL_DAYS);
+      return { league: lg, games: r.games };
+    }));
+    const live = results.find(r => r.games.some(g => g.status === 'live'));
+    if (live) return live.league;
+    let best = null;
+    results.forEach(r => {
+      const next = r.games.find(g => g.status === 'scheduled');
+      if (!next || !next.startTime) return;
+      const t = Date.parse(next.startTime);
+      if (!Number.isFinite(t)) return;
+      if (!best || t < best.t) best = { league: r.league, t };
+    });
+    return best ? best.league : activeLeague;
+  }
+
+  // True while renderHomeResults() is the correct rail to show — both the
+  // all-sports hub and the Football landing page use it; only WHICH
+  // competitions appear differs (see the isFootball narrowing below).
+  function isHomeResultsScope(){ return homeScope === 'all' || homeScope === 'football'; }
+
+  async function renderHomeResults(){
+    const homeRail   = document.getElementById('homeResults');
+    const legacyRail = document.getElementById('scores');
+    if (!homeRail) return;
+    const isFootball = homeScope === 'football';
+
+    if (legacyRail) legacyRail.hidden = true; // the single-competition rail is a league-page-only component now
+    const myRequestId = ++resultsRequestId;
+
+    const data = await fetchRecentFinals();
+    if (myRequestId !== resultsRequestId || !isHomeResultsScope()) return; // superseded, or the reader left this scope mid-fetch
+
+    // FOOTBALL LANDING PAGE (item 17) — reuses the exact same fetch and the
+    // exact same tiered per-competition selection already computed
+    // server-side for every league at once; this only narrows WHICH of
+    // those already-decided results get shown, never re-decides anything.
+    const scopedData = isFootball
+      ? { ...data, finals: Object.fromEntries(FOOTBALL_LEAGUE_IDS.map(id => [id, (data.finals || {})[id] || []])) }
+      : data;
+
+    resultsGroups = buildResultGroups(scopedData);
+    homeRail.hidden = false;
+
+    if (resultsGroups.length) {
+      renderResultsTabs();
+      const stillValid = resultsGroups.some(g => g.league === resultsActiveLeague);
+      showResultsGroup(stillValid ? resultsActiveLeague : resultsGroups[0].league);
+      return;
+    }
+
+    // NO RECENT FINALS ANYWHERE — the same honest empty-safe fallback the
+    // league rail has always used, just pointed at whichever competition
+    // currently has the most imminent game rather than a fixed default.
+    stopResultsRotation();
+    const tabs  = document.getElementById('resultsTabs');
+    const label = document.getElementById('resultsRailLabel');
+    const body  = document.getElementById('resultsRailBody');
+    if (tabs) tabs.innerHTML = '';
+    if (label) {
+      label.classList.remove('is-final');
+      label.classList.add('is-upcoming');
+      label.innerHTML = '<span class="pulse"></span>Upcoming';
+    }
+
+    const fallbackLeague = await pickFallbackUpcomingLeague(isFootball ? FOOTBALL_LEAGUE_IDS : null);
+    if (myRequestId !== resultsRequestId || !isHomeResultsScope()) return;
+    const sched = await fetchSchedule(fallbackLeague, GAME_RAIL_DAYS);
+    if (myRequestId !== resultsRequestId || !isHomeResultsScope()) return;
+
+    // wireResultsFullLink() reads this at click time — must reflect the
+    // fallback league too, not just whichever competition a real result
+    // group last showed, or "View full schedule" would 404/point stale.
+    resultsActiveLeague = fallbackLeague;
+
+    const games = sched.games.slice(0, MAX_RESULTS_PER_GROUP);
+    if (body) {
+      body.innerHTML = games.length
+        ? games.map(buildGameCard).join('')
+        : `<div class="score-empty">No games in the next ${GAME_RAIL_DAYS} days.</div>`;
+    }
+    const fullLink = document.getElementById('resultsFullLink');
+    if (fullLink) fullLink.href = scheduleUrl(fallbackLeague);
   }
 
   // ---------------------------------------------------------------------------
@@ -4196,6 +5036,23 @@
     link.addEventListener('click', e => {
       e.preventDefault();
       navigate(scheduleUrl(activeLeague));
+    });
+  })();
+
+  // Same fix, same reasoning, for the homepage Latest Results rail's own
+  // "View full schedule" link — this one had NO click handler at all (a
+  // real bug: the href alone let the browser perform a normal top-level
+  // navigation to e.g. /schedule/ucl, which 404s against a static file
+  // server that only knows index.html). Reads resultsActiveLeague fresh at
+  // click time, never activeLeague — the results rail rotates through
+  // whichever competition is CURRENTLY shown, independently of whatever
+  // league the (hidden, on this scope) single-competition rail last used.
+  (function wireResultsFullLink(){
+    const link = document.getElementById('resultsFullLink');
+    if (!link) return;
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      if (resultsActiveLeague) navigate(scheduleUrl(resultsActiveLeague));
     });
   })();
 
@@ -5677,6 +6534,10 @@
   })();
 
   const homeUrl    = () => (BASE || '') + '/';
+  // The Football landing page (see selectFootball()/filterFootball()) — a
+  // real, distinct, bookmarkable route, unlike every single league (which
+  // all share '/' and are distinguished only by in-memory homeScope).
+  const footballUrl = () => (BASE || '') + '/football';
   // A story image is stored relative ("assets/x.jpg"). On /story/{id} a bare
   // relative path would resolve to /story/assets/x.jpg, so anchor it to BASE.
   const assetUrl = u => (!u || /^[a-z]+:/i.test(u) || u.charAt(0) === '/')
@@ -5767,6 +6628,11 @@
     // serve, same list leagueNames already merges.
     const scheduleLeagueValid = scheduleLeagueId &&
       [...LEAGUES_CFG, ...COMPETITIONS_CFG].some(l => l.id === scheduleLeagueId);
+    // A real, distinct route (unlike a single league, which never gets its
+    // own URL — see footballUrl()'s own comment) — checked only once
+    // nothing more specific (story/game/team/schedule) already matched.
+    const isFootballRoute = !story && !gameRouteValid && !teamRouteValid && !scheduleLeagueValid
+      && location.pathname === footballUrl();
 
     if (story) {
       // Reading an article about another league should move the whole app to
@@ -5880,9 +6746,48 @@
       return;
     }
 
-    // Unknown /story/, /schedule/, /game/ or /team/ path: fall back to the
-    // homepage rather than a blank page.
+    if (isFootballRoute) {
+      // Same shape as the schedule/game/team branches above — a real,
+      // distinct URL renders its own view. homeScope drives Hero/rail/
+      // Latest (see renderHomeLead()/renderStories()'s own isFootball
+      // branches) exactly the way it already does for the all-sports hub;
+      // activeLeague is deliberately left untouched (see filterFootball()).
+      homeScope = 'football';
+      markActiveSport();
+      homeView.hidden = false;
+      releaseHomeLeadMedia();
+      articleView.hidden = true;
+      articleView.innerHTML = '';
+      scheduleView.hidden = true;
+      scheduleView.innerHTML = '';
+      gameView.hidden = true;
+      gameView.innerHTML = '';
+      teamView.hidden = true;
+      teamView.innerHTML = '';
+      // Full re-render (not just renderHomeLead()) — Latest's own content
+      // has to switch to football-only stories too, not just the Hero/rail.
+      renderStories();
+      if (typeof renderScoreRail === 'function') renderScoreRail();
+      readProgress.style.width = '0%';
+      document.title = 'Football — Fast Break';
+      if (!opts.keepScroll) window.scrollTo({ top: 0, behavior: 'auto' });
+      return;
+    }
+
+    // Unknown /story/, /schedule/, /game/, /team/ or /football path: fall
+    // back to the homepage rather than a blank page.
     if (id || scheduleLeagueId || gameRoute || teamRoute) history.replaceState({}, '', homeUrl());
+    // Landing here means nothing more specific matched — plain '/', or a
+    // truly unknown path. The one case this branch must actively correct
+    // (browser back/forward can reach it without going through
+    // selectFootball()/homeBtn's own explicit reset) is leaving the
+    // Football route for anything else: homeScope must not still read
+    // 'football' once the URL no longer says so. Any real league's own
+    // scope (e.g. 'nba') is left exactly as it was, same as always — a
+    // single league never gets its own URL, so there's nothing to detect
+    // it left from here.
+    const leavingFootball = homeScope === 'football';
+    if (leavingFootball) homeScope = 'all';
     articleView.hidden = true;
     articleView.innerHTML = '';
     scheduleView.hidden = true;
@@ -5895,8 +6800,19 @@
     // The lead's video player is released whenever the home view is hidden
     // (see releaseHomeLeadMedia), so returning here has to rebuild it —
     // otherwise the Featured Video silently disappears for the rest of the
-    // session after the reader opens a single article.
-    renderHomeLead();
+    // session after the reader opens a single article. Landing here right
+    // after actually LEAVING football scope (back/forward, not a click that
+    // already re-rendered itself) needs the full renderStories() — Latest's
+    // own content, not just the Hero/rail, has to switch back to the
+    // all-sports feed too. The plain "closed an article, still on whatever
+    // scope I was on" case only ever needed the Hero/rail rebuilt, so it
+    // keeps using the cheaper renderHomeLead() alone, same as before.
+    if (leavingFootball) {
+      renderStories();
+      if (typeof renderScoreRail === 'function') renderScoreRail();
+    } else {
+      renderHomeLead();
+    }
     readProgress.style.width = '0%';
     document.title = 'Fast Break';
     markActiveSport();

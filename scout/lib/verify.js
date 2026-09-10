@@ -9,12 +9,36 @@
  * "the model believes it".
  */
 
+// Source expansion (2026-09), items 2/14/15: ESPN must not win primary-
+// source status merely because its RSS item was discovered/published a few
+// minutes ahead of everyone else's — it should no longer be the structural
+// default, only an additional source checked alongside/after the rest. This
+// window is deliberately small: it only breaks a genuine near-tie, never
+// overrides a source that is meaningfully earlier (ESPN included — an ESPN
+// scoop that is genuinely first, or the ONLY source in the cluster, still
+// wins on merit; see the file's own header and sources.js's matching note).
+const ESPN_TIEBREAK_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
+
 function pickPrimarySource(sources) {
-  // Earliest timestamp, tie-broken by lowest tier number (1 = most official).
+  // Tier 1 (official) always wins outright, regardless of timing — item 14:
+  // "primary source should be valued highly". Otherwise: earliest timestamp,
+  // with a small window in which a non-ESPN source is preferred over an
+  // ESPN one at a near-identical time (see ESPN_TIEBREAK_WINDOW_MS above),
+  // tie-broken by lowest tier number (1 = most official) as before.
   const withTime = sources.map(s => ({ ...s, _t: Date.parse(s.publishedAt || '') }));
   withTime.sort((a, b) => {
+    if (a.tier === 1 && b.tier !== 1) return -1;
+    if (b.tier === 1 && a.tier !== 1) return 1;
+
     const ta = Number.isNaN(a._t) ? Infinity : a._t;
     const tb = Number.isNaN(b._t) ? Infinity : b._t;
+
+    const closeInTime = Number.isFinite(ta) && Number.isFinite(tb) && Math.abs(ta - tb) <= ESPN_TIEBREAK_WINDOW_MS;
+    if (closeInTime) {
+      const aIsEspn = a.outlet === 'ESPN', bIsEspn = b.outlet === 'ESPN';
+      if (aIsEspn !== bIsEspn) return aIsEspn ? 1 : -1;
+    }
+
     if (ta !== tb) return ta - tb;
     return a.tier - b.tier;
   });

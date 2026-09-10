@@ -15,14 +15,31 @@
 
 const crypto = require('crypto');
 const { SUPPLEMENTAL_TEAMS } = require('./teamRegistry');
+const { SIGNUP_CTA_PATTERN, ROUNDUP_LIVE_FORMAT_PATTERN, isNewsletterOrEditorial } = require('./contentFilter');
+
+// A "confirmed transaction" category (signing/trade) must never be decided
+// by a bare substring match — "Sign up now to our newsletter" contains the
+// literal word "sign" but is not a signing event, and a live rumour-roundup
+// page ("Transfer Centre LIVE...") is not one confirmed trade. Wraps a real
+// regex in an object with the same `.test()` interface guessCategory below
+// already calls, so the CATEGORY_RULES loop needs no other change.
+function contextGuardedPattern(realPattern) {
+  return {
+    test(text) {
+      if (SIGNUP_CTA_PATTERN.test(text)) return false;
+      if (ROUNDUP_LIVE_FORMAT_PATTERN.test(text)) return false;
+      return realPattern.test(text);
+    }
+  };
+}
 
 const CATEGORY_RULES = [
   // Checked in order — first match wins. Keyword lists are intentionally
   // small and literal; this is a heuristic, not an NLP model, and is
   // documented as such in the report's "known limitations" section.
-  { category: 'trade', pattern: /\btrad(e|ed|es|ing)\b|\bacquir(e|ed|es)\b/i },
+  { category: 'trade', pattern: contextGuardedPattern(/\btrad(e|ed|es|ing)\b|\bacquir(e|ed|es)\b/i) },
   { category: 'transfer', pattern: /\btransfer(red|s)?\b|\bloan\b|\bmove to\b|\bjoins\b.*\bfrom\b/i },
-  { category: 'signing', pattern: /\bsign(s|ed|ing)?\b|\bagrees? to\b|\bcontract extension\b|\bre-signs?\b/i },
+  { category: 'signing', pattern: contextGuardedPattern(/\bsign(s|ed|ing)?\b|\bagrees? to\b|\bcontract extension\b|\bre-signs?\b/i) },
   // "set for return"/"ready to return" catches comeback-from-injury follow-
   // up headlines that don't repeat the word "injury" itself (the injury
   // context is usually established in earlier coverage) — found in testing
@@ -380,6 +397,18 @@ function buildNonPersonExclusionSet(matchedTeams, matchedCompetitions, matchedLe
  * @returns {object|null} a Candidate, or null if no league could be matched
  */
 function normalizeItem(rawItem, feed, sportsConfig) {
+  // Newsletter/roundup/opinion detection (item 2) — checked FIRST, before
+  // any league/entity matching or classification, exactly per the intended
+  // pipeline order (raw item -> strip HTML [already done by rssParser] ->
+  // detect newsletter/editorial -> classify -> score). rawItem.title/
+  // .description are already HTML-stripped plain text by this point (see
+  // rssParser.js's extractTag) — never raw HTML reaches this check. A
+  // newsletter/roundup item is excluded the same way an unmatched-league
+  // item already is (returns null; the caller's own "unmatched" count in
+  // run.js absorbs it) rather than becoming a normal NEWS candidate with a
+  // fabricated classification/importance.
+  if (isNewsletterOrEditorial(rawItem.title, rawItem.description)) return null;
+
   const text = `${rawItem.title} ${rawItem.description || ''}`;
   const matchedTeams = matchTeams(text, sportsConfig.TEAMS_CFG);
   const matchedCompetitions = matchCompetitions(text, sportsConfig.COMPETITIONS_CFG);
